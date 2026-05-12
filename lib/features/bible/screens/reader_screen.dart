@@ -19,13 +19,6 @@ final _chapterTextProvider = FutureProvider.family<ChapterTextRow?, ChapterRef>(
   },
 );
 
-final _chapterReadProvider = FutureProvider.family<bool, ChapterRef>((
-  ref,
-  chapterRef,
-) {
-  return ref.watch(progressDaoProvider).isRead(chapterRef);
-});
-
 class ReaderScreen extends ConsumerStatefulWidget {
   final String bookId;
   final int chapterNumber;
@@ -102,7 +95,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             }
             return _DownloadedChapterView(
               row: row,
-              chapterRef: _chapterRef,
               previous: previous,
               next: next,
               onPrevious: () => _goTo(previous),
@@ -140,9 +132,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 }
 
-class _DownloadedChapterView extends ConsumerWidget {
+class _DownloadedChapterView extends StatelessWidget {
   final ChapterTextRow row;
-  final ChapterRef chapterRef;
   final ChapterRef? previous;
   final ChapterRef? next;
   final VoidCallback onPrevious;
@@ -150,7 +141,6 @@ class _DownloadedChapterView extends ConsumerWidget {
 
   const _DownloadedChapterView({
     required this.row,
-    required this.chapterRef,
     required this.previous,
     required this.next,
     required this.onPrevious,
@@ -158,9 +148,8 @@ class _DownloadedChapterView extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isRead = ref.watch(_chapterReadProvider(chapterRef)).value ?? false;
 
     return Column(
       children: [
@@ -175,52 +164,24 @@ class _DownloadedChapterView extends ConsumerWidget {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      final dao = ref.read(progressDaoProvider);
-                      if (isRead) {
-                        await dao.markUnread(chapterRef);
-                      } else {
-                        await dao.markRead(chapterRef, DateTime.now());
-                      }
-                      ref.invalidate(_chapterReadProvider(chapterRef));
-                    },
-                    icon: Icon(
-                      isRead
-                          ? Icons.radio_button_unchecked
-                          : Icons.check_circle_outline,
-                    ),
-                    label: Text(
-                      isRead ? l10n.readerMarkUnread : l10n.readerMarkRead,
-                    ),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    key: const Key('reader-previous-button'),
+                    onPressed: previous == null ? null : onPrevious,
+                    icon: const Icon(Icons.chevron_left),
+                    label: Text(l10n.readerPreviousChapter),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        key: const Key('reader-previous-button'),
-                        onPressed: previous == null ? null : onPrevious,
-                        icon: const Icon(Icons.chevron_left),
-                        label: Text(l10n.readerPreviousChapter),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        key: const Key('reader-next-button'),
-                        onPressed: next == null ? null : onNext,
-                        icon: const Icon(Icons.chevron_right),
-                        label: Text(l10n.readerNextChapter),
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    key: const Key('reader-next-button'),
+                    onPressed: next == null ? null : onNext,
+                    icon: const Icon(Icons.chevron_right),
+                    label: Text(l10n.readerNextChapter),
+                  ),
                 ),
               ],
             ),

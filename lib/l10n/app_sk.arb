@@ -139,5 +139,19 @@
   "planCompletedChapters": "Prečítané kapitoly",
   "planExpectedByToday": "Očakávané do dnes",
   "planAheadBehind": "Predstih/sklz",
-  "planCompletionPercent": "Dokončenie"
+  "planCompletionPercent": "Dokončenie",
+  "statsNoPlan": "Najprv si vytvorte plán čítania.",
+  "statsPlanProgressTitle": "Pokrok v aktuálnom pláne",
+  "statsRemainingPlanChapters": "Zostávajúce kapitoly v pláne",
+  "statsPlanStatus": "Stav plánu",
+  "statsTestamentsTitle": "Starý a Nový zákon v pláne",
+  "statsOldTestamentInPlan": "Starý zákon v aktuálnom pláne",
+  "statsNewTestamentInPlan": "Nový zákon v aktuálnom pláne",
+  "statsDeuterocanonicalInPlan": "Deuterokánonické knihy v pláne",
+  "statsBooksTitle": "Knihy v aktuálnom pláne",
+  "statsCompletedBooksInPlan": "Dokončené knihy v pláne",
+  "statsRemainingBooksInPlan": "Zostávajúce knihy v pláne",
+  "statsFullyCompletedSelectedBooks": "Úplne dokončené vybrané knihy",
+  "statsNotStartedSelectedBooks": "Nezačaté vybrané knihy",
+  "statsTodaySummary": "Dnešné čítanie v pláne"
 }

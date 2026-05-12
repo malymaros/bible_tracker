@@ -226,35 +226,207 @@ abstract class AppLocalizations {
   /// **'Zavrieť'**
   String get readerClose;
 
+  /// No description provided for @planCreateTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Vytvoriť plán čítania'**
   String get planCreateTitle;
+
+  /// No description provided for @planStartDate.
+  ///
+  /// In sk, this message translates to:
+  /// **'Začiatok'**
   String get planStartDate;
+
+  /// No description provided for @planTotalDays.
+  ///
+  /// In sk, this message translates to:
+  /// **'Počet dní'**
   String get planTotalDays;
+
+  /// No description provided for @planIncludedBooks.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zahrnuté knihy'**
   String get planIncludedBooks;
+
+  /// No description provided for @planSelectedChapters.
+  ///
+  /// In sk, this message translates to:
+  /// **'Vybrané kapitoly'**
   String get planSelectedChapters;
+
+  /// No description provided for @planDateRange.
+  ///
+  /// In sk, this message translates to:
+  /// **'Rozsah dátumov'**
   String get planDateRange;
+
+  /// No description provided for @planDateRangeUnavailable.
+  ///
+  /// In sk, this message translates to:
+  /// **'nedostupné'**
   String get planDateRangeUnavailable;
+
+  /// No description provided for @planCreateAction.
+  ///
+  /// In sk, this message translates to:
+  /// **'Vytvoriť plán'**
   String get planCreateAction;
+
+  /// No description provided for @planInvalidDayCount.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zadajte platný počet dní'**
   String get planInvalidDayCount;
+
+  /// No description provided for @planTooManyDays.
+  ///
+  /// In sk, this message translates to:
+  /// **'Počet dní nemôže byť väčší ako počet vybraných kapitol'**
   String get planTooManyDays;
+
+  /// No description provided for @planSelectAtLeastOneBook.
+  ///
+  /// In sk, this message translates to:
+  /// **'Vyberte aspoň jednu knihu'**
   String get planSelectAtLeastOneBook;
+
+  /// No description provided for @planTodayReading.
+  ///
+  /// In sk, this message translates to:
+  /// **'Dnešné čítanie'**
   String get planTodayReading;
+
+  /// No description provided for @planNoReadingToday.
+  ///
+  /// In sk, this message translates to:
+  /// **'Na dnes nie je naplánované čítanie'**
   String get planNoReadingToday;
+
+  /// No description provided for @planSchedule.
+  ///
+  /// In sk, this message translates to:
+  /// **'Rozpis'**
   String get planSchedule;
+
+  /// No description provided for @planDay.
+  ///
+  /// In sk, this message translates to:
+  /// **'Deň'**
   String get planDay;
+
+  /// No description provided for @planToday.
+  ///
+  /// In sk, this message translates to:
+  /// **'dnes'**
   String get planToday;
+
+  /// No description provided for @planChapterCompleted.
+  ///
+  /// In sk, this message translates to:
+  /// **'prečítané'**
   String get planChapterCompleted;
+
+  /// No description provided for @planChapterIncomplete.
+  ///
+  /// In sk, this message translates to:
+  /// **'neprečítané'**
   String get planChapterIncomplete;
+
+  /// No description provided for @planDeleteAction.
+  ///
+  /// In sk, this message translates to:
+  /// **'Vymazať plán'**
   String get planDeleteAction;
+
+  /// No description provided for @planDeleteTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Vymazať plán?'**
   String get planDeleteTitle;
+
+  /// No description provided for @planDeleteMessage.
+  ///
+  /// In sk, this message translates to:
+  /// **'Rozpis čítania bude odstránený. Prečítané kapitoly zostanú zachované.'**
   String get planDeleteMessage;
+
+  /// No description provided for @planCancel.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zrušiť'**
   String get planCancel;
+
+  /// No description provided for @planAhead.
+  ///
+  /// In sk, this message translates to:
+  /// **'V predstihu'**
   String get planAhead;
+
+  /// No description provided for @planBehind.
+  ///
+  /// In sk, this message translates to:
+  /// **'V sklze'**
   String get planBehind;
+
+  /// No description provided for @planOnTrack.
+  ///
+  /// In sk, this message translates to:
+  /// **'Podľa plánu'**
   String get planOnTrack;
+
+  /// No description provided for @planCompletedChapters.
+  ///
+  /// In sk, this message translates to:
+  /// **'Prečítané kapitoly'**
   String get planCompletedChapters;
+
+  /// No description provided for @planExpectedByToday.
+  ///
+  /// In sk, this message translates to:
+  /// **'Očakávané do dnes'**
   String get planExpectedByToday;
+
+  /// No description provided for @planAheadBehind.
+  ///
+  /// In sk, this message translates to:
+  /// **'Predstih/sklz'**
   String get planAheadBehind;
+
+  /// No description provided for @planCompletionPercent.
+  ///
+  /// In sk, this message translates to:
+  /// **'Dokončenie'**
   String get planCompletionPercent;
+
+  String get statsNoPlan;
+
+  String get statsPlanProgressTitle;
+
+  String get statsRemainingPlanChapters;
+
+  String get statsPlanStatus;
+
+  String get statsTestamentsTitle;
+
+  String get statsOldTestamentInPlan;
+
+  String get statsNewTestamentInPlan;
+
+  String get statsDeuterocanonicalInPlan;
+
+  String get statsBooksTitle;
+
+  String get statsCompletedBooksInPlan;
+
+  String get statsRemainingBooksInPlan;
+
+  String get statsFullyCompletedSelectedBooks;
+
+  String get statsNotStartedSelectedBooks;
+
+  String get statsTodaySummary;
 }
 
 class _AppLocalizationsDelegate

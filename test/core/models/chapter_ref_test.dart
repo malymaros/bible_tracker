@@ -37,7 +37,9 @@ void main() {
       });
 
       test('usable in Set', () {
-        final set = {const ChapterRef('gen', 1), const ChapterRef('gen', 1)};
+        final set = <ChapterRef>{};
+        set.add(const ChapterRef('gen', 1));
+        set.add(const ChapterRef('gen', 1));
         expect(set.length, 1);
       });
     });

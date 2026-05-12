@@ -162,4 +162,47 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get planCompletionPercent => 'Dokončenie';
+
+  @override
+  String get statsNoPlan => 'Najprv si vytvorte plán čítania.';
+
+  @override
+  String get statsPlanProgressTitle => 'Pokrok v aktuálnom pláne';
+
+  @override
+  String get statsRemainingPlanChapters => 'Zostávajúce kapitoly v pláne';
+
+  @override
+  String get statsPlanStatus => 'Stav plánu';
+
+  @override
+  String get statsTestamentsTitle => 'Starý a Nový zákon v pláne';
+
+  @override
+  String get statsOldTestamentInPlan => 'Starý zákon v aktuálnom pláne';
+
+  @override
+  String get statsNewTestamentInPlan => 'Nový zákon v aktuálnom pláne';
+
+  @override
+  String get statsDeuterocanonicalInPlan => 'Deuterokánonické knihy v pláne';
+
+  @override
+  String get statsBooksTitle => 'Knihy v aktuálnom pláne';
+
+  @override
+  String get statsCompletedBooksInPlan => 'Dokončené knihy v pláne';
+
+  @override
+  String get statsRemainingBooksInPlan => 'Zostávajúce knihy v pláne';
+
+  @override
+  String get statsFullyCompletedSelectedBooks =>
+      'Úplne dokončené vybrané knihy';
+
+  @override
+  String get statsNotStartedSelectedBooks => 'Nezačaté vybrané knihy';
+
+  @override
+  String get statsTodaySummary => 'Dnešné čítanie v pláne';
 }

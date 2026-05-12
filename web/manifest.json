@@ -1,6 +1,6 @@
 {
-    "name": "bible_tracker",
-    "short_name": "bible_tracker",
+    "name": "Bible Tracker",
+    "short_name": "Bible Tracker",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

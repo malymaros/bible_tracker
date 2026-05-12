@@ -65,27 +65,19 @@ void main() {
     expect(find.text('Otvoriť na webe SSV'), findsOneWidget);
   });
 
-  testWidgets('mark as read and unread toggles read progress', (tester) async {
+  testWidgets('reader has no read controls and does not change progress', (
+    tester,
+  ) async {
     final db = _openTestDb();
     const ref = ChapterRef('gen', 1);
-    await _insertChapter(db, ref, 'Read toggle chapter');
+    await _insertChapter(db, ref, 'Free reading chapter');
 
     await tester.pumpWidget(_testReader(db, ref));
     await tester.pumpAndSettle();
 
-    expect(find.text('Označiť ako prečítané'), findsOneWidget);
-
-    await tester.tap(find.text('Označiť ako prečítané'));
-    await tester.pumpAndSettle();
-
-    expect(await db.progressDao.isRead(ref), isTrue);
-    expect(find.text('Označiť ako neprečítané'), findsOneWidget);
-
-    await tester.tap(find.text('Označiť ako neprečítané'));
-    await tester.pumpAndSettle();
-
     expect(await db.progressDao.isRead(ref), isFalse);
-    expect(find.text('Označiť ako prečítané'), findsOneWidget);
+    expect(find.text('Označiť ako prečítané'), findsNothing);
+    expect(find.text('Označiť ako neprečítané'), findsNothing);
   });
 
   testWidgets('next and previous buttons navigate chapters', (tester) async {

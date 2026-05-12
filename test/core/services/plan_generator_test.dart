@@ -11,19 +11,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 BibleBook _book(String id) => kBibleBooks.firstWhere((b) => b.id == id);
 
-List<ChapterRef> _allChapters(List<dynamic> days) => [
-      for (final d in days) ...(d as dynamic).chapters as List<ChapterRef>,
-    ];
-
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 void main() {
   // Common books used across multiple tests
-  final genesis = _book('gen');   // 50 chapters
-  final exodus = _book('exod');   // 40 chapters
-  final matthew = _book('matt');  // 28 chapters
+  final genesis = _book('gen'); // 50 chapters
+  final exodus = _book('exod'); // 40 chapters
+  final matthew = _book('matt'); // 28 chapters
   final obadiah = _book('obad'); //  1 chapter
 
   const planId = 'test-plan';
@@ -74,15 +70,21 @@ void main() {
 
     test('first 239 days have 4 chapters', () {
       for (var i = 0; i < 239; i++) {
-        expect(days[i].chapters.length, 4,
-            reason: 'Day ${i + 1} should have 4 chapters');
+        expect(
+          days[i].chapters.length,
+          4,
+          reason: 'Day ${i + 1} should have 4 chapters',
+        );
       }
     });
 
     test('remaining 126 days have 3 chapters', () {
       for (var i = 239; i < 365; i++) {
-        expect(days[i].chapters.length, 3,
-            reason: 'Day ${i + 1} should have 3 chapters');
+        expect(
+          days[i].chapters.length,
+          3,
+          reason: 'Day ${i + 1} should have 3 chapters',
+        );
       }
     });
   });
@@ -104,8 +106,11 @@ void main() {
 
     test('no duplicate chapters', () {
       final flat = [for (final d in days) ...d.chapters];
-      expect(flat.toSet().length, flat.length,
-          reason: 'Every chapter must appear exactly once');
+      expect(
+        flat.toSet().length,
+        flat.length,
+        reason: 'Every chapter must appear exactly once',
+      );
     });
 
     test('chapters are in canonical SSV order across all days', () {
@@ -133,8 +138,11 @@ void main() {
 
     test('subsequent days have base chapters', () {
       for (var i = 1; i < 7; i++) {
-        expect(days[i].chapters.length, 7,
-            reason: 'Day ${i + 1} should have 7 chapters');
+        expect(
+          days[i].chapters.length,
+          7,
+          reason: 'Day ${i + 1} should have 7 chapters',
+        );
       }
     });
 
@@ -301,8 +309,11 @@ void main() {
         selectedBooks: [genesis],
       );
       for (var i = 0; i < 5; i++) {
-        expect(days[i].scheduledDate, start.add(Duration(days: i)),
-            reason: 'Day ${i + 1} should be on ${start.add(Duration(days: i))}');
+        expect(
+          days[i].scheduledDate,
+          start.add(Duration(days: i)),
+          reason: 'Day ${i + 1} should be on ${start.add(Duration(days: i))}',
+        );
       }
     });
 
