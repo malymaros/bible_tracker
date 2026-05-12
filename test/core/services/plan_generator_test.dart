@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 BibleBook _book(String id) => kBibleBooks.firstWhere((b) => b.id == id);
 
 List<ChapterRef> _allChapters(List<dynamic> days) => [
-      for (final d in days as List) ...(d as dynamic).chapters as List<ChapterRef>,
+      for (final d in days) ...(d as dynamic).chapters as List<ChapterRef>,
     ];
 
 // ---------------------------------------------------------------------------

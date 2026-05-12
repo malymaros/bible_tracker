@@ -1,0 +1,38 @@
+{
+  "@@locale": "sk",
+
+  "appTitle": "Bible Tracker",
+  "@appTitle": {
+    "description": "Application title shown in the OS task switcher"
+  },
+
+  "tabBiblia": "Biblia",
+  "@tabBiblia": {
+    "description": "Label for the Bible browser tab"
+  },
+
+  "tabPlan": "Plán",
+  "@tabPlan": {
+    "description": "Label for the reading plan tab"
+  },
+
+  "tabStatistika": "Štatistika",
+  "@tabStatistika": {
+    "description": "Label for the statistics tab"
+  },
+
+  "screenBiblia": "Biblia",
+  "@screenBiblia": {
+    "description": "Heading shown on the Bible browser placeholder screen"
+  },
+
+  "screenPlan": "Plán čítania",
+  "@screenPlan": {
+    "description": "Heading shown on the reading plan placeholder screen"
+  },
+
+  "screenStatistika": "Štatistika čítania",
+  "@screenStatistika": {
+    "description": "Heading shown on the statistics placeholder screen"
+  }
+}
