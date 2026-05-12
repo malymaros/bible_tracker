@@ -192,8 +192,11 @@ class _DownloadedChapterView extends StatelessWidget {
         Expanded(
           child: SingleChildScrollView(
             key: const Key('reader-scroll'),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: AppCard(child: _ChapterHtml(htmlContent: row.htmlContent)),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            child: AppCard(
+              padding: const EdgeInsets.all(20),
+              child: _ChapterHtml(htmlContent: row.htmlContent),
+            ),
           ),
         ),
         SafeArea(
@@ -367,12 +370,18 @@ class _ChapterHtml extends StatelessWidget {
   }
 
   Widget? _widgetForNode(BuildContext context, dom.Node node) {
+    final readerBodyStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontSize: 20,
+      height: 1.8,
+      color: AppColors.text,
+    );
+
     if (node is dom.Text) {
       final text = node.text.trim();
       if (text.isEmpty) return null;
       return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Text(text, style: readerBodyStyle),
       );
     }
     if (node is! dom.Element) return null;
@@ -381,17 +390,13 @@ class _ChapterHtml extends StatelessWidget {
       return const SizedBox(height: 8);
     }
 
-    final span = _spanForNode(
-      context,
-      node,
-      Theme.of(context).textTheme.bodyLarge,
-    );
+    final span = _spanForNode(context, node, readerBodyStyle);
     final align = node.attributes['align'] == 'center'
         ? TextAlign.center
         : TextAlign.start;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 14),
       child: RichText(textAlign: align, text: span),
     );
   }
@@ -415,8 +420,8 @@ class _ChapterHtml extends StatelessWidget {
         style = style?.copyWith(fontWeight: FontWeight.w700);
       case 'sup':
         style = style?.copyWith(
-          fontSize: (style.fontSize ?? 16) * 0.72,
-          color: Theme.of(context).colorScheme.primary,
+          fontSize: (style.fontSize ?? 20) * 0.68,
+          color: AppColors.textMuted,
         );
       case 'br':
         return const TextSpan(text: '\n');

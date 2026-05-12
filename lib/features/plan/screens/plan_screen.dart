@@ -1,10 +1,11 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
+import 'package:bible_tracker/core/utils/chapter_count_format.dart';
+import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/plan_day.dart';
 import 'package:bible_tracker/core/models/reading_plan.dart';
 import 'package:bible_tracker/core/services/plan_generator.dart';
-import 'package:bible_tracker/core/services/plan_progress_calculator.dart';
 import 'package:bible_tracker/features/bible/screens/biblia_screen.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/features/statistics/screens/statistika_screen.dart';
@@ -25,7 +26,7 @@ class PlanScreen extends ConsumerWidget {
       loading: () => Scaffold(
         appBar: AppBar(
           leading: const _BooksNavLeading(),
-          leadingWidth: 96,
+          leadingWidth: 48,
           title: const _PlanAppBarTitle(),
           centerTitle: true,
           backgroundColor: _PlanColors.background,
@@ -37,7 +38,7 @@ class PlanScreen extends ConsumerWidget {
       error: (error, _) => Scaffold(
         appBar: AppBar(
           leading: const _BooksNavLeading(),
-          leadingWidth: 96,
+          leadingWidth: 48,
           title: const _PlanAppBarTitle(),
           centerTitle: true,
           backgroundColor: _PlanColors.background,
@@ -96,7 +97,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const _BooksNavLeading(),
-        leadingWidth: 96,
+        leadingWidth: 48,
         title: const _PlanAppBarTitle(),
         centerTitle: true,
         backgroundColor: _PlanColors.background,
@@ -104,50 +105,96 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
       ),
       backgroundColor: _PlanColors.background,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               l10n.planCreateTitle,
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: _PlanColors.textStrong,
+                height: 1.2,
+              ),
             ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              key: const Key('plan-start-date-button'),
-              onPressed: _pickStartDate,
-              icon: const Icon(Icons.calendar_today),
-              label: Text('${l10n.planStartDate}: ${_formatDate(_startDate)}'),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 52,
+              child: OutlinedButton.icon(
+                key: const Key('plan-start-date-button'),
+                onPressed: _pickStartDate,
+                icon: const Icon(Icons.calendar_today, size: 20),
+                label: Text(
+                  '${l10n.planStartDate}: ${_formatDate(_startDate)}',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               key: const Key('plan-total-days-field'),
               controller: _daysController,
               keyboardType: TextInputType.number,
+              style: const TextStyle(
+                fontSize: 18,
+                color: _PlanColors.textStrong,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
                 labelText: l10n.planTotalDays,
+                labelStyle: const TextStyle(fontSize: 17),
                 border: const OutlineInputBorder(),
                 errorText: validation,
+                errorStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            _PreviewLine(
-              label: l10n.planSelectedChapters,
-              value: '$selectedChapters',
+            AppCard(
+              child: Column(
+                children: [
+                  _PreviewLine(
+                    label: l10n.planSelectedBooks,
+                    value: '${selectedBooks.length}',
+                  ),
+                  const SizedBox(height: 6),
+                  _PreviewLine(
+                    label: l10n.planSelectedChapters,
+                    value: formatChapterCount(selectedChapters),
+                  ),
+                  const SizedBox(height: 6),
+                  _PreviewLine(
+                    label: l10n.planDateRange,
+                    value: endDate == null
+                        ? l10n.planDateRangeUnavailable
+                        : '${_formatDate(_startDate)} - ${_formatDate(endDate)}',
+                  ),
+                ],
+              ),
             ),
-            _PreviewLine(
-              label: l10n.planDateRange,
-              value: endDate == null
-                  ? l10n.planDateRangeUnavailable
-                  : '${_formatDate(_startDate)} - ${_formatDate(endDate)}',
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
+              child: Text(
+                l10n.planIncludedBooks,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: _PlanColors.textStrong,
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.planIncludedBooks,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            for (final group in _bookGroups)
+            const TestamentHeader(title: 'Starý zákon'),
+            for (final group in _otBookGroups)
               _BookSelectionGroup(
                 group: group,
                 selectedBookIds: _selectedBookIds,
@@ -161,14 +208,38 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
                   });
                 },
               ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              key: const Key('plan-create-button'),
-              onPressed: validation == null && selectedBooks.isNotEmpty
-                  ? () => _createPlan(selectedBooks, totalDays!)
-                  : null,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.planCreateAction),
+            const TestamentHeader(title: 'Nový zákon'),
+            for (final group in _ntBookGroups)
+              _BookSelectionGroup(
+                group: group,
+                selectedBookIds: _selectedBookIds,
+                onChanged: (bookId, selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedBookIds.add(bookId);
+                    } else {
+                      _selectedBookIds.remove(bookId);
+                    }
+                  });
+                },
+              ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 54,
+              child: FilledButton.icon(
+                key: const Key('plan-create-button'),
+                onPressed: validation == null && selectedBooks.isNotEmpty
+                    ? () => _createPlan(selectedBooks, totalDays!)
+                    : null,
+                icon: const Icon(Icons.add, size: 20),
+                label: Text(
+                  l10n.planCreateAction,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -263,7 +334,7 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
       backgroundColor: _PlanColors.background,
       appBar: AppBar(
         leading: const _BooksNavLeading(),
-        leadingWidth: 96,
+        leadingWidth: 48,
         title: const _PlanAppBarTitle(),
         centerTitle: true,
         backgroundColor: _PlanColors.background,
@@ -294,6 +365,7 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
                 children: [
                   _DayNavigationCard(
                     day: selectedDay,
+                    totalDays: days.length,
                     canGoPrevious: selectedIndex > 0,
                     canGoNext: selectedIndex < days.length - 1,
                     onPrevious: () =>
@@ -311,6 +383,8 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  _BooksInPlanNavCard(plan: widget.plan),
                   const SizedBox(height: 18),
                   _DailyReadingsCard(
                     day: selectedDay,
@@ -371,18 +445,13 @@ class _BooksNavLeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return TextButton.icon(
+    return IconButton(
       key: const Key('plan-books-nav-button'),
       onPressed: () => Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const BibliaScreen()),
       ),
-      icon: const Icon(Icons.menu_book_outlined, size: 18),
-      label: Text(l10n.navBooks),
-      style: TextButton.styleFrom(
-        foregroundColor: _PlanColors.goldDark,
-        padding: const EdgeInsets.only(left: 8),
-      ),
+      icon: const Icon(Icons.menu_book_outlined),
+      color: _PlanColors.goldDark,
     );
   }
 }
@@ -392,7 +461,14 @@ class _PlanAppBarTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Icon(Icons.church_outlined, color: _PlanColors.gold, size: 28);
+    return const Text(
+      'Biblia',
+      style: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: _PlanColors.text,
+      ),
+    );
   }
 }
 
@@ -457,20 +533,70 @@ class _TotalProgressCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              '$completed/$total ${l10n.planChaptersCompletedLower}',
-              key: const Key('plan-total-progress-chapters'),
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: _PlanColors.textMuted),
+            Row(
+              children: [
+                Text(
+                  '$completedBooks / $totalBooks ${l10n.planBooksUnit}',
+                  key: const Key('plan-total-progress-books'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: _PlanColors.text),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Text('·', style: TextStyle(color: _PlanColors.textMuted)),
+                ),
+                Text(
+                  '$completed / $total ${l10n.planChaptersCompletedLower}',
+                  key: const Key('plan-total-progress-chapters'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: _PlanColors.text),
+                ),
+              ],
             ),
-            Text(
-              '$completedBooks / $totalBooks ${l10n.planBooksUnit}',
-              key: const Key('plan-total-progress-books'),
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: _PlanColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BooksInPlanNavCard extends StatelessWidget {
+  final ReadingPlan plan;
+
+  const _BooksInPlanNavCard({required this.plan});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return GestureDetector(
+      key: const Key('plan-books-in-plan-button'),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => BooksInPlanScreen(plan: plan),
+        ),
+      ),
+      child: _PlanCard(
+        child: Row(
+          children: [
+            const CircleAvatar(
+              radius: 18,
+              backgroundColor: _PlanColors.goldSoft,
+              foregroundColor: _PlanColors.goldDark,
+              child: Icon(Icons.library_books_outlined, size: 18),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.planBooksInPlan,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: _PlanColors.text,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: _PlanColors.textMuted),
           ],
         ),
       ),
@@ -480,6 +606,7 @@ class _TotalProgressCard extends StatelessWidget {
 
 class _DayNavigationCard extends StatelessWidget {
   final PlanDay day;
+  final int totalDays;
   final bool canGoPrevious;
   final bool canGoNext;
   final VoidCallback onPrevious;
@@ -487,6 +614,7 @@ class _DayNavigationCard extends StatelessWidget {
 
   const _DayNavigationCard({
     required this.day,
+    required this.totalDays,
     required this.canGoPrevious,
     required this.canGoNext,
     required this.onPrevious,
@@ -508,10 +636,10 @@ class _DayNavigationCard extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  '${l10n.planDay} ${day.dayNumber}',
+                  '${l10n.planDay} ${day.dayNumber} / $totalDays',
                   key: Key('plan-current-day-${day.dayNumber}'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: _PlanColors.text,
+                    color: _PlanColors.textStrong,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -519,7 +647,8 @@ class _DayNavigationCard extends StatelessWidget {
                 Text(
                   _formatDate(day.scheduledDate),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _PlanColors.textMuted,
+                    color: _PlanColors.text,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -562,7 +691,7 @@ class _DailyReadingsCard extends StatelessWidget {
             Text(
               _bookChapterRangeLabel(group.book, group.chapters),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: _PlanColors.goldDark,
+                color: _PlanColors.text,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -592,50 +721,31 @@ class BooksInPlanScreen extends ConsumerWidget {
         ref.watch(planDaysProvider(plan.id)).value ?? const <PlanDay>[];
     final readChapters =
         ref.watch(readChaptersProvider).value ?? const <ChapterRef>{};
-    final progress = PlanProgressCalculator.calculate(
-      plan: plan,
-      days: days,
-      readChapters: readChapters,
-      today: ref.watch(todayProvider),
-    );
     final bookProgress = _bookProgressForPlan(plan, days, readChapters);
+
+    final otBooks = bookProgress
+        .where((bp) => bp.book.testament == Testament.oldTestament)
+        .toList();
+    final ntBooks = bookProgress
+        .where((bp) => bp.book.testament == Testament.newTestament)
+        .toList();
 
     return Scaffold(
       backgroundColor: _PlanColors.background,
-      appBar: AppBar(
-        title: Text(l10n.planBooksInPlan),
-        backgroundColor: _PlanColors.background,
-        surfaceTintColor: _PlanColors.background,
-      ),
+      appBar: AppBar(title: Text(l10n.planBooksInPlan)),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
-          _PlanCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  l10n.planCurrentPlan,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _PlanColors.text,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${progress.completedPlanChapters}/${progress.totalPlanChapters} '
-                  '${l10n.planChaptersCompletedLower}',
-                  key: const Key('plan-books-summary'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _PlanColors.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          for (final progress in bookProgress)
-            _PlanBookProgressTile(progress: progress),
+          if (otBooks.isNotEmpty) ...[
+            const TestamentHeader(title: 'Starý zákon'),
+            for (final progress in otBooks)
+              _PlanBookProgressTile(progress: progress),
+          ],
+          if (ntBooks.isNotEmpty) ...[
+            const TestamentHeader(title: 'Nový zákon'),
+            for (final progress in ntBooks)
+              _PlanBookProgressTile(progress: progress),
+          ],
         ],
       ),
     );
@@ -665,11 +775,7 @@ class _PlanBookProgressTile extends ConsumerWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.fromLTRB(14, 8, 10, 8),
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-          leading: CircleAvatar(
-            backgroundColor: _PlanColors.goldSoft,
-            foregroundColor: _PlanColors.goldDark,
-            child: const Icon(Icons.menu_book_outlined, size: 20),
-          ),
+          leading: BookIconBadge(abbreviation: progress.book.shortName, size: 40),
           title: Text(
             progress.book.name,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -765,31 +871,55 @@ class _PlanChapterCheckboxTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
     final book = _bookById(chapter.bookId);
     final label = '${book.name} ${chapter.chapterNumber}';
 
-    return CheckboxListTile(
-      key: Key('plan-chapter-${chapter.bookId}-${chapter.chapterNumber}'),
-      value: isRead,
-      activeColor: _PlanColors.goldDark,
-      checkboxShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4),
-      ),
-      controlAffinity: ListTileControlAffinity.leading,
-      contentPadding: EdgeInsets.zero,
-      title: Text(label),
-      subtitle: Text(
-        isRead ? l10n.planChapterCompleted : l10n.planChapterIncomplete,
-      ),
-      onChanged: (_) => _toggle(ref),
-      secondary: IconButton(
-        key: Key(
-          'plan-open-chapter-${chapter.bookId}-${chapter.chapterNumber}',
-        ),
-        tooltip: label,
-        icon: Icon(Icons.chevron_right, color: _PlanColors.textMuted),
-        onPressed: () => _openReader(context),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: Checkbox(
+              key: Key('plan-chapter-${chapter.bookId}-${chapter.chapterNumber}'),
+              value: isRead,
+              activeColor: _PlanColors.goldDark,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              onChanged: (_) => _toggle(ref),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _toggle(ref),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
+                  color: isRead ? _PlanColors.textMuted : _PlanColors.textStrong,
+                  decoration: isRead ? TextDecoration.lineThrough : null,
+                  decorationColor: _PlanColors.textMuted,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            key: Key(
+              'plan-open-chapter-${chapter.bookId}-${chapter.chapterNumber}',
+            ),
+            tooltip: label,
+            icon: const Icon(Icons.menu_book_outlined, size: 20),
+            color: _PlanColors.goldDark,
+            onPressed: () => _openReader(context),
+          ),
+        ],
       ),
     );
   }
@@ -879,20 +1009,44 @@ class _BookSelectionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExpansionTile(
-      key: Key('plan-book-group-${group.category.name}'),
-      initiallyExpanded: group.category == CatholicCategory.pentateuch,
-      title: Text(group.title),
-      children: [
-        for (final book in group.books)
-          CheckboxListTile(
-            key: Key('plan-book-${book.id}'),
-            value: selectedBookIds.contains(book.id),
-            onChanged: (selected) => onChanged(book.id, selected ?? false),
-            title: Text(book.name),
-            subtitle: Text('${book.chapterCount}'),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Card(
+        elevation: 0,
+        color: _PlanColors.card,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: _PlanColors.cardBorder),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            key: Key('plan-book-group-${group.category.name}'),
+            initiallyExpanded: false,
+            tilePadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 6),
+            title: Text(
+              group.title,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: _PlanColors.text,
+              ),
+            ),
+            children: [
+              const Divider(height: 1, thickness: 1, color: _PlanColors.cardBorder),
+              for (final book in group.books)
+                _BookCheckboxRow(
+                  key: Key('plan-book-${book.id}'),
+                  book: book,
+                  selected: selectedBookIds.contains(book.id),
+                  onChanged: (v) => onChanged(book.id, v),
+                ),
+            ],
           ),
-      ],
+        ),
+      ),
     );
   }
 }
@@ -905,13 +1059,89 @@ class _PreviewLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Expanded(child: Text(label)),
-          Text(value, key: Key('plan-preview-$label')),
-        ],
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: _PlanColors.text,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          key: Key('plan-preview-$label'),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: _PlanColors.textStrong,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BookCheckboxRow extends StatelessWidget {
+  final BibleBook book;
+  final bool selected;
+  final ValueChanged<bool> onChanged;
+
+  const _BookCheckboxRow({
+    super.key,
+    required this.book,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => onChanged(!selected),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            BookIconBadge(abbreviation: book.shortName, size: 36),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    book.name,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? _PlanColors.textStrong
+                          : _PlanColors.textMuted,
+                    ),
+                  ),
+                  Text(
+                    '+${formatChapterCount(book.chapterCount)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: _PlanColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Checkbox(
+              value: selected,
+              onChanged: (v) => onChanged(v ?? false),
+              activeColor: _PlanColors.goldDark,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5),
+              ),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -949,11 +1179,14 @@ class _BookGroup {
       kBibleBooks.where((book) => book.category == category).toList();
 }
 
-const _bookGroups = [
+const _otBookGroups = [
   _BookGroup(CatholicCategory.pentateuch, 'Pentateuch'),
   _BookGroup(CatholicCategory.historicalBooks, 'Historické knihy'),
   _BookGroup(CatholicCategory.wisdomBooks, 'Múdroslovné knihy'),
   _BookGroup(CatholicCategory.propheticBooks, 'Prorocké knihy'),
+];
+
+const _ntBookGroups = [
   _BookGroup(CatholicCategory.gospels, 'Evanjeliá'),
   _BookGroup(CatholicCategory.acts, 'Skutky apoštolov'),
   _BookGroup(CatholicCategory.paulineLetters, 'Pavlove listy'),
@@ -1052,5 +1285,6 @@ class _PlanColors {
   static const goldDark = Color(0xFF9B6A10);
   static const goldSoft = Color(0xFFF7E8C3);
   static const text = Color(0xFF2B2418);
-  static const textMuted = Color(0xFF786E5F);
+  static const textStrong = Color(0xFF1A110A);
+  static const textMuted = Color(0xFF5A5047);
 }

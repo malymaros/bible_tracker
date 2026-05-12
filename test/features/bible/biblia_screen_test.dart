@@ -148,10 +148,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // Tap book-row-gen → navigates to _BookDownloadScreen
     await tester.tap(find.byKey(const Key('book-row-gen')));
     await tester.pumpAndSettle();
+    // Tap download button on the download screen
     await tester.tap(find.text('Stiahnuť knihu'));
-    await tester.pumpAndSettle();
+    // pumpAndSettle would time out due to the infinite CircularProgressIndicator
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('sťahuje sa'), findsOneWidget);
   });
@@ -175,15 +179,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // Tap book-row-gen → navigates to _BookDownloadScreen
     await tester.tap(find.byKey(const Key('book-row-gen')));
     await tester.pumpAndSettle();
+    // Tap download button on the download screen
     await tester.tap(find.text('Stiahnuť knihu'));
     await tester.pumpAndSettle();
 
     expect(find.text('chyba'), findsOneWidget);
   });
 
-  testWidgets('tapping a downloaded book opens chapter picker', (tester) async {
+  testWidgets('tapping a downloaded book opens chapter list screen', (
+    tester,
+  ) async {
     final db = _openTestDb();
 
     await tester.pumpWidget(
@@ -201,8 +209,46 @@ void main() {
     await tester.tap(find.byKey(const Key('book-row-phlm')));
     await tester.pumpAndSettle();
 
+    // Chapter list screen shows book name, chapter button, and delete button
     expect(find.text('List Filemonovi'), findsWidgets);
     expect(find.text('1'), findsWidgets);
     expect(find.text('Vymazať stiahnutý text'), findsOneWidget);
+    // No bottom sheet
+    expect(find.byType(BottomSheet), findsNothing);
+  });
+
+  testWidgets('tapping not downloaded book opens download screen', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+
+    await tester.pumpWidget(_testScreen(db));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('book-row-gen')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stiahnuť knihu'), findsOneWidget);
+    expect(find.text('Otvoriť na webe SSV'), findsOneWidget);
+    // No bottom sheet
+    expect(find.byType(BottomSheet), findsNothing);
+  });
+
+  testWidgets('Starý zákon and Nový zákon headers are visible', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+
+    await tester.pumpWidget(_testScreen(db));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Starý zákon'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Nový zákon'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Nový zákon'), findsOneWidget);
   });
 }

@@ -324,7 +324,7 @@ class _MetricLine extends StatelessWidget {
               key: Key(valueKey ?? 'stats-$label'),
               textAlign: TextAlign.end,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.goldDark,
+                color: AppColors.text,
                 fontWeight: FontWeight.w800,
               ),
             ),

@@ -90,6 +90,9 @@ class AppLocalizationsSk extends AppLocalizations {
   String get planSelectedChapters => 'Vybrané kapitoly';
 
   @override
+  String get planSelectedBooks => 'Vybrané knihy';
+
+  @override
   String get planDateRange => 'Rozsah dátumov';
 
   @override
@@ -173,10 +176,10 @@ class AppLocalizationsSk extends AppLocalizations {
   String get planTotalProgressTitle => 'Pokrok plánu';
 
   @override
-  String get planBooksUnit => 'kníh';
+  String get planBooksUnit => 'knihy';
 
   @override
-  String get planChaptersCompletedLower => 'kapitol prečítaných';
+  String get planChaptersCompletedLower => 'kapitoly';
 
   @override
   String get planBooksInPlan => 'Knihy v pláne';

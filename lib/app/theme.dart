@@ -70,10 +70,38 @@ ThemeData lightTheme() {
         ),
       ),
     ),
-    textTheme: Typography.blackMountainView.apply(
-      bodyColor: AppColors.text,
-      displayColor: AppColors.text,
-    ),
+    textTheme: Typography.blackMountainView
+        .apply(bodyColor: AppColors.text, displayColor: AppColors.text)
+        .copyWith(
+          bodyLarge: const TextStyle(
+            fontSize: 16,
+            color: AppColors.text,
+            height: 1.6,
+          ),
+          bodyMedium: const TextStyle(
+            fontSize: 15,
+            color: AppColors.text,
+            height: 1.5,
+          ),
+          titleMedium: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.text,
+            height: 1.4,
+          ),
+          titleLarge: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppColors.text,
+            height: 1.3,
+          ),
+          headlineSmall: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: AppColors.text,
+            height: 1.2,
+          ),
+        ),
   );
 }
 

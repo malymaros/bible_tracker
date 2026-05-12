@@ -9,7 +9,7 @@ abstract final class AppColors {
   static const goldDark = Color(0xFF9B6A10);
   static const goldSoft = Color(0xFFF7E8C3);
   static const text = Color(0xFF2B2418);
-  static const textMuted = Color(0xFF786E5F);
+  static const textMuted = Color(0xFF5A5047);
   static const error = Color(0xFFB3261E);
 }
 
@@ -180,9 +180,10 @@ class StatusBadge extends StatelessWidget {
             ],
             Text(
               label,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: effectiveColor,
+              style: TextStyle(
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
+                color: effectiveColor,
               ),
             ),
           ],
@@ -242,37 +243,50 @@ class BookIconBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textBox = size - 8;
     return SizedBox.square(
       dimension: size,
       child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: AppColors.goldSoft,
+        decoration: BoxDecoration(
+          color: AppColors.goldDark.withValues(alpha: 0.15),
           shape: BoxShape.circle,
         ),
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.symmetric(horizontal: 5),
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: textBox,
-                child: Text(
-                  abbreviation,
-                  maxLines: 2,
-                  softWrap: true,
-                  overflow: TextOverflow.visible,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppColors.goldDark,
-                    fontWeight: FontWeight.w800,
-                    height: 0.95,
-                  ),
+              child: Text(
+                abbreviation,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: AppColors.goldDark,
+                  fontWeight: FontWeight.w800,
+                  height: 1.0,
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class TestamentHeader extends StatelessWidget {
+  final String title;
+
+  const TestamentHeader({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 20, 4, 4),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: AppColors.text,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );

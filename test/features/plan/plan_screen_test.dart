@@ -7,6 +7,7 @@ import 'package:bible_tracker/core/models/reading_plan.dart';
 import 'package:bible_tracker/db/app_database.dart';
 import 'package:bible_tracker/features/plan/screens/plan_screen.dart';
 import 'package:bible_tracker/features/statistics/screens/statistika_screen.dart';
+import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
@@ -107,19 +108,23 @@ void main() {
 
   testWidgets('all books selected by default', (tester) async {
     final db = _openTestDb();
-    final totalChapters = kBibleBooks.fold<int>(
-      0,
-      (sum, book) => sum + book.chapterCount,
-    );
+    final totalBooks = kBibleBooks.length;
 
     await tester.pumpWidget(_testWidget(const CreatePlanScreen(), db));
     await tester.pumpAndSettle();
 
-    final firstVisibleCheckbox = tester.widget<CheckboxListTile>(
-      find.byKey(const Key('plan-book-gen')),
+    // Expand Pentateuch to make Genesis visible
+    await tester.tap(find.byKey(const Key('plan-book-group-pentateuch')));
+    await tester.pumpAndSettle();
+
+    final checkbox = tester.widget<Checkbox>(
+      find.descendant(
+        of: find.byKey(const Key('plan-book-gen')),
+        matching: find.byType(Checkbox),
+      ),
     );
-    expect(firstVisibleCheckbox.value, isTrue);
-    expect(find.text('$totalChapters'), findsOneWidget);
+    expect(checkbox.value, isTrue);
+    expect(find.text('$totalBooks'), findsOneWidget);
   });
 
   testWidgets('validation for invalid day count', (tester) async {
@@ -257,7 +262,7 @@ void main() {
       tester
           .widget<Text>(find.byKey(const Key('plan-total-progress-chapters')))
           .data,
-      startsWith('1/7'),
+      startsWith('1 / 7'),
     );
   });
 
@@ -283,7 +288,7 @@ void main() {
         .data!;
     // 0 completed, 2 selected books
     expect(booksText, startsWith('0 / 2'));
-    expect(booksText, contains('kníh'));
+    expect(booksText, contains('knihy'));
   });
 
   testWidgets('progress updates when checkbox changes', (tester) async {
@@ -308,7 +313,7 @@ void main() {
       tester
           .widget<Text>(find.byKey(const Key('plan-total-progress-chapters')))
           .data,
-      startsWith('0/7'),
+      startsWith('0 / 7'),
     );
 
     await tester.tap(find.byKey(const Key('plan-chapter-gen-1')));
@@ -321,7 +326,7 @@ void main() {
       tester
           .widget<Text>(find.byKey(const Key('plan-total-progress-chapters')))
           .data,
-      startsWith('1/7'),
+      startsWith('1 / 7'),
     );
   });
 
@@ -472,6 +477,114 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 250));
       expect(await db.planDao.watchActivePlan().first, isNull);
     });
+  });
+
+  testWidgets('app bar center shows Biblia text', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Biblia'), findsOneWidget);
+  });
+
+  testWidgets('books nav button has no visible text label', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Knihy'), findsNothing);
+    expect(find.byKey(const Key('plan-books-nav-button')), findsOneWidget);
+  });
+
+  testWidgets('day header shows N / X format', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Plan has 3 days; today is day 1 — header should show 'Deň 1 / 3'
+    expect(find.text('Deň 1 / 3'), findsOneWidget);
+  });
+
+  testWidgets('BooksInPlanScreen does not show summary card', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        BooksInPlanScreen(plan: plan),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aktuálny plán'), findsNothing);
+    expect(find.byKey(const Key('plan-books-summary')), findsNothing);
+  });
+
+  testWidgets('BooksInPlanScreen shows testament header', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan(); // gen and ps are both Old Testament
+
+    await tester.pumpWidget(
+      _testWidget(
+        BooksInPlanScreen(plan: plan),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Starý zákon'), findsOneWidget);
+  });
+
+  testWidgets('BooksInPlanScreen uses BookIconBadge not menu_book icon', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        BooksInPlanScreen(plan: plan),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // BookIconBadge shows the book abbreviation text, not a CircleAvatar icon
+    expect(find.byType(BookIconBadge), findsWidgets);
   });
 
   testWidgets('plan deletion keeps read progress', (tester) async {

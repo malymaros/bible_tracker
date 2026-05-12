@@ -256,6 +256,12 @@ abstract class AppLocalizations {
   /// **'Vybrané kapitoly'**
   String get planSelectedChapters;
 
+  /// No description provided for @planSelectedBooks.
+  ///
+  /// In sk, this message translates to:
+  /// **'Vybrané knihy'**
+  String get planSelectedBooks;
+
   /// No description provided for @planDateRange.
   ///
   /// In sk, this message translates to:
@@ -421,13 +427,13 @@ abstract class AppLocalizations {
   /// No description provided for @planBooksUnit.
   ///
   /// In sk, this message translates to:
-  /// **'kníh'**
+  /// **'knihy'**
   String get planBooksUnit;
 
   /// No description provided for @planChaptersCompletedLower.
   ///
   /// In sk, this message translates to:
-  /// **'kapitol prečítaných'**
+  /// **'kapitoly'**
   String get planChaptersCompletedLower;
 
   /// No description provided for @planBooksInPlan.

@@ -1,6 +1,7 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/book_download_progress.dart';
+import 'package:bible_tracker/core/services/ssv_scraper.dart';
 import 'package:bible_tracker/shared/providers/dao_providers.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
@@ -8,6 +9,7 @@ import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BibliaScreen extends ConsumerStatefulWidget {
   const BibliaScreen({super.key});
@@ -17,22 +19,10 @@ class BibliaScreen extends ConsumerStatefulWidget {
 }
 
 class _BibliaScreenState extends ConsumerState<BibliaScreen> {
-  String? _activeDownloadBookId;
-  final Map<String, BookDownloadProgress> _downloadProgressByBook = {};
-  final Set<String> _failedBookIds = {};
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final counts = ref.watch(downloadedChapterCountsProvider).value ?? {};
-    final activeBookId = _activeDownloadBookId;
-
-    if (activeBookId != null) {
-      ref.listen<AsyncValue<BookDownloadProgress>>(
-        downloadBookProvider(activeBookId),
-        (_, next) => next.whenData(_handleDownloadProgress),
-      );
-    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -41,14 +31,19 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: Column(
           children: [
-            for (final group in _bookGroups)
+            const TestamentHeader(title: 'Starý zákon'),
+            for (final group in _otBookGroups)
               _BookGroupSection(
                 group: group,
                 counts: counts,
-                activeBookId: activeBookId,
-                progressByBook: _downloadProgressByBook,
-                failedBookIds: _failedBookIds,
-                onTapBook: _showBookActions,
+                onTapBook: _openBook,
+              ),
+            const TestamentHeader(title: 'Nový zákon'),
+            for (final group in _ntBookGroups)
+              _BookGroupSection(
+                group: group,
+                counts: counts,
+                onTapBook: _openBook,
               ),
           ],
         ),
@@ -56,208 +51,279 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
     );
   }
 
-  void _handleDownloadProgress(BookDownloadProgress progress) {
-    if (!mounted) return;
-    setState(() {
-      _downloadProgressByBook[progress.bookId] = progress;
-      if (progress.status == BookDownloadStatus.failed) {
-        _failedBookIds.add(progress.bookId);
-        _activeDownloadBookId = null;
-      } else {
-        _failedBookIds.remove(progress.bookId);
-      }
-
-      if (progress.status == BookDownloadStatus.completed &&
-          _activeDownloadBookId == progress.bookId) {
-        _activeDownloadBookId = null;
-      }
-    });
-  }
-
-  void _showBookActions(BibleBook book, _BookDownloadState state) {
+  void _openBook(BibleBook book, _BookDownloadState state) {
     if (state == _BookDownloadState.downloaded) {
-      _showChapterPicker(book);
-      return;
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => _BookChaptersScreen(book: book),
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => _BookDownloadScreen(book: book, initialState: state),
+        ),
+      );
     }
-    _showDownloadSheet(book, state);
   }
+}
 
-  void _showDownloadSheet(BibleBook book, _BookDownloadState state) {
+class _BookChaptersScreen extends ConsumerWidget {
+  final BibleBook book;
+
+  const _BookChaptersScreen({required this.book});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final isAnotherBookDownloading =
-        _activeDownloadBookId != null && _activeDownloadBookId != book.id;
 
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
+    return Scaffold(
       backgroundColor: AppColors.background,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-          child: AppCard(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    BookIconBadge(abbreviation: book.shortName),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        book.name,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+      appBar: AppBar(title: Text(book.name)),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 6,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+              ),
+              itemCount: book.chapterCount,
+              itemBuilder: (_, index) {
+                final chapter = index + 1;
+                return OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ReaderScreen(
+                        bookId: book.id,
+                        chapterNumber: chapter,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: StatusBadge(
-                    label: _statusLabel(l10n, state),
-                    icon: _statusIcon(state),
-                    color: _statusColor(state),
                   ),
-                ),
-                const SizedBox(height: 16),
-                AppPrimaryButton(
-                  onPressed: isAnotherBookDownloading
-                      ? null
-                      : () {
-                          Navigator.of(context).pop();
-                          setState(() {
-                            _failedBookIds.remove(book.id);
-                            _activeDownloadBookId = book.id;
-                          });
-                        },
-                  icon: const Icon(Icons.download),
-                  label: Text(l10n.bibleDownloadBook),
-                ),
-                if (state == _BookDownloadState.partial ||
-                    state == _BookDownloadState.error) ...[
-                  const SizedBox(height: 8),
-                  AppOutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      _deleteBookText(book);
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                    label: Text(l10n.bibleDeleteDownloadedText),
+                  child: Text(
+                    '$chapter',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ],
-              ],
+                );
+              },
             ),
           ),
-        ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: AppOutlinedButton(
+                key: const Key('chapters-screen-delete-button'),
+                onPressed: () async {
+                  await ref
+                      .read(chapterTextDaoProvider)
+                      .deleteBookChapters(book.id);
+                  if (context.mounted) {
+                    ref.invalidate(downloadedChapterCountsProvider);
+                    Navigator.of(context).pop();
+                  }
+                },
+                icon: const Icon(Icons.delete_outline),
+                label: Text(
+                  l10n.bibleDeleteDownloadedText,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  void _showChapterPicker(BibleBook book) {
+class _BookDownloadScreen extends ConsumerStatefulWidget {
+  final BibleBook book;
+  final _BookDownloadState initialState;
+
+  const _BookDownloadScreen({
+    required this.book,
+    required this.initialState,
+  });
+
+  @override
+  ConsumerState<_BookDownloadScreen> createState() => _BookDownloadScreenState();
+}
+
+class _BookDownloadScreenState extends ConsumerState<_BookDownloadScreen> {
+  late _BookDownloadState _state;
+  bool _isDownloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _state = widget.initialState;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final stateContext = context;
-    showModalBottomSheet<void>(
-      context: stateContext,
-      showDragHandle: true,
+
+    if (_isDownloading) {
+      ref.listen<AsyncValue<BookDownloadProgress>>(
+        downloadBookProvider(widget.book.id),
+        (_, next) {
+          next.whenData((progress) {
+            if (!mounted) return;
+            setState(() {
+              if (progress.status == BookDownloadStatus.completed) {
+                _state = _BookDownloadState.downloaded;
+                _isDownloading = false;
+                ref.invalidate(downloadedChapterCountsProvider);
+              } else if (progress.status == BookDownloadStatus.failed) {
+                _state = _BookDownloadState.error;
+                _isDownloading = false;
+              } else {
+                _state = _BookDownloadState.downloading;
+              }
+            });
+          });
+        },
+      );
+    }
+
+    return Scaffold(
       backgroundColor: AppColors.background,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-          child: AppCard(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    BookIconBadge(abbreviation: book.shortName),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        book.name,
-                        style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: l10n.bibleDeleteDownloadedText,
-                      color: AppColors.textMuted,
-                      onPressed: () {
-                        Navigator.of(sheetContext).pop();
-                        _deleteBookText(book);
-                      },
-                      icon: const Icon(Icons.delete_outline),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 320),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 6,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                        ),
-                    itemCount: book.chapterCount,
-                    itemBuilder: (_, index) {
-                      final chapter = index + 1;
-                      return OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+      appBar: AppBar(title: Text(widget.book.name)),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      BookIconBadge(abbreviation: widget.book.shortName),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          widget.book.name,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.of(sheetContext).pop();
-                          Navigator.of(stateContext).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => ReaderScreen(
-                                bookId: book.id,
-                                chapterNumber: chapter,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Text('$chapter'),
-                      );
-                    },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  StatusBadge(
+                    label: _statusLabel(l10n, _state),
+                    icon: _statusIcon(_state),
+                    color: _statusColor(_state),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_state == _BookDownloadState.downloaded)
+              AppPrimaryButton(
+                onPressed: () => Navigator.of(context).pushReplacement(
+                  MaterialPageRoute<void>(
+                    builder: (_) => _BookChaptersScreen(book: widget.book),
                   ),
                 ),
-                const SizedBox(height: 12),
+                icon: const Icon(Icons.menu_book_outlined),
+                label: const Text(
+                  'Čítať',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                ),
+              )
+            else ...[
+              AppPrimaryButton(
+                onPressed: _isDownloading ? null : _startDownload,
+                icon: _isDownloading
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.download),
+                label: Text(
+                  l10n.bibleDownloadBook,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              AppOutlinedButton(
+                onPressed: _openOnline,
+                icon: const Icon(Icons.open_in_browser),
+                label: Text(
+                  l10n.readerOpenSsv,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (_state == _BookDownloadState.partial ||
+                  _state == _BookDownloadState.error) ...[
+                const SizedBox(height: 8),
                 AppOutlinedButton(
-                  onPressed: () {
-                    Navigator.of(sheetContext).pop();
-                    _deleteBookText(book);
-                  },
+                  onPressed: _deleteText,
                   icon: const Icon(Icons.delete_outline),
-                  label: Text(l10n.bibleDeleteDownloadedText),
+                  label: Text(
+                    l10n.bibleDeleteDownloadedText,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
-            ),
-          ),
+            ],
+          ],
         ),
       ),
     );
   }
 
-  Future<void> _deleteBookText(BibleBook book) async {
-    await ref.read(chapterTextDaoProvider).deleteBookChapters(book.id);
-    if (!mounted) return;
+  void _startDownload() {
+    ref.invalidate(downloadBookProvider(widget.book.id));
     setState(() {
-      _downloadProgressByBook.remove(book.id);
-      _failedBookIds.remove(book.id);
-      if (_activeDownloadBookId == book.id) {
-        _activeDownloadBookId = null;
-      }
+      _isDownloading = true;
+      _state = _BookDownloadState.downloading;
     });
+  }
+
+  void _openOnline() {
+    final url = SsvScraper.buildSsvUrl(widget.book, 1);
+    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _deleteText() async {
+    await ref
+        .read(chapterTextDaoProvider)
+        .deleteBookChapters(widget.book.id);
+    if (!mounted) return;
+    setState(() => _state = _BookDownloadState.notDownloaded);
+    ref.invalidate(downloadedChapterCountsProvider);
   }
 }
 
@@ -271,11 +337,14 @@ class _BookGroup {
       kBibleBooks.where((book) => book.category == category).toList();
 }
 
-const _bookGroups = [
+const _otBookGroups = [
   _BookGroup(CatholicCategory.pentateuch, 'Pentateuch'),
   _BookGroup(CatholicCategory.historicalBooks, 'Historické knihy'),
   _BookGroup(CatholicCategory.wisdomBooks, 'Múdroslovné knihy'),
   _BookGroup(CatholicCategory.propheticBooks, 'Prorocké knihy'),
+];
+
+const _ntBookGroups = [
   _BookGroup(CatholicCategory.gospels, 'Evanjeliá'),
   _BookGroup(CatholicCategory.acts, 'Skutky apoštolov'),
   _BookGroup(CatholicCategory.paulineLetters, 'Pavlove listy'),
@@ -286,17 +355,11 @@ const _bookGroups = [
 class _BookGroupSection extends StatelessWidget {
   final _BookGroup group;
   final Map<String, int> counts;
-  final String? activeBookId;
-  final Map<String, BookDownloadProgress> progressByBook;
-  final Set<String> failedBookIds;
   final void Function(BibleBook book, _BookDownloadState state) onTapBook;
 
   const _BookGroupSection({
     required this.group,
     required this.counts,
-    required this.activeBookId,
-    required this.progressByBook,
-    required this.failedBookIds,
     required this.onTapBook,
   });
 
@@ -327,24 +390,9 @@ class _BookGroupSection extends StatelessWidget {
   }
 
   _BookDownloadState _stateForBook(BibleBook book) {
-    final progress = progressByBook[book.id];
-    if (activeBookId == book.id &&
-        progress?.status != BookDownloadStatus.failed &&
-        progress?.status != BookDownloadStatus.completed) {
-      return _BookDownloadState.downloading;
-    }
-    if (failedBookIds.contains(book.id) ||
-        progress?.status == BookDownloadStatus.failed) {
-      return _BookDownloadState.error;
-    }
-
     final downloaded = counts[book.id] ?? 0;
-    if (downloaded >= book.chapterCount) {
-      return _BookDownloadState.downloaded;
-    }
-    if (downloaded > 0) {
-      return _BookDownloadState.partial;
-    }
+    if (downloaded >= book.chapterCount) return _BookDownloadState.downloaded;
+    if (downloaded > 0) return _BookDownloadState.partial;
     return _BookDownloadState.notDownloaded;
   }
 }
@@ -377,13 +425,15 @@ class _BookRow extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: ListTile(
         key: Key('book-row-${book.id}'),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         leading: BookIconBadge(abbreviation: book.shortName),
         title: Text(
           book.name,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.text,
+          ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 5),
