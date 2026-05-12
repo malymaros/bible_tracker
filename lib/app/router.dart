@@ -1,4 +1,5 @@
 import 'package:bible_tracker/features/bible/screens/biblia_screen.dart';
+import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/features/plan/screens/plan_screen.dart';
 import 'package:bible_tracker/features/statistics/screens/statistika_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
@@ -21,16 +22,22 @@ final appRouter = GoRouter(
             GoRoute(
               path: '/biblia',
               builder: (_, _) => const BibliaScreen(),
+              routes: [
+                GoRoute(
+                  path: 'reader/:bookId/:chapter',
+                  builder: (_, state) => ReaderScreen(
+                    bookId: state.pathParameters['bookId']!,
+                    chapterNumber: int.parse(state.pathParameters['chapter']!),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
         StatefulShellBranch(
           navigatorKey: _planKey,
           routes: [
-            GoRoute(
-              path: '/plan',
-              builder: (_, _) => const PlanScreen(),
-            ),
+            GoRoute(path: '/plan', builder: (_, _) => const PlanScreen()),
           ],
         ),
         StatefulShellBranch(

@@ -31,8 +31,10 @@ class SsvScraper {
 
   SsvScraper(this._client);
 
-  String buildUrl(BibleBook book, int chapter) =>
+  static String buildSsvUrl(BibleBook book, int chapter) =>
       '${SsvConstants.baseUrl}/${book.ssvSlug}/kapitola/$chapter.xhtml';
+
+  String buildUrl(BibleBook book, int chapter) => buildSsvUrl(book, chapter);
 
   Future<ChapterText> fetchChapter(BibleBook book, int chapter) async {
     final url = buildUrl(book, chapter);

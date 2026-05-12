@@ -135,6 +135,96 @@ abstract class AppLocalizations {
   /// In sk, this message translates to:
   /// **'Štatistika čítania'**
   String get screenStatistika;
+
+  /// Book text has not been downloaded
+  ///
+  /// In sk, this message translates to:
+  /// **'nestiahnuté'**
+  String get bibleStatusNotDownloaded;
+
+  /// Only some chapters of a book are downloaded
+  ///
+  /// In sk, this message translates to:
+  /// **'čiastočne stiahnuté'**
+  String get bibleStatusPartial;
+
+  /// A book is currently downloading
+  ///
+  /// In sk, this message translates to:
+  /// **'sťahuje sa'**
+  String get bibleStatusDownloading;
+
+  /// All chapters of a book are downloaded
+  ///
+  /// In sk, this message translates to:
+  /// **'stiahnuté'**
+  String get bibleStatusDownloaded;
+
+  /// Book download failed
+  ///
+  /// In sk, this message translates to:
+  /// **'chyba'**
+  String get bibleStatusError;
+
+  /// Action to download all chapters of a book
+  ///
+  /// In sk, this message translates to:
+  /// **'Stiahnuť knihu'**
+  String get bibleDownloadBook;
+
+  /// Action to delete cached book text
+  ///
+  /// In sk, this message translates to:
+  /// **'Vymazať stiahnutý text'**
+  String get bibleDeleteDownloadedText;
+
+  /// Offline reader state when chapter text is missing
+  ///
+  /// In sk, this message translates to:
+  /// **'Kapitola nie je stiahnutá'**
+  String get readerChapterNotDownloaded;
+
+  /// Offline reader state when local chapter loading fails
+  ///
+  /// In sk, this message translates to:
+  /// **'Kapitolu sa nepodarilo načítať'**
+  String get readerChapterLoadError;
+
+  /// Reader previous chapter button label
+  ///
+  /// In sk, this message translates to:
+  /// **'Predchádzajúca'**
+  String get readerPreviousChapter;
+
+  /// Reader next chapter button label
+  ///
+  /// In sk, this message translates to:
+  /// **'Ďalšia'**
+  String get readerNextChapter;
+
+  /// Reader action to mark the current chapter as read
+  ///
+  /// In sk, this message translates to:
+  /// **'Označiť ako prečítané'**
+  String get readerMarkRead;
+
+  /// Reader action to mark the current chapter as unread
+  ///
+  /// In sk, this message translates to:
+  /// **'Označiť ako neprečítané'**
+  String get readerMarkUnread;
+
+  /// Reader action to open the chapter on the SSV website
+  ///
+  /// In sk, this message translates to:
+  /// **'Otvoriť na webe SSV'**
+  String get readerOpenSsv;
+
+  /// Generic close button
+  ///
+  /// In sk, this message translates to:
+  /// **'Zavrieť'**
+  String get readerClose;
 }
 
 class _AppLocalizationsDelegate

@@ -19,12 +19,16 @@ final downloadServiceProvider = Provider<DownloadService>((ref) {
   );
 });
 
+final downloadedChapterCountsProvider = StreamProvider<Map<String, int>>((ref) {
+  return ref.watch(chapterTextDaoProvider).watchDownloadedChapterCounts();
+});
+
 /// Starts downloading all chapters for [bookId] and exposes live progress.
 ///
 /// The stream begins as soon as this provider is first watched. Use
 /// [ref.invalidate] to restart a cancelled or failed download.
 final downloadBookProvider =
     StreamProvider.family<BookDownloadProgress, String>((ref, bookId) {
-  final book = kBibleBooks.firstWhere((b) => b.id == bookId);
-  return ref.read(downloadServiceProvider).downloadBook(book);
-});
+      final book = kBibleBooks.firstWhere((b) => b.id == bookId);
+      return ref.read(downloadServiceProvider).downloadBook(book);
+    });

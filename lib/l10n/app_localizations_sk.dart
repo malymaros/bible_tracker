@@ -28,4 +28,49 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get screenStatistika => 'Štatistika čítania';
+
+  @override
+  String get bibleStatusNotDownloaded => 'nestiahnuté';
+
+  @override
+  String get bibleStatusPartial => 'čiastočne stiahnuté';
+
+  @override
+  String get bibleStatusDownloading => 'sťahuje sa';
+
+  @override
+  String get bibleStatusDownloaded => 'stiahnuté';
+
+  @override
+  String get bibleStatusError => 'chyba';
+
+  @override
+  String get bibleDownloadBook => 'Stiahnuť knihu';
+
+  @override
+  String get bibleDeleteDownloadedText => 'Vymazať stiahnutý text';
+
+  @override
+  String get readerChapterNotDownloaded => 'Kapitola nie je stiahnutá';
+
+  @override
+  String get readerChapterLoadError => 'Kapitolu sa nepodarilo načítať';
+
+  @override
+  String get readerPreviousChapter => 'Predchádzajúca';
+
+  @override
+  String get readerNextChapter => 'Ďalšia';
+
+  @override
+  String get readerMarkRead => 'Označiť ako prečítané';
+
+  @override
+  String get readerMarkUnread => 'Označiť ako neprečítané';
+
+  @override
+  String get readerOpenSsv => 'Otvoriť na webe SSV';
+
+  @override
+  String get readerClose => 'Zavrieť';
 }

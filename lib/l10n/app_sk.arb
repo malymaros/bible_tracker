@@ -34,5 +34,80 @@
   "screenStatistika": "Štatistika čítania",
   "@screenStatistika": {
     "description": "Heading shown on the statistics placeholder screen"
+  },
+
+  "bibleStatusNotDownloaded": "nestiahnuté",
+  "@bibleStatusNotDownloaded": {
+    "description": "Book text has not been downloaded"
+  },
+
+  "bibleStatusPartial": "čiastočne stiahnuté",
+  "@bibleStatusPartial": {
+    "description": "Only some chapters of a book are downloaded"
+  },
+
+  "bibleStatusDownloading": "sťahuje sa",
+  "@bibleStatusDownloading": {
+    "description": "A book is currently downloading"
+  },
+
+  "bibleStatusDownloaded": "stiahnuté",
+  "@bibleStatusDownloaded": {
+    "description": "All chapters of a book are downloaded"
+  },
+
+  "bibleStatusError": "chyba",
+  "@bibleStatusError": {
+    "description": "Book download failed"
+  },
+
+  "bibleDownloadBook": "Stiahnuť knihu",
+  "@bibleDownloadBook": {
+    "description": "Action to download all chapters of a book"
+  },
+
+  "bibleDeleteDownloadedText": "Vymazať stiahnutý text",
+  "@bibleDeleteDownloadedText": {
+    "description": "Action to delete cached book text"
+  },
+
+  "readerChapterNotDownloaded": "Kapitola nie je stiahnutá",
+  "@readerChapterNotDownloaded": {
+    "description": "Offline reader state when chapter text is missing"
+  },
+
+  "readerChapterLoadError": "Kapitolu sa nepodarilo načítať",
+  "@readerChapterLoadError": {
+    "description": "Offline reader state when local chapter loading fails"
+  },
+
+  "readerPreviousChapter": "Predchádzajúca",
+  "@readerPreviousChapter": {
+    "description": "Reader previous chapter button label"
+  },
+
+  "readerNextChapter": "Ďalšia",
+  "@readerNextChapter": {
+    "description": "Reader next chapter button label"
+  },
+
+  "readerMarkRead": "Označiť ako prečítané",
+  "@readerMarkRead": {
+    "description": "Reader action to mark the current chapter as read"
+  },
+
+  "readerMarkUnread": "Označiť ako neprečítané",
+  "@readerMarkUnread": {
+    "description": "Reader action to mark the current chapter as unread"
+  },
+
+  "readerOpenSsv": "Otvoriť na webe SSV",
+  "@readerOpenSsv": {
+    "description": "Reader action to open the chapter on the SSV website"
+  },
+
+  "readerClose": "Zavrieť",
+  "@readerClose": {
+    "description": "Generic close button"
   }
 }
