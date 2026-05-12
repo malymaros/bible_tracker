@@ -400,32 +400,88 @@ abstract class AppLocalizations {
   /// **'Dokončenie'**
   String get planCompletionPercent;
 
+  /// No description provided for @statsNoPlan.
+  ///
+  /// In sk, this message translates to:
+  /// **'Najprv si vytvorte plán čítania.'**
   String get statsNoPlan;
 
+  /// No description provided for @statsPlanProgressTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Pokrok v aktuálnom pláne'**
   String get statsPlanProgressTitle;
 
+  /// No description provided for @statsRemainingPlanChapters.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zostávajúce kapitoly v pláne'**
   String get statsRemainingPlanChapters;
 
+  /// No description provided for @statsPlanStatus.
+  ///
+  /// In sk, this message translates to:
+  /// **'Stav plánu'**
   String get statsPlanStatus;
 
+  /// No description provided for @statsTestamentsTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Starý a Nový zákon v pláne'**
   String get statsTestamentsTitle;
 
+  /// No description provided for @statsOldTestamentInPlan.
+  ///
+  /// In sk, this message translates to:
+  /// **'Starý zákon v aktuálnom pláne'**
   String get statsOldTestamentInPlan;
 
+  /// No description provided for @statsNewTestamentInPlan.
+  ///
+  /// In sk, this message translates to:
+  /// **'Nový zákon v aktuálnom pláne'**
   String get statsNewTestamentInPlan;
 
+  /// No description provided for @statsDeuterocanonicalInPlan.
+  ///
+  /// In sk, this message translates to:
+  /// **'Deuterokánonické knihy v pláne'**
   String get statsDeuterocanonicalInPlan;
 
+  /// No description provided for @statsBooksTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Knihy v aktuálnom pláne'**
   String get statsBooksTitle;
 
+  /// No description provided for @statsCompletedBooksInPlan.
+  ///
+  /// In sk, this message translates to:
+  /// **'Dokončené knihy v pláne'**
   String get statsCompletedBooksInPlan;
 
+  /// No description provided for @statsRemainingBooksInPlan.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zostávajúce knihy v pláne'**
   String get statsRemainingBooksInPlan;
 
+  /// No description provided for @statsFullyCompletedSelectedBooks.
+  ///
+  /// In sk, this message translates to:
+  /// **'Úplne dokončené vybrané knihy'**
   String get statsFullyCompletedSelectedBooks;
 
+  /// No description provided for @statsNotStartedSelectedBooks.
+  ///
+  /// In sk, this message translates to:
+  /// **'Nezačaté vybrané knihy'**
   String get statsNotStartedSelectedBooks;
 
+  /// No description provided for @statsTodaySummary.
+  ///
+  /// In sk, this message translates to:
+  /// **'Dnešné čítanie v pláne'**
   String get statsTodaySummary;
 }
 
