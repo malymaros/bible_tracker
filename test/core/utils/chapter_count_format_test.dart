@@ -39,12 +39,12 @@ void main() {
       expect(formatChapterCount(21), '21 kapitol');
     });
 
-    test('22 → kapitoly (ends in 2, not a teen)', () {
-      expect(formatChapterCount(22), '22 kapitoly');
+    test('22 → kapitol', () {
+      expect(formatChapterCount(22), '22 kapitol');
     });
 
-    test('24 → kapitoly (ends in 4, not a teen)', () {
-      expect(formatChapterCount(24), '24 kapitoly');
+    test('24 → kapitol', () {
+      expect(formatChapterCount(24), '24 kapitol');
     });
 
     test('25 → kapitol', () {
@@ -59,8 +59,8 @@ void main() {
       expect(formatChapterCount(112), '112 kapitol');
     });
 
-    test('122 → kapitoly (ends in 2, mod100=22, not teen)', () {
-      expect(formatChapterCount(122), '122 kapitoly');
+    test('122 → kapitol', () {
+      expect(formatChapterCount(122), '122 kapitol');
     });
   });
 }

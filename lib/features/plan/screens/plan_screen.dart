@@ -462,7 +462,7 @@ class _PlanAppBarTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Text(
-      'Biblia',
+      'Plán čítania Biblie',
       style: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w700,

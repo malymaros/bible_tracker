@@ -479,7 +479,7 @@ void main() {
     });
   });
 
-  testWidgets('app bar center shows Biblia text', (tester) async {
+  testWidgets('app bar center shows plan title', (tester) async {
     final db = _openTestDb();
     final plan = _plan();
 
@@ -493,7 +493,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Biblia'), findsOneWidget);
+    expect(find.text('Plán čítania Biblie'), findsOneWidget);
   });
 
   testWidgets('books nav button has no visible text label', (tester) async {
