@@ -225,6 +225,36 @@ abstract class AppLocalizations {
   /// In sk, this message translates to:
   /// **'Zavrieť'**
   String get readerClose;
+
+  String get planCreateTitle;
+  String get planStartDate;
+  String get planTotalDays;
+  String get planIncludedBooks;
+  String get planSelectedChapters;
+  String get planDateRange;
+  String get planDateRangeUnavailable;
+  String get planCreateAction;
+  String get planInvalidDayCount;
+  String get planTooManyDays;
+  String get planSelectAtLeastOneBook;
+  String get planTodayReading;
+  String get planNoReadingToday;
+  String get planSchedule;
+  String get planDay;
+  String get planToday;
+  String get planChapterCompleted;
+  String get planChapterIncomplete;
+  String get planDeleteAction;
+  String get planDeleteTitle;
+  String get planDeleteMessage;
+  String get planCancel;
+  String get planAhead;
+  String get planBehind;
+  String get planOnTrack;
+  String get planCompletedChapters;
+  String get planExpectedByToday;
+  String get planAheadBehind;
+  String get planCompletionPercent;
 }
 
 class _AppLocalizationsDelegate

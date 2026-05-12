@@ -109,5 +109,35 @@
   "readerClose": "Zavrieť",
   "@readerClose": {
     "description": "Generic close button"
-  }
+  },
+
+  "planCreateTitle": "Vytvoriť plán čítania",
+  "planStartDate": "Začiatok",
+  "planTotalDays": "Počet dní",
+  "planIncludedBooks": "Zahrnuté knihy",
+  "planSelectedChapters": "Vybrané kapitoly",
+  "planDateRange": "Rozsah dátumov",
+  "planDateRangeUnavailable": "nedostupné",
+  "planCreateAction": "Vytvoriť plán",
+  "planInvalidDayCount": "Zadajte platný počet dní",
+  "planTooManyDays": "Počet dní nemôže byť väčší ako počet vybraných kapitol",
+  "planSelectAtLeastOneBook": "Vyberte aspoň jednu knihu",
+  "planTodayReading": "Dnešné čítanie",
+  "planNoReadingToday": "Na dnes nie je naplánované čítanie",
+  "planSchedule": "Rozpis",
+  "planDay": "Deň",
+  "planToday": "dnes",
+  "planChapterCompleted": "prečítané",
+  "planChapterIncomplete": "neprečítané",
+  "planDeleteAction": "Vymazať plán",
+  "planDeleteTitle": "Vymazať plán?",
+  "planDeleteMessage": "Rozpis čítania bude odstránený. Prečítané kapitoly zostanú zachované.",
+  "planCancel": "Zrušiť",
+  "planAhead": "V predstihu",
+  "planBehind": "V sklze",
+  "planOnTrack": "Podľa plánu",
+  "planCompletedChapters": "Prečítané kapitoly",
+  "planExpectedByToday": "Očakávané do dnes",
+  "planAheadBehind": "Predstih/sklz",
+  "planCompletionPercent": "Dokončenie"
 }

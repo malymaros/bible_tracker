@@ -2,6 +2,7 @@ import 'package:bible_tracker/app/app.dart';
 import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/db/app_database.dart';
+import 'package:bible_tracker/features/plan/screens/plan_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
@@ -31,6 +32,8 @@ Widget _testApp(
     downloadedChapterCountsProvider.overrideWith(
       (ref) => Stream.value(downloadedCounts),
     ),
+    activePlanProvider.overrideWith((ref) => Stream.value(null)),
+    readChaptersProvider.overrideWith((ref) => Stream.value(const {})),
   ],
   child: const BibleTrackerApp(),
 );
