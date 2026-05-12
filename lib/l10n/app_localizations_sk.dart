@@ -164,6 +164,37 @@ class AppLocalizationsSk extends AppLocalizations {
   String get planCompletionPercent => 'Dokončenie';
 
   @override
+  String get navBooks => 'Knihy';
+
+  @override
+  String get planDailyProgress => 'Denný pokrok';
+
+  @override
+  String get planTotalProgressTitle => 'Pokrok plánu';
+
+  @override
+  String get planBooksUnit => 'kníh';
+
+  @override
+  String get planChaptersCompletedLower => 'kapitol prečítaných';
+
+  @override
+  String get planBooksInPlan => 'Knihy v pláne';
+
+  @override
+  String get planCurrentPlan => 'Aktuálny plán';
+
+  @override
+  String get planCompleteBookTitle => 'Označiť knihu ako prečítanú?';
+
+  @override
+  String get planCompleteBookMessage =>
+      'Všetky kapitoly tejto knihy v aktuálnom pláne budú označené ako prečítané:';
+
+  @override
+  String get planCompleteBookAction => 'Označiť knihu';
+
+  @override
   String get statsNoPlan => 'Najprv si vytvorte plán čítania.';
 
   @override

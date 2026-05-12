@@ -7,6 +7,8 @@ import 'package:bible_tracker/db/app_database.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/dao_providers.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
+import 'package:bible_tracker/shared/providers/plan_providers.dart';
+import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:html/dom.dart' as dom;
@@ -22,11 +24,13 @@ final _chapterTextProvider = FutureProvider.family<ChapterTextRow?, ChapterRef>(
 class ReaderScreen extends ConsumerStatefulWidget {
   final String bookId;
   final int chapterNumber;
+  final bool canMarkRead;
 
   const ReaderScreen({
     super.key,
     required this.bookId,
     required this.chapterNumber,
+    this.canMarkRead = false,
   });
 
   @override
@@ -54,8 +58,40 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final previous = ChapterCursor.full.previousOf(_chapterRef);
     final next = ChapterCursor.full.nextOf(_chapterRef);
 
+    final isCurrentChapterRead = widget.canMarkRead
+        ? (ref.watch(readChaptersProvider).value ?? const {}).contains(
+            _chapterRef,
+          )
+        : false;
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text('${book.name} ${_chapterRef.chapterNumber}')),
+      floatingActionButton: widget.canMarkRead
+          ? FloatingActionButton.extended(
+              key: const Key('reader-mark-read-fab'),
+              onPressed: () async {
+                final dao = ref.read(progressDaoProvider);
+                if (isCurrentChapterRead) {
+                  await dao.markUnread(_chapterRef);
+                } else {
+                  await dao.markRead(_chapterRef, DateTime.now());
+                }
+              },
+              backgroundColor: AppColors.goldSoft,
+              foregroundColor: AppColors.goldDark,
+              icon: Icon(
+                isCurrentChapterRead
+                    ? Icons.bookmark_remove_outlined
+                    : Icons.bookmark_add_outlined,
+              ),
+              label: Text(
+                isCurrentChapterRead
+                    ? l10n.readerMarkUnread
+                    : l10n.readerMarkRead,
+              ),
+            )
+          : null,
       body: GestureDetector(
         key: const Key('reader-swipe-area'),
         behavior: HitTestBehavior.opaque,
@@ -156,8 +192,8 @@ class _DownloadedChapterView extends StatelessWidget {
         Expanded(
           child: SingleChildScrollView(
             key: const Key('reader-scroll'),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: _ChapterHtml(htmlContent: row.htmlContent),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: AppCard(child: _ChapterHtml(htmlContent: row.htmlContent)),
           ),
         ),
         SafeArea(
@@ -167,7 +203,7 @@ class _DownloadedChapterView extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: AppOutlinedButton(
                     key: const Key('reader-previous-button'),
                     onPressed: previous == null ? null : onPrevious,
                     icon: const Icon(Icons.chevron_left),
@@ -176,7 +212,7 @@ class _DownloadedChapterView extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: AppOutlinedButton(
                     key: const Key('reader-next-button'),
                     onPressed: next == null ? null : onNext,
                     icon: const Icon(Icons.chevron_right),
@@ -219,7 +255,7 @@ class _MissingChapterView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -242,7 +278,7 @@ class _MissingChapterView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            FilledButton.icon(
+            AppPrimaryButton(
               onPressed: isDownloading ? null : onDownloadBook,
               icon: isDownloading
                   ? const SizedBox.square(
@@ -253,7 +289,7 @@ class _MissingChapterView extends StatelessWidget {
               label: Text(l10n.bibleDownloadBook),
             ),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
+            AppOutlinedButton(
               onPressed: onOpenSsv,
               icon: const Icon(Icons.open_in_browser),
               label: Text(l10n.readerOpenSsv),
@@ -262,7 +298,7 @@ class _MissingChapterView extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: AppOutlinedButton(
                     key: const Key('reader-previous-button'),
                     onPressed: previous == null ? null : onPrevious,
                     icon: const Icon(Icons.chevron_left),
@@ -271,7 +307,7 @@ class _MissingChapterView extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: AppOutlinedButton(
                     key: const Key('reader-next-button'),
                     onPressed: next == null ? null : onNext,
                     icon: const Icon(Icons.chevron_right),

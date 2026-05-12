@@ -2,33 +2,28 @@ import 'package:bible_tracker/app/app.dart';
 import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/db/app_database.dart';
-import 'package:bible_tracker/features/plan/screens/plan_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
+import 'package:bible_tracker/shared/providers/plan_providers.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-// Opens a fresh in-memory database for each test.
 AppDatabase _testDb() {
   final db = AppDatabase(NativeDatabase.memory());
   addTearDown(db.close);
   return db;
 }
 
-// Builds BibleTrackerApp with the real router overridden to allow widget-test
-// navigation without requiring a platform window.
 Widget _testApp(
   AppDatabase db, {
   Map<String, int> downloadedCounts = const {},
 }) => ProviderScope(
   overrides: [
-    appDatabaseProvider.overrideWith((ref) {
-      return db;
-    }),
+    appDatabaseProvider.overrideWith((ref) => db),
     downloadedChapterCountsProvider.overrideWith(
       (ref) => Stream.value(downloadedCounts),
     ),
@@ -61,73 +56,34 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  // ── Bottom navigation ────────────────────────────────────────────────────
-
-  testWidgets('bottom navigation bar has 3 destinations', (tester) async {
+  testWidgets('initial route shows Plan screen', (tester) async {
     final db = _testDb();
     await tester.pumpWidget(_testApp(db));
     await tester.pumpAndSettle();
 
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.byType(NavigationDestination), findsNWidgets(3));
+    // Plan screen shows create-plan title when no plan exists
+    expect(find.text('Vytvoriť plán čítania'), findsOneWidget);
   });
 
-  testWidgets('localized tab labels are visible', (tester) async {
+  testWidgets('no bottom navigation bar', (tester) async {
     final db = _testDb();
     await tester.pumpWidget(_testApp(db));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(BottomNavigationBar), findsNothing);
+  });
+
+  testWidgets('Knihy button opens Books screen', (tester) async {
+    final db = _testDb();
+    await tester.pumpWidget(_testApp(db));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('plan-books-nav-button')));
     await tester.pumpAndSettle();
 
     expect(find.text('Biblia'), findsWidgets);
-    expect(find.text('Plán'), findsWidgets);
-    expect(find.text('Štatistika'), findsWidgets);
-  });
-
-  testWidgets('initial route shows Biblia screen', (tester) async {
-    final db = _testDb();
-    await tester.pumpWidget(_testApp(db));
-    await tester.pumpAndSettle();
-
-    // AppBar title on the Biblia placeholder
-    expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('Biblia')),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('tapping Plán tab navigates to plan screen', (tester) async {
-    final db = _testDb();
-    await tester.pumpWidget(_testApp(db));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Plán').last);
-    await tester.pumpAndSettle();
-
-    expect(
-      find.descendant(
-        of: find.byType(AppBar),
-        matching: find.text('Plán čítania'),
-      ),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('tapping Štatistika tab navigates to statistics screen', (
-    tester,
-  ) async {
-    final db = _testDb();
-    await tester.pumpWidget(_testApp(db));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Štatistika').last);
-    await tester.pumpAndSettle();
-
-    expect(
-      find.descendant(
-        of: find.byType(AppBar),
-        matching: find.text('Štatistika čítania'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Pentateuch'), findsOneWidget);
   });
 
   // ── Localizations ────────────────────────────────────────────────────────
@@ -150,9 +106,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(l10n.appTitle, 'Bible Tracker');
-    expect(l10n.tabBiblia, 'Biblia');
-    expect(l10n.tabPlan, 'Plán');
-    expect(l10n.tabStatistika, 'Štatistika');
+    expect(l10n.navBooks, 'Knihy');
+    expect(l10n.planTotalProgressTitle, 'Pokrok plánu');
   });
 
   // ── GoRouter ─────────────────────────────────────────────────────────────
@@ -162,8 +117,7 @@ void main() {
     await tester.pumpWidget(_testApp(db));
     await tester.pumpAndSettle();
 
-    // InheritedGoRouter is available somewhere in the tree.
-    final context = tester.element(find.byType(NavigationBar));
+    final context = tester.element(find.byType(Scaffold).first);
     expect(GoRouter.maybeOf(context), isNotNull);
   });
 
@@ -178,7 +132,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Biblia').last);
+    // Navigate to Books screen via Knjiy button
+    await tester.tap(find.byKey(const Key('plan-books-nav-button')));
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(

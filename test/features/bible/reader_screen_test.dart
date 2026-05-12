@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/db/app_database.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
+import 'package:bible_tracker/shared/providers/plan_providers.dart';
+import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,13 +18,28 @@ AppDatabase _openTestDb() {
   return db;
 }
 
-Widget _testReader(AppDatabase db, ChapterRef ref) {
+Widget _testReader(
+  AppDatabase db,
+  ChapterRef ref, {
+  bool canMarkRead = false,
+  Stream<Set<ChapterRef>>? readChaptersStream,
+}) {
   return ProviderScope(
-    overrides: [appDatabaseProvider.overrideWith((_) => db)],
+    overrides: [
+      appDatabaseProvider.overrideWith((_) => db),
+      if (canMarkRead)
+        readChaptersProvider.overrideWith(
+          (_) => readChaptersStream ?? Stream.value(const {}),
+        ),
+    ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: ReaderScreen(bookId: ref.bookId, chapterNumber: ref.chapterNumber),
+      home: ReaderScreen(
+        bookId: ref.bookId,
+        chapterNumber: ref.chapterNumber,
+        canMarkRead: canMarkRead,
+      ),
     ),
   );
 }
@@ -65,9 +84,7 @@ void main() {
     expect(find.text('Otvoriť na webe SSV'), findsOneWidget);
   });
 
-  testWidgets('reader has no read controls and does not change progress', (
-    tester,
-  ) async {
+  testWidgets('books reader has no read controls', (tester) async {
     final db = _openTestDb();
     const ref = ChapterRef('gen', 1);
     await _insertChapter(db, ref, 'Free reading chapter');
@@ -78,6 +95,43 @@ void main() {
     expect(await db.progressDao.isRead(ref), isFalse);
     expect(find.text('Označiť ako prečítané'), findsNothing);
     expect(find.text('Označiť ako neprečítané'), findsNothing);
+    expect(find.byKey(const Key('reader-mark-read-fab')), findsNothing);
+  });
+
+  testWidgets('plan reader shows mark read controls', (tester) async {
+    final db = _openTestDb();
+    const ref = ChapterRef('gen', 1);
+    await _insertChapter(db, ref, 'Plan reading chapter');
+
+    await tester.pumpWidget(_testReader(db, ref, canMarkRead: true));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('reader-mark-read-fab')), findsOneWidget);
+    expect(find.text('Označiť ako prečítané'), findsOneWidget);
+  });
+
+  testWidgets('plan reader marks chapter read via FAB', (tester) async {
+    final db = _openTestDb();
+    const ref = ChapterRef('gen', 1);
+    await _insertChapter(db, ref, 'Plan reading chapter');
+    final reads = StreamController<Set<ChapterRef>>();
+    addTearDown(reads.close);
+
+    await tester.pumpWidget(
+      _testReader(db, ref, canMarkRead: true, readChaptersStream: reads.stream),
+    );
+    reads.add(const <ChapterRef>{});
+    await tester.pumpAndSettle();
+
+    expect(find.text('Označiť ako prečítané'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('reader-mark-read-fab')));
+    await tester.pump();
+    reads.add({ref});
+    await tester.pumpAndSettle();
+
+    expect(await db.progressDao.isRead(ref), isTrue);
+    expect(find.text('Označiť ako neprečítané'), findsOneWidget);
   });
 
   testWidgets('next and previous buttons navigate chapters', (tester) async {
@@ -123,7 +177,7 @@ void main() {
     await tester.pumpWidget(_testReader(db, const ChapterRef('gen', 1)));
     await tester.pumpAndSettle();
 
-    final previousButton = tester.widget<OutlinedButton>(
+    final previousButton = tester.widget<AppOutlinedButton>(
       find.byKey(const Key('reader-previous-button')),
     );
     expect(previousButton.onPressed, isNull);

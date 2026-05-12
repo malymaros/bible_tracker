@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/plan_day.dart';
 import 'package:bible_tracker/core/models/reading_plan.dart';
 import 'package:bible_tracker/db/app_database.dart';
 import 'package:bible_tracker/features/plan/screens/plan_screen.dart';
+import 'package:bible_tracker/features/statistics/screens/statistika_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
+import 'package:bible_tracker/shared/providers/download_providers.dart';
+import 'package:bible_tracker/shared/providers/plan_providers.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,6 +28,7 @@ Widget _testWidget(
   ReadingPlan? activePlan,
   List<PlanDay> days = const [],
   Set<ChapterRef> readChapters = const {},
+  Stream<Set<ChapterRef>>? readChaptersStream,
   DateTime? today,
 }) {
   return ProviderScope(
@@ -33,7 +39,12 @@ Widget _testWidget(
       if (activePlan == null && child is PlanScreen)
         activePlanProvider.overrideWith((_) => Stream.value(null)),
       planDaysProvider.overrideWith((ref, planId) => Stream.value(days)),
-      readChaptersProvider.overrideWith((_) => Stream.value(readChapters)),
+      readChaptersProvider.overrideWith(
+        (_) => readChaptersStream ?? Stream.value(readChapters),
+      ),
+      downloadedChapterCountsProvider.overrideWith(
+        (_) => Stream.value(const {}),
+      ),
       todayProvider.overrideWithValue(today ?? DateTime(2026, 5, 12)),
     ],
     child: MaterialApp(
@@ -47,8 +58,8 @@ Widget _testWidget(
 ReadingPlan _plan() => ReadingPlan(
   id: 'plan-1',
   startDate: DateTime(2026, 5, 12),
-  totalDays: 2,
-  selectedBookIds: const ['gen'],
+  totalDays: 3,
+  selectedBookIds: const ['gen', 'ps'],
   createdAt: DateTime(2026, 5, 1),
 );
 
@@ -57,13 +68,24 @@ List<PlanDay> _days(String planId) => [
     planId: planId,
     dayNumber: 1,
     scheduledDate: DateTime(2026, 5, 12),
-    chapters: const [ChapterRef('gen', 1), ChapterRef('gen', 2)],
+    chapters: const [
+      ChapterRef('gen', 1),
+      ChapterRef('gen', 2),
+      ChapterRef('gen', 3),
+      ChapterRef('ps', 1),
+    ],
   ),
   PlanDay(
     planId: planId,
     dayNumber: 2,
     scheduledDate: DateTime(2026, 5, 13),
-    chapters: const [ChapterRef('gen', 3), ChapterRef('gen', 4)],
+    chapters: const [ChapterRef('gen', 4), ChapterRef('ps', 2)],
+  ),
+  PlanDay(
+    planId: planId,
+    dayNumber: 3,
+    scheduledDate: DateTime(2026, 5, 14),
+    chapters: const [ChapterRef('ps', 3)],
   ),
 ];
 
@@ -156,7 +178,9 @@ void main() {
     });
   });
 
-  testWidgets('existing plan shows schedule', (tester) async {
+  testWidgets('Plan screen renders with Knjiy button and progress widget', (
+    tester,
+  ) async {
     final db = _openTestDb();
     final plan = _plan();
 
@@ -170,13 +194,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('plan-books-nav-button')), findsOneWidget);
     expect(find.text('Dnešné čítanie'), findsOneWidget);
-    expect(find.text('Rozpis'), findsOneWidget);
-    expect(find.byKey(const Key('plan-day-1')), findsWidgets);
-    expect(find.text('Gn 1'), findsWidgets);
+    expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
+    expect(find.byKey(const Key('plan-current-day-2')), findsNothing);
+    expect(find.text('Genezis 1–3'), findsOneWidget);
+    expect(find.text('Žalmy 1'), findsWidgets);
   });
 
-  testWidgets('today is highlighted', (tester) async {
+  testWidgets('previous and next day navigation changes selected day', (
+    tester,
+  ) async {
     final db = _openTestDb();
     final plan = _plan();
 
@@ -191,10 +219,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('(dnes)'), findsWidgets);
+    expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('plan-next-day-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('plan-current-day-2')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('plan-previous-day-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
   });
 
-  testWidgets('read chapters are shown as completed', (tester) async {
+  testWidgets('total progress widget shows plan completion', (tester) async {
     final db = _openTestDb();
     final plan = _plan();
 
@@ -209,8 +245,209 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('prečítané'), findsWidgets);
-    expect(find.text('neprečítané'), findsWidgets);
+    // Total: 4+2+1 = 7 chapters, 1 completed → 14%
+    expect(find.byKey(const Key('plan-total-progress-bar')), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-total-progress-percent')))
+          .data,
+      '14 %',
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-total-progress-chapters')))
+          .data,
+      startsWith('1/7'),
+    );
+  });
+
+  testWidgets('total progress widget shows completed books / selected books', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _plan(); // selectedBookIds: ['gen', 'ps']
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+        readChapters: const {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final booksText = tester
+        .widget<Text>(find.byKey(const Key('plan-total-progress-books')))
+        .data!;
+    // 0 completed, 2 selected books
+    expect(booksText, startsWith('0 / 2'));
+    expect(booksText, contains('kníh'));
+  });
+
+  testWidgets('progress updates when checkbox changes', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+    final reads = StreamController<Set<ChapterRef>>();
+    addTearDown(reads.close);
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+        readChaptersStream: reads.stream,
+      ),
+    );
+    reads.add(const <ChapterRef>{});
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-total-progress-chapters')))
+          .data,
+      startsWith('0/7'),
+    );
+
+    await tester.tap(find.byKey(const Key('plan-chapter-gen-1')));
+    await tester.pump();
+    reads.add({const ChapterRef('gen', 1)});
+    await tester.pumpAndSettle();
+
+    expect(await db.progressDao.isRead(const ChapterRef('gen', 1)), isTrue);
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-total-progress-chapters')))
+          .data,
+      startsWith('1/7'),
+    );
+  });
+
+  testWidgets('chapter tap opens ReaderScreen', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('plan-open-chapter-gen-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Genezis 1'), findsWidgets);
+  });
+
+  testWidgets('tapping progress widget opens Statistics screen', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap the total progress card
+    await tester.tap(find.byKey(const Key('plan-total-progress-bar')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StatistikaScreen), findsOneWidget);
+  });
+
+  testWidgets('Knjiy button opens Books screen', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('plan-books-nav-button')));
+    await tester.pumpAndSettle();
+
+    // BibliaScreen shows book groups
+    expect(find.text('Biblia'), findsWidgets);
+    expect(find.text('Pentateuch'), findsOneWidget);
+  });
+
+  testWidgets('Knjiy button is present on create plan screen', (tester) async {
+    final db = _openTestDb();
+
+    await tester.pumpWidget(_testWidget(const PlanScreen(), db));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('plan-books-nav-button')), findsOneWidget);
+  });
+
+  testWidgets('book progress is calculated correctly', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        BooksInPlanScreen(plan: plan),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+        readChapters: {const ChapterRef('gen', 1), const ChapterRef('ps', 1)},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('plan-book-count-gen'))).data,
+      '1/4',
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('plan-book-count-ps'))).data,
+      '1/3',
+    );
+  });
+
+  testWidgets('completed book shows completion mark', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        BooksInPlanScreen(plan: plan),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+        readChapters: {
+          const ChapterRef('gen', 1),
+          const ChapterRef('gen', 2),
+          const ChapterRef('gen', 3),
+          const ChapterRef('gen', 4),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final checkbox = tester.widget<Checkbox>(
+      find.byKey(const Key('plan-book-complete-gen')),
+    );
+    expect(checkbox.value, isTrue);
   });
 
   testWidgets('delete plan confirmation removes plan', (tester) async {

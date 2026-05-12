@@ -400,6 +400,66 @@ abstract class AppLocalizations {
   /// **'Dokončenie'**
   String get planCompletionPercent;
 
+  /// No description provided for @navBooks.
+  ///
+  /// In sk, this message translates to:
+  /// **'Knihy'**
+  String get navBooks;
+
+  /// No description provided for @planDailyProgress.
+  ///
+  /// In sk, this message translates to:
+  /// **'Denný pokrok'**
+  String get planDailyProgress;
+
+  /// No description provided for @planTotalProgressTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Pokrok plánu'**
+  String get planTotalProgressTitle;
+
+  /// No description provided for @planBooksUnit.
+  ///
+  /// In sk, this message translates to:
+  /// **'kníh'**
+  String get planBooksUnit;
+
+  /// No description provided for @planChaptersCompletedLower.
+  ///
+  /// In sk, this message translates to:
+  /// **'kapitol prečítaných'**
+  String get planChaptersCompletedLower;
+
+  /// No description provided for @planBooksInPlan.
+  ///
+  /// In sk, this message translates to:
+  /// **'Knihy v pláne'**
+  String get planBooksInPlan;
+
+  /// No description provided for @planCurrentPlan.
+  ///
+  /// In sk, this message translates to:
+  /// **'Aktuálny plán'**
+  String get planCurrentPlan;
+
+  /// No description provided for @planCompleteBookTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Označiť knihu ako prečítanú?'**
+  String get planCompleteBookTitle;
+
+  /// No description provided for @planCompleteBookMessage.
+  ///
+  /// In sk, this message translates to:
+  /// **'Všetky kapitoly tejto knihy v aktuálnom pláne budú označené ako prečítané:'**
+  String get planCompleteBookMessage;
+
+  /// No description provided for @planCompleteBookAction.
+  ///
+  /// In sk, this message translates to:
+  /// **'Označiť knihu'**
+  String get planCompleteBookAction;
+
   /// No description provided for @statsNoPlan.
   ///
   /// In sk, this message translates to:

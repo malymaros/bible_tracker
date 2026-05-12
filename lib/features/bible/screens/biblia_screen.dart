@@ -3,10 +3,11 @@ import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/book_download_progress.dart';
 import 'package:bible_tracker/shared/providers/dao_providers.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
+import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
+import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 class BibliaScreen extends ConsumerStatefulWidget {
   const BibliaScreen({super.key});
@@ -34,6 +35,7 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(l10n.screenBiblia)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -88,43 +90,66 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      backgroundColor: AppColors.background,
       builder: (context) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(book.name, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text(_statusLabel(l10n, state)),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: isAnotherBookDownloading
-                    ? null
-                    : () {
-                        Navigator.of(context).pop();
-                        setState(() {
-                          _failedBookIds.remove(book.id);
-                          _activeDownloadBookId = book.id;
-                        });
-                      },
-                icon: const Icon(Icons.download),
-                label: Text(l10n.bibleDownloadBook),
-              ),
-              if (state == _BookDownloadState.partial ||
-                  state == _BookDownloadState.error) ...[
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _deleteBookText(book);
-                  },
-                  icon: const Icon(Icons.delete_outline),
-                  label: Text(l10n.bibleDeleteDownloadedText),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          child: AppCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    BookIconBadge(abbreviation: book.shortName),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        book.name,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: StatusBadge(
+                    label: _statusLabel(l10n, state),
+                    icon: _statusIcon(state),
+                    color: _statusColor(state),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                AppPrimaryButton(
+                  onPressed: isAnotherBookDownloading
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
+                          setState(() {
+                            _failedBookIds.remove(book.id);
+                            _activeDownloadBookId = book.id;
+                          });
+                        },
+                  icon: const Icon(Icons.download),
+                  label: Text(l10n.bibleDownloadBook),
+                ),
+                if (state == _BookDownloadState.partial ||
+                    state == _BookDownloadState.error) ...[
+                  const SizedBox(height: 8),
+                  AppOutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _deleteBookText(book);
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(l10n.bibleDeleteDownloadedText),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -133,67 +158,90 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
 
   void _showChapterPicker(BibleBook book) {
     final l10n = AppLocalizations.of(context)!;
+    final stateContext = context;
     showModalBottomSheet<void>(
-      context: context,
+      context: stateContext,
       showDragHandle: true,
-      builder: (context) => SafeArea(
+      backgroundColor: AppColors.background,
+      builder: (sheetContext) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      book.name,
-                      style: Theme.of(context).textTheme.titleLarge,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          child: AppCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    BookIconBadge(abbreviation: book.shortName),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        book.name,
+                        style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: l10n.bibleDeleteDownloadedText,
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      _deleteBookText(book);
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 320),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                  ),
-                  itemCount: book.chapterCount,
-                  itemBuilder: (context, index) {
-                    final chapter = index + 1;
-                    return OutlinedButton(
+                    IconButton(
+                      tooltip: l10n.bibleDeleteDownloadedText,
+                      color: AppColors.textMuted,
                       onPressed: () {
-                        Navigator.of(context).pop();
-                        context.push('/biblia/reader/${book.id}/$chapter');
+                        Navigator.of(sheetContext).pop();
+                        _deleteBookText(book);
                       },
-                      child: Text('$chapter'),
-                    );
-                  },
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _deleteBookText(book);
-                },
-                icon: const Icon(Icons.delete_outline),
-                label: Text(l10n.bibleDeleteDownloadedText),
-              ),
-            ],
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 320),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 6,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                        ),
+                    itemCount: book.chapterCount,
+                    itemBuilder: (_, index) {
+                      final chapter = index + 1;
+                      return OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(sheetContext).pop();
+                          Navigator.of(stateContext).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => ReaderScreen(
+                                bookId: book.id,
+                                chapterNumber: chapter,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Text('$chapter'),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                AppOutlinedButton(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    _deleteBookText(book);
+                  },
+                  icon: const Icon(Icons.delete_outline),
+                  label: Text(l10n.bibleDeleteDownloadedText),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -262,13 +310,9 @@ class _BookGroupSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 10, 4, 6),
-            child: Text(
-              group.title,
-              key: Key('book-group-${group.category.name}'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+          SectionHeader(
+            key: Key('book-group-${group.category.name}'),
+            title: group.title,
           ),
           for (final book in books)
             _BookRow(
@@ -328,17 +372,33 @@ class _BookRow extends StatelessWidget {
       _BookDownloadState.error => Icons.error_outline,
     };
 
-    return ListTile(
-      key: Key('book-row-${book.id}'),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      leading: CircleAvatar(
-        radius: 18,
-        child: Text(book.shortName, textAlign: TextAlign.center),
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        key: Key('book-row-${book.id}'),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        leading: BookIconBadge(abbreviation: book.shortName),
+        title: Text(
+          book.name,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: StatusBadge(
+              label: statusLabel,
+              icon: icon,
+              color: _statusColor(state),
+            ),
+          ),
+        ),
+        trailing: Icon(Icons.chevron_right, color: AppColors.textMuted),
+        onTap: onTap,
       ),
-      title: Text(book.name),
-      subtitle: Text(statusLabel),
-      trailing: Icon(icon),
-      onTap: onTap,
     );
   }
 }
@@ -358,5 +418,25 @@ String _statusLabel(AppLocalizations l10n, _BookDownloadState state) {
     _BookDownloadState.downloading => l10n.bibleStatusDownloading,
     _BookDownloadState.downloaded => l10n.bibleStatusDownloaded,
     _BookDownloadState.error => l10n.bibleStatusError,
+  };
+}
+
+IconData _statusIcon(_BookDownloadState state) {
+  return switch (state) {
+    _BookDownloadState.notDownloaded => Icons.cloud_download_outlined,
+    _BookDownloadState.partial => Icons.downloading,
+    _BookDownloadState.downloading => Icons.sync,
+    _BookDownloadState.downloaded => Icons.check_circle_outline,
+    _BookDownloadState.error => Icons.error_outline,
+  };
+}
+
+Color _statusColor(_BookDownloadState state) {
+  return switch (state) {
+    _BookDownloadState.downloaded => AppColors.goldDark,
+    _BookDownloadState.error => AppColors.error,
+    _BookDownloadState.downloading => AppColors.goldDark,
+    _BookDownloadState.partial => AppColors.goldDark,
+    _BookDownloadState.notDownloaded => AppColors.textMuted,
   };
 }

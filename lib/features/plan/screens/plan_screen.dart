@@ -2,51 +2,48 @@ import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/plan_day.dart';
-import 'package:bible_tracker/core/models/plan_progress.dart';
 import 'package:bible_tracker/core/models/reading_plan.dart';
 import 'package:bible_tracker/core/services/plan_generator.dart';
 import 'package:bible_tracker/core/services/plan_progress_calculator.dart';
+import 'package:bible_tracker/features/bible/screens/biblia_screen.dart';
+import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
+import 'package:bible_tracker/features/statistics/screens/statistika_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/dao_providers.dart';
+import 'package:bible_tracker/shared/providers/plan_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
-final activePlanProvider = StreamProvider<ReadingPlan?>((ref) {
-  return ref.watch(planDaoProvider).watchActivePlan();
-});
-
-final planDaysProvider = StreamProvider.family<List<PlanDay>, String>((
-  ref,
-  planId,
-) {
-  return ref.watch(planDaoProvider).watchPlanDays(planId);
-});
-
-final readChaptersProvider = StreamProvider<Set<ChapterRef>>((ref) {
-  return ref.watch(progressDaoProvider).watchAllReadChapters();
-});
-
-final todayProvider = Provider<DateTime>((_) {
-  final now = DateTime.now();
-  return DateTime(now.year, now.month, now.day);
-});
 
 class PlanScreen extends ConsumerWidget {
   const PlanScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
     final activePlan = ref.watch(activePlanProvider);
 
     return activePlan.when(
       loading: () => Scaffold(
-        appBar: AppBar(title: Text(l10n.screenPlan)),
+        appBar: AppBar(
+          leading: const _BooksNavLeading(),
+          leadingWidth: 96,
+          title: const _PlanAppBarTitle(),
+          centerTitle: true,
+          backgroundColor: _PlanColors.background,
+          surfaceTintColor: _PlanColors.background,
+        ),
+        backgroundColor: _PlanColors.background,
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (error, _) => Scaffold(
-        appBar: AppBar(title: Text(l10n.screenPlan)),
+        appBar: AppBar(
+          leading: const _BooksNavLeading(),
+          leadingWidth: 96,
+          title: const _PlanAppBarTitle(),
+          centerTitle: true,
+          backgroundColor: _PlanColors.background,
+          surfaceTintColor: _PlanColors.background,
+        ),
+        backgroundColor: _PlanColors.background,
         body: Center(child: Text(error.toString())),
       ),
       data: (plan) {
@@ -97,7 +94,15 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
         : _startDate.add(Duration(days: totalDays - 1));
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.screenPlan)),
+      appBar: AppBar(
+        leading: const _BooksNavLeading(),
+        leadingWidth: 96,
+        title: const _PlanAppBarTitle(),
+        centerTitle: true,
+        backgroundColor: _PlanColors.background,
+        surfaceTintColor: _PlanColors.background,
+      ),
+      backgroundColor: _PlanColors.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: Column(
@@ -230,64 +235,110 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
   }
 }
 
-class _ExistingPlanScreen extends ConsumerWidget {
+class _ExistingPlanScreen extends ConsumerStatefulWidget {
   final ReadingPlan plan;
 
   const _ExistingPlanScreen({required this.plan});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ExistingPlanScreen> createState() =>
+      _ExistingPlanScreenState();
+}
+
+class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
+  int? _selectedDayIndex;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final days =
-        ref.watch(planDaysProvider(plan.id)).value ?? const <PlanDay>[];
+        ref.watch(planDaysProvider(widget.plan.id)).value ?? const <PlanDay>[];
     final readChapters =
         ref.watch(readChaptersProvider).value ?? const <ChapterRef>{};
     final today = ref.watch(todayProvider);
-    final progress = PlanProgressCalculator.calculate(
-      plan: plan,
-      days: days,
-      readChapters: readChapters,
-      today: today,
-    );
-    final todayDay = days.where((day) => _sameDate(day.scheduledDate, today));
+    final selectedIndex = _effectiveSelectedIndex(days, today);
+    final selectedDay = days.isEmpty ? null : days[selectedIndex];
 
     return Scaffold(
+      backgroundColor: _PlanColors.background,
       appBar: AppBar(
-        title: Text(l10n.screenPlan),
+        leading: const _BooksNavLeading(),
+        leadingWidth: 96,
+        title: const _PlanAppBarTitle(),
+        centerTitle: true,
+        backgroundColor: _PlanColors.background,
+        surfaceTintColor: _PlanColors.background,
         actions: [
           IconButton(
             tooltip: l10n.planDeleteAction,
             onPressed: () => _confirmDelete(context, ref),
-            icon: const Icon(Icons.delete_outline),
+            icon: Icon(Icons.delete_outline, color: _PlanColors.textMuted),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          _PlanProgressPanel(progress: progress),
-          const SizedBox(height: 12),
-          Text(
-            l10n.planTodayReading,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          if (todayDay.isEmpty)
-            Text(l10n.planNoReadingToday)
-          else
-            for (final day in todayDay)
-              _PlanDayCard(day: day, today: today, readChapters: readChapters),
-          const SizedBox(height: 18),
-          Text(
-            l10n.planSchedule,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          for (final day in days)
-            _PlanDayCard(day: day, today: today, readChapters: readChapters),
-        ],
-      ),
+      body: selectedDay == null
+          ? Center(child: Text(l10n.planNoReadingToday))
+          : GestureDetector(
+              key: const Key('plan-day-swipe-area'),
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragEnd: (details) {
+                final velocity = details.primaryVelocity ?? 0;
+                if (velocity < -200) {
+                  _selectDay(selectedIndex + 1, days.length);
+                } else if (velocity > 200) {
+                  _selectDay(selectedIndex - 1, days.length);
+                }
+              },
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  _DayNavigationCard(
+                    day: selectedDay,
+                    canGoPrevious: selectedIndex > 0,
+                    canGoNext: selectedIndex < days.length - 1,
+                    onPrevious: () =>
+                        _selectDay(selectedIndex - 1, days.length),
+                    onNext: () => _selectDay(selectedIndex + 1, days.length),
+                  ),
+                  const SizedBox(height: 14),
+                  _TotalProgressCard(
+                    plan: widget.plan,
+                    days: days,
+                    readChapters: readChapters,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const StatistikaScreen(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _DailyReadingsCard(
+                    day: selectedDay,
+                    readChapters: readChapters,
+                  ),
+                ],
+              ),
+            ),
     );
+  }
+
+  int _effectiveSelectedIndex(List<PlanDay> days, DateTime today) {
+    if (days.isEmpty) return 0;
+    final existing = _selectedDayIndex;
+    if (existing != null) return existing.clamp(0, days.length - 1);
+    final todayIndex = days.indexWhere(
+      (day) => _sameDate(day.scheduledDate, today),
+    );
+    if (todayIndex != -1) return todayIndex;
+    final nextIndex = days.indexWhere(
+      (day) => day.scheduledDate.isAfter(today),
+    );
+    return nextIndex == -1 ? days.length - 1 : nextIndex;
+  }
+
+  void _selectDay(int index, int totalDays) {
+    if (index < 0 || index >= totalDays) return;
+    setState(() => _selectedDayIndex = index);
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
@@ -315,53 +366,110 @@ class _ExistingPlanScreen extends ConsumerWidget {
   }
 }
 
-class _PlanProgressPanel extends StatelessWidget {
-  final PlanProgress progress;
-
-  const _PlanProgressPanel({required this.progress});
+class _BooksNavLeading extends StatelessWidget {
+  const _BooksNavLeading();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final label = progress.isAhead
-        ? l10n.planAhead
-        : progress.isBehind
-        ? l10n.planBehind
-        : l10n.planOnTrack;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(8),
+    return TextButton.icon(
+      key: const Key('plan-books-nav-button'),
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const BibliaScreen()),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+      icon: const Icon(Icons.menu_book_outlined, size: 18),
+      label: Text(l10n.navBooks),
+      style: TextButton.styleFrom(
+        foregroundColor: _PlanColors.goldDark,
+        padding: const EdgeInsets.only(left: 8),
+      ),
+    );
+  }
+}
+
+class _PlanAppBarTitle extends StatelessWidget {
+  const _PlanAppBarTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Icon(Icons.church_outlined, color: _PlanColors.gold, size: 28);
+  }
+}
+
+class _TotalProgressCard extends StatelessWidget {
+  final ReadingPlan plan;
+  final List<PlanDay> days;
+  final Set<ChapterRef> readChapters;
+  final VoidCallback onTap;
+
+  const _TotalProgressCard({
+    required this.plan,
+    required this.days,
+    required this.readChapters,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final total = _totalPlanChapters(days);
+    final completed = _completedPlanChapters(days, readChapters);
+    final totalBooks = plan.selectedBookIds.length;
+    final completedBooks = _completedBooksCount(plan, days, readChapters);
+    final percent = total == 0 ? 0.0 : completed / total;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: _PlanCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(label, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: progress.totalPlanChapters == 0
-                  ? 0
-                  : progress.completedPlanChapters / progress.totalPlanChapters,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.planTotalProgressTitle,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: _PlanColors.text,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${(percent * 100).round()} %',
+                  key: const Key('plan-total-progress-percent'),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: _PlanColors.goldDark,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                key: const Key('plan-total-progress-bar'),
+                value: percent,
+                minHeight: 9,
+                backgroundColor: _PlanColors.goldSoft,
+                valueColor: AlwaysStoppedAnimation(_PlanColors.gold),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              '${l10n.planCompletedChapters}: '
-              '${progress.completedPlanChapters}/${progress.totalPlanChapters}',
+              '$completed/$total ${l10n.planChaptersCompletedLower}',
+              key: const Key('plan-total-progress-chapters'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: _PlanColors.textMuted),
             ),
             Text(
-              '${l10n.planExpectedByToday}: '
-              '${progress.expectedChaptersByToday}',
-            ),
-            Text(
-              '${l10n.planAheadBehind}: '
-              '${progress.aheadBehindChapterCount}',
-            ),
-            Text(
-              '${l10n.planCompletionPercent}: '
-              '${progress.completionPercent.toStringAsFixed(1)} %',
+              '$completedBooks / $totalBooks ${l10n.planBooksUnit}',
+              key: const Key('plan-total-progress-books'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: _PlanColors.textMuted),
             ),
           ],
         ),
@@ -370,85 +478,390 @@ class _PlanProgressPanel extends StatelessWidget {
   }
 }
 
-class _PlanDayCard extends ConsumerWidget {
+class _DayNavigationCard extends StatelessWidget {
   final PlanDay day;
-  final DateTime today;
+  final bool canGoPrevious;
+  final bool canGoNext;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+
+  const _DayNavigationCard({
+    required this.day,
+    required this.canGoPrevious,
+    required this.canGoNext,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return _PlanCard(
+      child: Row(
+        children: [
+          _RoundGoldIconButton(
+            key: const Key('plan-previous-day-button'),
+            icon: Icons.chevron_left,
+            onPressed: canGoPrevious ? onPrevious : null,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  '${l10n.planDay} ${day.dayNumber}',
+                  key: Key('plan-current-day-${day.dayNumber}'),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: _PlanColors.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatDate(day.scheduledDate),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: _PlanColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _RoundGoldIconButton(
+            key: const Key('plan-next-day-button'),
+            icon: Icons.chevron_right,
+            onPressed: canGoNext ? onNext : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyReadingsCard extends StatelessWidget {
+  final PlanDay day;
   final Set<ChapterRef> readChapters;
 
-  const _PlanDayCard({
-    required this.day,
-    required this.today,
-    required this.readChapters,
-  });
+  const _DailyReadingsCard({required this.day, required this.readChapters});
+
+  @override
+  Widget build(BuildContext context) {
+    final grouped = _groupChaptersByBook(day.chapters);
+    final l10n = AppLocalizations.of(context)!;
+    return _PlanCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.planTodayReading,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: _PlanColors.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (final group in grouped) ...[
+            Text(
+              _bookChapterRangeLabel(group.book, group.chapters),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: _PlanColors.goldDark,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            for (final chapter in group.chapters)
+              _PlanChapterCheckboxTile(
+                chapter: chapter,
+                isRead: readChapters.contains(chapter),
+              ),
+            if (group != grouped.last) const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class BooksInPlanScreen extends ConsumerWidget {
+  final ReadingPlan plan;
+
+  const BooksInPlanScreen({super.key, required this.plan});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final isToday = _sameDate(day.scheduledDate, today);
+    final days =
+        ref.watch(planDaysProvider(plan.id)).value ?? const <PlanDay>[];
+    final readChapters =
+        ref.watch(readChaptersProvider).value ?? const <ChapterRef>{};
+    final progress = PlanProgressCalculator.calculate(
+      plan: plan,
+      days: days,
+      readChapters: readChapters,
+      today: ref.watch(todayProvider),
+    );
+    final bookProgress = _bookProgressForPlan(plan, days, readChapters);
+
+    return Scaffold(
+      backgroundColor: _PlanColors.background,
+      appBar: AppBar(
+        title: Text(l10n.planBooksInPlan),
+        backgroundColor: _PlanColors.background,
+        surfaceTintColor: _PlanColors.background,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          _PlanCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.planCurrentPlan,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _PlanColors.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${progress.completedPlanChapters}/${progress.totalPlanChapters} '
+                  '${l10n.planChaptersCompletedLower}',
+                  key: const Key('plan-books-summary'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: _PlanColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          for (final progress in bookProgress)
+            _PlanBookProgressTile(progress: progress),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanBookProgressTile extends ConsumerWidget {
+  final _BookProgress progress;
+
+  const _PlanBookProgressTile({required this.progress});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final completed = progress.completedChapters;
+    final total = progress.chapters.length;
+    final isComplete = total > 0 && completed == total;
+    final percent = total == 0 ? 0.0 : completed / total;
 
     return Card(
-      key: Key('plan-day-${day.dayNumber}'),
-      color: isToday ? Theme.of(context).colorScheme.primaryContainer : null,
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              '${l10n.planDay} ${day.dayNumber} - ${_formatDate(day.scheduledDate)}'
-              '${isToday ? ' (${l10n.planToday})' : ''}',
-              style: Theme.of(context).textTheme.titleMedium,
+      key: Key('plan-book-progress-${progress.book.id}'),
+      elevation: 0,
+      color: _PlanColors.card,
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.fromLTRB(14, 8, 10, 8),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          leading: CircleAvatar(
+            backgroundColor: _PlanColors.goldSoft,
+            foregroundColor: _PlanColors.goldDark,
+            child: const Icon(Icons.menu_book_outlined, size: 20),
+          ),
+          title: Text(
+            progress.book.name,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: _PlanColors.text,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 8),
-            for (final chapter in day.chapters)
-              _PlanChapterTile(
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 7),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '$completed/$total',
+                  key: Key('plan-book-count-${progress.book.id}'),
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    key: Key('plan-book-progress-bar-${progress.book.id}'),
+                    value: percent,
+                    minHeight: 7,
+                    backgroundColor: _PlanColors.goldSoft,
+                    valueColor: AlwaysStoppedAnimation(_PlanColors.gold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          trailing: Checkbox(
+            key: Key('plan-book-complete-${progress.book.id}'),
+            value: isComplete,
+            activeColor: _PlanColors.goldDark,
+            onChanged: (_) => _toggleBook(context, ref, isComplete),
+          ),
+          children: [
+            for (final chapter in progress.chapters)
+              _PlanChapterCheckboxTile(
                 chapter: chapter,
-                isRead: readChapters.contains(chapter),
+                isRead: progress.readChapters.contains(chapter),
               ),
           ],
         ),
       ),
     );
   }
+
+  Future<void> _toggleBook(
+    BuildContext context,
+    WidgetRef ref,
+    bool isComplete,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final dao = ref.read(progressDaoProvider);
+    if (isComplete) {
+      for (final chapter in progress.chapters) {
+        await dao.markUnread(chapter);
+      }
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.planCompleteBookTitle),
+        content: Text('${l10n.planCompleteBookMessage} ${progress.book.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.planCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.planCompleteBookAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final now = DateTime.now();
+    for (final chapter in progress.chapters) {
+      await dao.markRead(chapter, now);
+    }
+  }
 }
 
-class _PlanChapterTile extends ConsumerWidget {
+class _PlanChapterCheckboxTile extends ConsumerWidget {
   final ChapterRef chapter;
   final bool isRead;
 
-  const _PlanChapterTile({required this.chapter, required this.isRead});
+  const _PlanChapterCheckboxTile({required this.chapter, required this.isRead});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final book = _bookById(chapter.bookId);
-    final label = '${book.shortName} ${chapter.chapterNumber}';
+    final label = '${book.name} ${chapter.chapterNumber}';
 
-    return ListTile(
+    return CheckboxListTile(
       key: Key('plan-chapter-${chapter.bookId}-${chapter.chapterNumber}'),
-      dense: true,
+      value: isRead,
+      activeColor: _PlanColors.goldDark,
+      checkboxShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4),
+      ),
+      controlAffinity: ListTileControlAffinity.leading,
       contentPadding: EdgeInsets.zero,
-      leading: Icon(isRead ? Icons.check_circle : Icons.radio_button_unchecked),
       title: Text(label),
       subtitle: Text(
         isRead ? l10n.planChapterCompleted : l10n.planChapterIncomplete,
       ),
-      onTap: () => context.push(
-        '/biblia/reader/${chapter.bookId}/${chapter.chapterNumber}',
+      onChanged: (_) => _toggle(ref),
+      secondary: IconButton(
+        key: Key(
+          'plan-open-chapter-${chapter.bookId}-${chapter.chapterNumber}',
+        ),
+        tooltip: label,
+        icon: Icon(Icons.chevron_right, color: _PlanColors.textMuted),
+        onPressed: () => _openReader(context),
       ),
-      trailing: IconButton(
-        tooltip: isRead ? l10n.readerMarkUnread : l10n.readerMarkRead,
-        icon: Icon(isRead ? Icons.undo : Icons.check),
-        onPressed: () async {
-          final dao = ref.read(progressDaoProvider);
-          if (isRead) {
-            await dao.markUnread(chapter);
-          } else {
-            await dao.markRead(chapter, DateTime.now());
-          }
-        },
+    );
+  }
+
+  Future<void> _toggle(WidgetRef ref) async {
+    final dao = ref.read(progressDaoProvider);
+    if (isRead) {
+      await dao.markUnread(chapter);
+    } else {
+      await dao.markRead(chapter, DateTime.now());
+    }
+  }
+
+  void _openReader(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ReaderScreen(
+          bookId: chapter.bookId,
+          chapterNumber: chapter.chapterNumber,
+          canMarkRead: true,
+        ),
       ),
+    );
+  }
+}
+
+class _RoundGoldIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  const _RoundGoldIconButton({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filledTonal(
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: _PlanColors.goldSoft,
+        foregroundColor: _PlanColors.goldDark,
+        disabledBackgroundColor: _PlanColors.cardMuted,
+        disabledForegroundColor: _PlanColors.textMuted.withValues(alpha: 0.45),
+      ),
+      icon: Icon(icon),
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  final Widget child;
+
+  const _PlanCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: _PlanColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _PlanColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(padding: const EdgeInsets.all(16), child: child),
     );
   }
 }
@@ -504,6 +917,28 @@ class _PreviewLine extends StatelessWidget {
   }
 }
 
+class _BookChapterGroup {
+  final BibleBook book;
+  final List<ChapterRef> chapters;
+
+  const _BookChapterGroup({required this.book, required this.chapters});
+}
+
+class _BookProgress {
+  final BibleBook book;
+  final List<ChapterRef> chapters;
+  final Set<ChapterRef> readChapters;
+
+  const _BookProgress({
+    required this.book,
+    required this.chapters,
+    required this.readChapters,
+  });
+
+  int get completedChapters =>
+      chapters.where((chapter) => readChapters.contains(chapter)).length;
+}
+
 class _BookGroup {
   final CatholicCategory category;
   final String title;
@@ -536,4 +971,86 @@ String _formatDate(DateTime date) {
 
 bool _sameDate(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+int _completedCount(List<ChapterRef> chapters, Set<ChapterRef> readChapters) {
+  return chapters.where((chapter) => readChapters.contains(chapter)).length;
+}
+
+int _totalPlanChapters(List<PlanDay> days) {
+  return days.fold(0, (sum, day) => sum + day.chapters.length);
+}
+
+int _completedPlanChapters(List<PlanDay> days, Set<ChapterRef> readChapters) {
+  return days.fold(
+    0,
+    (sum, day) => sum + _completedCount(day.chapters, readChapters),
+  );
+}
+
+int _completedBooksCount(
+  ReadingPlan plan,
+  List<PlanDay> days,
+  Set<ChapterRef> readChapters,
+) {
+  return _bookProgressForPlan(plan, days, readChapters)
+      .where(
+        (bp) => bp.chapters.isNotEmpty && bp.completedChapters == bp.chapters.length,
+      )
+      .length;
+}
+
+List<_BookChapterGroup> _groupChaptersByBook(List<ChapterRef> chapters) {
+  final groups = <_BookChapterGroup>[];
+  for (final chapter in chapters) {
+    if (groups.isNotEmpty && groups.last.book.id == chapter.bookId) {
+      groups.last.chapters.add(chapter);
+    } else {
+      groups.add(
+        _BookChapterGroup(book: _bookById(chapter.bookId), chapters: [chapter]),
+      );
+    }
+  }
+  return groups;
+}
+
+String _bookChapterRangeLabel(BibleBook book, List<ChapterRef> chapters) {
+  if (chapters.length == 1) {
+    return '${book.name} ${chapters.single.chapterNumber}';
+  }
+  return '${book.name} ${chapters.first.chapterNumber}–${chapters.last.chapterNumber}';
+}
+
+List<_BookProgress> _bookProgressForPlan(
+  ReadingPlan plan,
+  List<PlanDay> days,
+  Set<ChapterRef> readChapters,
+) {
+  final chaptersByBook = <String, List<ChapterRef>>{};
+  for (final day in days) {
+    for (final chapter in day.chapters) {
+      chaptersByBook.putIfAbsent(chapter.bookId, () => []).add(chapter);
+    }
+  }
+  return [
+    for (final bookId in plan.selectedBookIds)
+      if (chaptersByBook.containsKey(bookId))
+        _BookProgress(
+          book: _bookById(bookId),
+          chapters: chaptersByBook[bookId]!,
+          readChapters: readChapters,
+        ),
+  ];
+}
+
+class _PlanColors {
+  static const background = Color(0xFFFFFCF7);
+  static const card = Colors.white;
+  static const cardMuted = Color(0xFFF3EEE6);
+  static const cardBorder = Color(0xFFF0E3CC);
+  static const gold = Color(0xFFD6A645);
+  static const goldDark = Color(0xFF9B6A10);
+  static const goldSoft = Color(0xFFF7E8C3);
+  static const text = Color(0xFF2B2418);
+  static const textMuted = Color(0xFF786E5F);
 }
