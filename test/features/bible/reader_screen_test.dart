@@ -6,7 +6,6 @@ import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:bible_tracker/shared/providers/plan_providers.dart';
-import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -134,28 +133,7 @@ void main() {
     expect(find.text('Označiť ako neprečítané'), findsOneWidget);
   });
 
-  testWidgets('next and previous buttons navigate chapters', (tester) async {
-    final db = _openTestDb();
-    await _insertChapter(db, const ChapterRef('gen', 1), 'Genesis one');
-    await _insertChapter(db, const ChapterRef('gen', 2), 'Genesis two');
-
-    await tester.pumpWidget(_testReader(db, const ChapterRef('gen', 1)));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('reader-next-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Genezis 2'), findsOneWidget);
-    expect(_richText('Genesis two'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('reader-previous-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Genezis 1'), findsOneWidget);
-    expect(_richText('Genesis one'), findsOneWidget);
-  });
-
-  testWidgets('boundary Genesis 50 navigates to Exodus 1', (tester) async {
+  testWidgets('swipe boundary Genesis 50 navigates to Exodus 1', (tester) async {
     final db = _openTestDb();
     await _insertChapter(db, const ChapterRef('gen', 50), 'Genesis fifty');
     await _insertChapter(db, const ChapterRef('exod', 1), 'Exodus one');
@@ -163,24 +141,30 @@ void main() {
     await tester.pumpWidget(_testReader(db, const ChapterRef('gen', 50)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('reader-next-button')));
+    await tester.drag(
+      find.byKey(const Key('reader-swipe-area')),
+      const Offset(-500, 0),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Exodus 1'), findsOneWidget);
     expect(_richText('Exodus one'), findsOneWidget);
   });
 
-  testWidgets('boundary Genesis 1 has no previous chapter', (tester) async {
+  testWidgets('swipe right at first chapter stays on Genesis 1', (tester) async {
     final db = _openTestDb();
     await _insertChapter(db, const ChapterRef('gen', 1), 'Genesis one');
 
     await tester.pumpWidget(_testReader(db, const ChapterRef('gen', 1)));
     await tester.pumpAndSettle();
 
-    final previousButton = tester.widget<AppOutlinedButton>(
-      find.byKey(const Key('reader-previous-button')),
+    await tester.drag(
+      find.byKey(const Key('reader-swipe-area')),
+      const Offset(500, 0),
     );
-    expect(previousButton.onPressed, isNull);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Genezis 1'), findsOneWidget);
   });
 
   testWidgets('swipe navigation moves next and previous', (tester) async {

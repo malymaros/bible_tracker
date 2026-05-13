@@ -403,50 +403,37 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
       ),
       body: selectedDay == null
           ? Center(child: Text(l10n.planNoReadingToday))
-          : GestureDetector(
-              key: const Key('plan-day-swipe-area'),
-              behavior: HitTestBehavior.opaque,
-              onHorizontalDragEnd: (details) {
-                final velocity = details.primaryVelocity ?? 0;
-                if (velocity < -200) {
-                  _selectDay(selectedIndex + 1, days.length);
-                } else if (velocity > 200) {
-                  _selectDay(selectedIndex - 1, days.length);
-                }
-              },
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                children: [
-                  _DayNavigationCard(
-                    day: selectedDay,
-                    totalDays: days.length,
-                    canGoPrevious: selectedIndex > 0,
-                    canGoNext: selectedIndex < days.length - 1,
-                    onPrevious: () =>
-                        _selectDay(selectedIndex - 1, days.length),
-                    onNext: () => _selectDay(selectedIndex + 1, days.length),
-                  ),
-                  const SizedBox(height: 14),
-                  _TotalProgressCard(
-                    plan: widget.plan,
-                    days: days,
-                    readChapters: readChapters,
-                    progress: progress,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const StatistikaScreen(),
-                      ),
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                _DayNavigationCard(
+                  day: selectedDay,
+                  totalDays: days.length,
+                  canGoPrevious: selectedIndex > 0,
+                  canGoNext: selectedIndex < days.length - 1,
+                  onPrevious: () => _selectDay(selectedIndex - 1, days.length),
+                  onNext: () => _selectDay(selectedIndex + 1, days.length),
+                ),
+                const SizedBox(height: 14),
+                _TotalProgressCard(
+                  plan: widget.plan,
+                  days: days,
+                  readChapters: readChapters,
+                  progress: progress,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const StatistikaScreen(),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  _BooksInPlanNavCard(plan: widget.plan),
-                  const SizedBox(height: 18),
-                  _DailyReadingsCard(
-                    day: selectedDay,
-                    readChapters: readChapters,
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 10),
+                _BooksInPlanNavCard(plan: widget.plan),
+                const SizedBox(height: 18),
+                _DailyReadingsCard(
+                  day: selectedDay,
+                  readChapters: readChapters,
+                ),
+              ],
             ),
     );
   }

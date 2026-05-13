@@ -120,22 +120,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               return _MissingChapterView(
                 book: book,
                 chapterRef: _chapterRef,
-                previous: previous,
-                next: next,
                 isDownloading: _isDownloadingBook,
                 onDownloadBook: _downloadBook,
                 onOpenSsv: _showSsvUrl,
-                onPrevious: () => _goTo(previous),
-                onNext: () => _goTo(next),
               );
             }
-            return _DownloadedChapterView(
-              row: row,
-              previous: previous,
-              next: next,
-              onPrevious: () => _goTo(previous),
-              onNext: () => _goTo(next),
-            );
+            return _DownloadedChapterView(row: row);
           },
         ),
       ),
@@ -170,63 +160,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
 class _DownloadedChapterView extends StatelessWidget {
   final ChapterTextRow row;
-  final ChapterRef? previous;
-  final ChapterRef? next;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
 
-  const _DownloadedChapterView({
-    required this.row,
-    required this.previous,
-    required this.next,
-    required this.onPrevious,
-    required this.onNext,
-  });
+  const _DownloadedChapterView({required this.row});
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            key: const Key('reader-scroll'),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            child: AppCard(
-              padding: const EdgeInsets.all(20),
-              child: _ChapterHtml(htmlContent: row.htmlContent),
-            ),
-          ),
-        ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: AppOutlinedButton(
-                    key: const Key('reader-previous-button'),
-                    onPressed: previous == null ? null : onPrevious,
-                    icon: const Icon(Icons.chevron_left),
-                    label: Text(l10n.readerPreviousChapter),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppOutlinedButton(
-                    key: const Key('reader-next-button'),
-                    onPressed: next == null ? null : onNext,
-                    icon: const Icon(Icons.chevron_right),
-                    label: Text(l10n.readerNextChapter),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return SingleChildScrollView(
+      key: const Key('reader-scroll'),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: AppCard(
+        padding: const EdgeInsets.all(20),
+        child: _ChapterHtml(htmlContent: row.htmlContent),
+      ),
     );
   }
 }
@@ -234,24 +179,16 @@ class _DownloadedChapterView extends StatelessWidget {
 class _MissingChapterView extends StatelessWidget {
   final BibleBook book;
   final ChapterRef chapterRef;
-  final ChapterRef? previous;
-  final ChapterRef? next;
   final bool isDownloading;
   final VoidCallback onDownloadBook;
   final VoidCallback onOpenSsv;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
 
   const _MissingChapterView({
     required this.book,
     required this.chapterRef,
-    required this.previous,
-    required this.next,
     required this.isDownloading,
     required this.onDownloadBook,
     required this.onOpenSsv,
-    required this.onPrevious,
-    required this.onNext,
   });
 
   @override
@@ -296,28 +233,6 @@ class _MissingChapterView extends StatelessWidget {
               onPressed: onOpenSsv,
               icon: const Icon(Icons.open_in_browser),
               label: Text(l10n.readerOpenSsv),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: AppOutlinedButton(
-                    key: const Key('reader-previous-button'),
-                    onPressed: previous == null ? null : onPrevious,
-                    icon: const Icon(Icons.chevron_left),
-                    label: Text(l10n.readerPreviousChapter),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppOutlinedButton(
-                    key: const Key('reader-next-button'),
-                    onPressed: next == null ? null : onNext,
-                    icon: const Icon(Icons.chevron_right),
-                    label: Text(l10n.readerNextChapter),
-                  ),
-                ),
-              ],
             ),
           ],
         ),

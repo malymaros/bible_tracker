@@ -535,7 +535,7 @@ abstract class AppLocalizations {
   /// No description provided for @statsCompletedBooksInPlan.
   ///
   /// In sk, this message translates to:
-  /// **'Dokončené knihy v pláne'**
+  /// **'Prečítané knihy'**
   String get statsCompletedBooksInPlan;
 
   /// No description provided for @statsRemainingBooksInPlan.
