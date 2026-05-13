@@ -262,6 +262,18 @@ abstract class AppLocalizations {
   /// **'Vybrané knihy'**
   String get planSelectedBooks;
 
+  /// No description provided for @planSelectedVerses.
+  ///
+  /// In sk, this message translates to:
+  /// **'Vybrané verše'**
+  String get planSelectedVerses;
+
+  /// No description provided for @planApproxVersesPerDay.
+  ///
+  /// In sk, this message translates to:
+  /// **'Cca veršov/deň'**
+  String get planApproxVersesPerDay;
+
   /// No description provided for @planDateRange.
   ///
   /// In sk, this message translates to:

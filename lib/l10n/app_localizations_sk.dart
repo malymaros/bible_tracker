@@ -93,6 +93,12 @@ class AppLocalizationsSk extends AppLocalizations {
   String get planSelectedBooks => 'Vybrané knihy';
 
   @override
+  String get planSelectedVerses => 'Vybrané verše';
+
+  @override
+  String get planApproxVersesPerDay => 'Cca veršov/deň';
+
+  @override
   String get planDateRange => 'Rozsah dátumov';
 
   @override

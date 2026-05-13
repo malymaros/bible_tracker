@@ -117,6 +117,8 @@
   "planIncludedBooks": "Zahrnuté knihy",
   "planSelectedChapters": "Vybrané kapitoly",
   "planSelectedBooks": "Vybrané knihy",
+  "planSelectedVerses": "Vybrané verše",
+  "planApproxVersesPerDay": "Cca veršov/deň",
   "planDateRange": "Rozsah dátumov",
   "planDateRangeUnavailable": "nedostupné",
   "planCreateAction": "Vytvoriť plán",

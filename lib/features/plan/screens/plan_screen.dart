@@ -1,4 +1,5 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
+import 'package:bible_tracker/core/constants/verse_counts.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/utils/chapter_count_format.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
@@ -88,6 +89,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
     final l10n = AppLocalizations.of(context)!;
     final selectedBooks = _selectedBooks;
     final selectedChapters = _selectedChapterCount;
+    final selectedVerses = _selectedVerseCount;
     final totalDays = int.tryParse(_daysController.text.trim());
     final validation = _validationMessage(l10n, totalDays, selectedChapters);
     final endDate = totalDays == null || totalDays < 1
@@ -174,6 +176,18 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
                   ),
                   const SizedBox(height: 6),
                   _PreviewLine(
+                    label: l10n.planSelectedVerses,
+                    value: '$selectedVerses',
+                  ),
+                  const SizedBox(height: 6),
+                  _PreviewLine(
+                    label: l10n.planApproxVersesPerDay,
+                    value: totalDays == null || totalDays < 1
+                        ? l10n.planDateRangeUnavailable
+                        : '~${(selectedVerses / totalDays).round()}',
+                  ),
+                  const SizedBox(height: 6),
+                  _PreviewLine(
                     label: l10n.planDateRange,
                     value: endDate == null
                         ? l10n.planDateRangeUnavailable
@@ -255,6 +269,15 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
 
   int get _selectedChapterCount {
     return _selectedBooks.fold(0, (sum, book) => sum + book.chapterCount);
+  }
+
+  int get _selectedVerseCount {
+    var total = 0;
+    for (final book in _selectedBooks) {
+      final counts = kVerseCountsByBook[book.id];
+      if (counts != null) total += counts.reduce((a, b) => a + b);
+    }
+    return total;
   }
 
   String? _validationMessage(

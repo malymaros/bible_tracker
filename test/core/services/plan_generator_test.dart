@@ -1,4 +1,5 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
+import 'package:bible_tracker/core/constants/verse_counts.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/services/plan_generator.dart';
@@ -11,16 +12,24 @@ import 'package:flutter_test/flutter_test.dart';
 
 BibleBook _book(String id) => kBibleBooks.firstWhere((b) => b.id == id);
 
+int _totalVerses(Iterable<ChapterRef> chapters) => chapters.fold(
+      0,
+      (sum, c) => sum + verseCountForChapter(c.bookId, c.chapterNumber),
+    );
+
+int _bookVerseTotal(String bookId) =>
+    kVerseCountsByBook[bookId]!.reduce((a, b) => a + b);
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 void main() {
-  // Common books used across multiple tests
-  final genesis = _book('gen'); // 50 chapters
-  final exodus = _book('exod'); // 40 chapters
-  final matthew = _book('matt'); // 28 chapters
-  final obadiah = _book('obad'); //  1 chapter
+  final genesis = _book('gen');   // 50 chapters
+  final exodus = _book('exod');   // 40 chapters
+  final matthew = _book('matt');  // 28 chapters
+  final obadiah = _book('obad');  //  1 chapter
+  final psalms = _book('ps');     // 150 chapters (highly uneven verse lengths)
 
   const planId = 'test-plan';
   final anyDate = DateTime(2024, 1, 1);
@@ -55,8 +64,6 @@ void main() {
   // ── 365-day full Bible plan ───────────────────────────────────────────────
 
   group('365-day full Bible plan', () {
-    // 1334 ~/ 365 = 3 (base), 1334 % 365 = 239 (remainder)
-    // Days 1–239 get 4 chapters; days 240–365 get 3.
     late final days = PlanGenerator.generatePlan(
       planId: planId,
       startDate: anyDate,
@@ -68,24 +75,32 @@ void main() {
       expect(days.length, 365);
     });
 
-    test('first 239 days have 4 chapters', () {
-      for (var i = 0; i < 239; i++) {
-        expect(
-          days[i].chapters.length,
-          4,
-          reason: 'Day ${i + 1} should have 4 chapters',
-        );
+    test('no day is empty', () {
+      for (final d in days) {
+        expect(d.chapters, isNotEmpty, reason: 'Day ${d.dayNumber} is empty');
       }
     });
 
-    test('remaining 126 days have 3 chapters', () {
-      for (var i = 239; i < 365; i++) {
-        expect(
-          days[i].chapters.length,
-          3,
-          reason: 'Day ${i + 1} should have 3 chapters',
-        );
-      }
+    test('total assigned chapters equals 1334', () {
+      final total = days.fold<int>(0, (sum, d) => sum + d.chapters.length);
+      expect(total, 1334);
+    });
+
+    test('total assigned verses equals full-Bible verse total', () {
+      final assigned = days.fold<int>(0, (s, d) => s + _totalVerses(d.chapters));
+      final expected = kVerseCountsByBook.values
+          .fold<int>(0, (s, c) => s + c.reduce((a, b) => a + b));
+      expect(assigned, expected);
+    });
+
+    test('chapters are in canonical SSV order across all days', () {
+      final flat = [for (final d in days) ...d.chapters];
+      expect(flat, ChapterCursor.full.toList());
+    });
+
+    test('no duplicate chapters', () {
+      final flat = [for (final d in days) ...d.chapters];
+      expect(flat.toSet().length, flat.length);
     });
   });
 
@@ -120,43 +135,84 @@ void main() {
     });
   });
 
-  // ── Remainder distribution ────────────────────────────────────────────────
+  // ── Verse-based distribution ──────────────────────────────────────────────
 
-  group('remainder distribution', () {
-    // Genesis: 50 chapters, 7 days → base=7, remainder=1
-    // Day 1 gets 8 chapters; days 2–7 get 7 each.
-    late final days = PlanGenerator.generatePlan(
-      planId: planId,
-      startDate: anyDate,
-      totalDays: 7,
-      selectedBooks: [genesis],
-    );
-
-    test('first day has base + 1 chapters when remainder is 1', () {
-      expect(days[0].chapters.length, 8);
+  group('verse-based distribution', () {
+    test('total assigned verses equals selected verses (Genesis, 10 days)', () {
+      final days = PlanGenerator.generatePlan(
+        planId: planId,
+        startDate: anyDate,
+        totalDays: 10,
+        selectedBooks: [genesis],
+      );
+      final assigned = days.fold<int>(0, (s, d) => s + _totalVerses(d.chapters));
+      expect(assigned, _bookVerseTotal('gen'));
     });
 
-    test('subsequent days have base chapters', () {
-      for (var i = 1; i < 7; i++) {
-        expect(
-          days[i].chapters.length,
-          7,
-          reason: 'Day ${i + 1} should have 7 chapters',
-        );
+    test('no day is empty (Genesis, 10 days)', () {
+      final days = PlanGenerator.generatePlan(
+        planId: planId,
+        startDate: anyDate,
+        totalDays: 10,
+        selectedBooks: [genesis],
+      );
+      for (final d in days) {
+        expect(d.chapters, isNotEmpty, reason: 'Day ${d.dayNumber} is empty');
       }
     });
 
-    test('total is still 50 after distribution', () {
-      final total = days.fold<int>(0, (sum, d) => sum + d.chapters.length);
-      expect(total, 50);
+    test(
+        'verse mode reduces imbalance vs pure chapter-count split '
+        '(Psalms, 2 days)', () {
+      // Psalms has highly uneven chapter lengths: Ps 117 = 2 verses,
+      // Ps 119 = 176 verses.  A naive 75/75 chapter split puts Ps 119 in
+      // day 2 and creates a large verse imbalance (~138 verses).
+      // Verse mode should produce an imbalance well below that.
+      final days = PlanGenerator.generatePlan(
+        planId: planId,
+        startDate: anyDate,
+        totalDays: 2,
+        selectedBooks: [psalms],
+      );
+
+      final d1 = _totalVerses(days[0].chapters);
+      final d2 = _totalVerses(days[1].chapters);
+      final imbalance = (d1 - d2).abs();
+
+      // Chapter-count split (75/75) yields ≈ 138-verse imbalance.
+      // Verse mode must do better.
+      expect(imbalance, lessThan(100));
+    });
+
+    test('output is deterministic', () {
+      final days1 = PlanGenerator.generatePlan(
+        planId: planId,
+        startDate: anyDate,
+        totalDays: 90,
+        selectedBooks: kBibleBooks,
+      );
+      final days2 = PlanGenerator.generatePlan(
+        planId: planId,
+        startDate: anyDate,
+        totalDays: 90,
+        selectedBooks: kBibleBooks,
+      );
+      for (var i = 0; i < days1.length; i++) {
+        expect(
+          days1[i].chapters,
+          days2[i].chapters,
+          reason: 'Day ${i + 1} differs between two identical calls',
+        );
+      }
     });
   });
 
   // ── Cross-book boundary ───────────────────────────────────────────────────
 
-  group('cross-book boundary', () {
-    // Genesis (50) + Exodus (40) = 90 chapters, 3 days = 30 per day.
-    // Day 1: Gen 1–30.  Day 2: Gen 31–50 + Ex 1–10.  Day 3: Ex 11–40.
+  group('cross-book boundary (Genesis + Exodus, 3 days)', () {
+    // Gen (50 ch) + Ex (40 ch) = 90 chapters.
+    // The verse-based algorithm will still place some chapters from Genesis and
+    // some from Exodus in day 2 because the first day cannot fit both books.
     late final days = PlanGenerator.generatePlan(
       planId: planId,
       startDate: anyDate,
@@ -164,27 +220,35 @@ void main() {
       selectedBooks: [genesis, exodus],
     );
 
-    test('day 2 contains last chapter of Genesis', () {
-      expect(days[1].chapters.contains(const ChapterRef('gen', 50)), isTrue);
-    });
-
-    test('day 2 contains first chapter of Exodus', () {
-      expect(days[1].chapters.contains(const ChapterRef('exod', 1)), isTrue);
-    });
-
-    test('day 1 stays within Genesis', () {
+    test('day 1 contains only Genesis chapters', () {
       expect(days[0].chapters.every((c) => c.bookId == 'gen'), isTrue);
     });
 
-    test('day 3 stays within Exodus', () {
+    test('day 3 contains only Exodus chapters', () {
       expect(days[2].chapters.every((c) => c.bookId == 'exod'), isTrue);
+    });
+
+    test('day 2 spans the Genesis–Exodus boundary', () {
+      final bookIds = {for (final c in days[1].chapters) c.bookId};
+      expect(bookIds, containsAll(['gen', 'exod']));
+    });
+
+    test('total chapters is 90', () {
+      final total = days.fold<int>(0, (s, d) => s + d.chapters.length);
+      expect(total, 90);
+    });
+
+    test('no chapter skipped — all Genesis and Exodus chapters present', () {
+      final flat = [for (final d in days) ...d.chapters];
+      final genChapters = List.generate(50, (i) => ChapterRef('gen', i + 1));
+      final exChapters = List.generate(40, (i) => ChapterRef('exod', i + 1));
+      expect(flat, [...genChapters, ...exChapters]);
     });
   });
 
   // ── Selected subset ───────────────────────────────────────────────────────
 
   group('selected subset (Genesis + Matthew)', () {
-    // Genesis: 50 ch, Matthew: 28 ch → total 78 ch, 2 days = 39 each.
     late final days = PlanGenerator.generatePlan(
       planId: planId,
       startDate: anyDate,
@@ -212,7 +276,6 @@ void main() {
     });
 
     test('books passed out of canonical order are reordered', () {
-      // Pass Matthew before Genesis — plan must still start with Genesis.
       final reversed = PlanGenerator.generatePlan(
         planId: planId,
         startDate: anyDate,
@@ -223,10 +286,9 @@ void main() {
     });
   });
 
-  // ── totalDays equals totalChapters (boundary) ─────────────────────────────
+  // ── totalDays == totalChapters boundary ───────────────────────────────────
 
   group('totalDays == totalChapters boundary', () {
-    // Obadiah has exactly 1 chapter.
     late final days = PlanGenerator.generatePlan(
       planId: planId,
       startDate: anyDate,
@@ -244,11 +306,35 @@ void main() {
     });
   });
 
+  group('one chapter per day boundary (Genesis, 50 days)', () {
+    late final days = PlanGenerator.generatePlan(
+      planId: planId,
+      startDate: anyDate,
+      totalDays: 50,
+      selectedBooks: [genesis],
+    );
+
+    test('each day has exactly 1 chapter', () {
+      for (final d in days) {
+        expect(
+          d.chapters.length,
+          1,
+          reason: 'Day ${d.dayNumber} should have exactly 1 chapter',
+        );
+      }
+    });
+
+    test('chapters are assigned in order', () {
+      for (var i = 0; i < 50; i++) {
+        expect(days[i].chapters.single, ChapterRef('gen', i + 1));
+      }
+    });
+  });
+
   // ── Error cases ───────────────────────────────────────────────────────────
 
   group('error cases', () {
     test('throws ArgumentError when totalDays > totalChapters', () {
-      // Genesis has 50 chapters; 51 days is too many.
       expect(
         () => PlanGenerator.generatePlan(
           planId: planId,
