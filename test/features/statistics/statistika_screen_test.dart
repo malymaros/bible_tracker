@@ -108,7 +108,6 @@ void main() {
     );
 
     expect(_metricText(tester, 'stats-completed-plan-chapters'), '2/3');
-    expect(_metricText(tester, 'stats-remaining-plan-chapters'), '1');
     expect(_metricText(tester, 'stats-plan-percent'), '66.7 %');
   });
 

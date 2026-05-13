@@ -91,37 +91,47 @@ class _ProgressSummary extends StatelessWidget {
         ? l10n.planBehind
         : l10n.planOnTrack;
 
+    final booksTotal = stats.totalBooksCount;
+    final booksCompleted = stats.completedBooksCount;
+    final booksPercent =
+        booksTotal == 0 ? 0.0 : booksCompleted / booksTotal * 100;
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SectionHeader(title: l10n.statsPlanProgressTitle),
+          _MetricLine(
+            label: l10n.planCompletedChapters,
+            value:
+                '${stats.completedPlanChapters}/${stats.totalPlanChapters}',
+            valueKey: 'stats-completed-plan-chapters',
+          ),
           GoldProgressBar(
             value: stats.totalPlanChapters == 0
                 ? 0
                 : stats.completedPlanChapters / stats.totalPlanChapters,
-          ),
-          const SizedBox(height: 12),
-          _MetricLine(
-            label: l10n.planCompletedChapters,
-            value: '${stats.completedPlanChapters}/${stats.totalPlanChapters}',
-            valueKey: 'stats-completed-plan-chapters',
-          ),
-          _MetricLine(
-            label: l10n.statsRemainingPlanChapters,
-            value: '${stats.remainingPlanChapters}',
-            valueKey: 'stats-remaining-plan-chapters',
           ),
           _MetricLine(
             label: l10n.planCompletionPercent,
             value: '${stats.completionPercent.toStringAsFixed(1)} %',
             valueKey: 'stats-plan-percent',
           ),
+          const SizedBox(height: 8),
           _MetricLine(
             label: l10n.statsCompletedBooksInPlan,
-            value: '${stats.completedBooksCount}/${stats.totalBooksCount}',
+            value: '$booksCompleted/$booksTotal',
             valueKey: 'stats-completed-books-overall',
           ),
+          GoldProgressBar(
+            value: booksTotal == 0 ? 0 : booksCompleted / booksTotal,
+          ),
+          _MetricLine(
+            label: l10n.planCompletionPercent,
+            value: '${booksPercent.toStringAsFixed(1)} %',
+            valueKey: 'stats-books-percent',
+          ),
+          const SizedBox(height: 8),
           _MetricLine(
             label: l10n.statsPlanStatus,
             value: status,
@@ -151,8 +161,17 @@ class _OldTestamentStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final total = stats.oldTestamentTotal;
-    final completed = stats.oldTestamentCompleted;
+    final chaptersTotal = stats.oldTestamentTotal;
+    final chaptersCompleted = stats.oldTestamentCompleted;
+    final chaptersPercent = chaptersTotal == 0
+        ? 0.0
+        : chaptersCompleted / chaptersTotal * 100;
+
+    final booksTotal = stats.otTotalBooksCount;
+    final booksCompleted = stats.otCompletedBooksCount;
+    final booksPercent =
+        booksTotal == 0 ? 0.0 : booksCompleted / booksTotal * 100;
+
     return AppCard(
       key: const Key('stats-ot-section'),
       child: Column(
@@ -161,24 +180,30 @@ class _OldTestamentStats extends StatelessWidget {
           const SectionHeader(title: 'Starý zákon'),
           _MetricLine(
             label: l10n.planCompletedChapters,
-            value: '$completed/$total',
+            value: '$chaptersCompleted/$chaptersTotal',
             valueKey: 'stats-old-testament',
           ),
           GoldProgressBar(
-            value: total == 0 ? 0 : completed / total,
-          ),
-          const SizedBox(height: 12),
-          _MetricLine(
-            label: l10n.statsCompletedBooksInPlan,
-            value: '${stats.otCompletedBooksCount}/${stats.otTotalBooksCount}',
-            valueKey: 'stats-ot-books',
+            value: chaptersTotal == 0 ? 0 : chaptersCompleted / chaptersTotal,
           ),
           _MetricLine(
             label: l10n.planCompletionPercent,
-            value: total == 0
-                ? '0.0 %'
-                : '${(completed / total * 100).toStringAsFixed(1)} %',
+            value: '${chaptersPercent.toStringAsFixed(1)} %',
             valueKey: 'stats-ot-percent',
+          ),
+          const SizedBox(height: 8),
+          _MetricLine(
+            label: l10n.statsCompletedBooksInPlan,
+            value: '$booksCompleted/$booksTotal',
+            valueKey: 'stats-ot-books',
+          ),
+          GoldProgressBar(
+            value: booksTotal == 0 ? 0 : booksCompleted / booksTotal,
+          ),
+          _MetricLine(
+            label: l10n.planCompletionPercent,
+            value: '${booksPercent.toStringAsFixed(1)} %',
+            valueKey: 'stats-ot-books-percent',
           ),
         ],
       ),
@@ -194,8 +219,17 @@ class _NewTestamentStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final total = stats.newTestamentTotal;
-    final completed = stats.newTestamentCompleted;
+    final chaptersTotal = stats.newTestamentTotal;
+    final chaptersCompleted = stats.newTestamentCompleted;
+    final chaptersPercent = chaptersTotal == 0
+        ? 0.0
+        : chaptersCompleted / chaptersTotal * 100;
+
+    final booksTotal = stats.ntTotalBooksCount;
+    final booksCompleted = stats.ntCompletedBooksCount;
+    final booksPercent =
+        booksTotal == 0 ? 0.0 : booksCompleted / booksTotal * 100;
+
     return AppCard(
       key: const Key('stats-nt-section'),
       child: Column(
@@ -204,24 +238,30 @@ class _NewTestamentStats extends StatelessWidget {
           const SectionHeader(title: 'Nový zákon'),
           _MetricLine(
             label: l10n.planCompletedChapters,
-            value: '$completed/$total',
+            value: '$chaptersCompleted/$chaptersTotal',
             valueKey: 'stats-new-testament',
           ),
           GoldProgressBar(
-            value: total == 0 ? 0 : completed / total,
-          ),
-          const SizedBox(height: 12),
-          _MetricLine(
-            label: l10n.statsCompletedBooksInPlan,
-            value: '${stats.ntCompletedBooksCount}/${stats.ntTotalBooksCount}',
-            valueKey: 'stats-nt-books',
+            value: chaptersTotal == 0 ? 0 : chaptersCompleted / chaptersTotal,
           ),
           _MetricLine(
             label: l10n.planCompletionPercent,
-            value: total == 0
-                ? '0.0 %'
-                : '${(completed / total * 100).toStringAsFixed(1)} %',
+            value: '${chaptersPercent.toStringAsFixed(1)} %',
             valueKey: 'stats-nt-percent',
+          ),
+          const SizedBox(height: 8),
+          _MetricLine(
+            label: l10n.statsCompletedBooksInPlan,
+            value: '$booksCompleted/$booksTotal',
+            valueKey: 'stats-nt-books',
+          ),
+          GoldProgressBar(
+            value: booksTotal == 0 ? 0 : booksCompleted / booksTotal,
+          ),
+          _MetricLine(
+            label: l10n.planCompletionPercent,
+            value: '${booksPercent.toStringAsFixed(1)} %',
+            valueKey: 'stats-nt-books-percent',
           ),
         ],
       ),
@@ -268,4 +308,3 @@ class _MetricLine extends StatelessWidget {
     );
   }
 }
-

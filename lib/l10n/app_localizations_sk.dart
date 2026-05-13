@@ -230,7 +230,7 @@ class AppLocalizationsSk extends AppLocalizations {
   String get statsBooksTitle => 'Knihy v aktuálnom pláne';
 
   @override
-  String get statsCompletedBooksInPlan => 'Dokončené knihy v pláne';
+  String get statsCompletedBooksInPlan => 'Prečítané knihy';
 
   @override
   String get statsRemainingBooksInPlan => 'Zostávajúce knihy v pláne';

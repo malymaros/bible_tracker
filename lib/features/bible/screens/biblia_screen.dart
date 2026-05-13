@@ -427,14 +427,37 @@ class _BookRow extends StatelessWidget {
         key: Key('book-row-${book.id}'),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         leading: BookIconBadge(abbreviation: book.shortName),
-        title: Text(
-          book.name,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.text,
-          ),
-        ),
+        title: book.isDeuterocanonical
+            ? RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${book.name} ',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    const TextSpan(
+                      text: '✝',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.goldDark,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Text(
+                book.name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text,
+                ),
+              ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 5),
           child: Align(
