@@ -51,6 +51,23 @@ class PlanStatistics {
   });
 
   int get completedBooksCount => fullyCompletedSelectedBooks.length;
-  int get remainingBooksCount => bookProgress.length - completedBooksCount;
+  int get totalBooksCount => bookProgress.length;
+  int get remainingBooksCount => totalBooksCount - completedBooksCount;
   bool get hasDeuterocanonicalBooks => deuterocanonicalTotal > 0;
+
+  int get otTotalBooksCount => bookProgress
+      .where((bp) => bp.book.testament == Testament.oldTestament)
+      .length;
+  int get otCompletedBooksCount => bookProgress
+      .where((bp) =>
+          bp.book.testament == Testament.oldTestament && bp.isCompleted)
+      .length;
+
+  int get ntTotalBooksCount => bookProgress
+      .where((bp) => bp.book.testament == Testament.newTestament)
+      .length;
+  int get ntCompletedBooksCount => bookProgress
+      .where((bp) =>
+          bp.book.testament == Testament.newTestament && bp.isCompleted)
+      .length;
 }

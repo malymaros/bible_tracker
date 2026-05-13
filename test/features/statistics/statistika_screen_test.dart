@@ -155,7 +155,7 @@ void main() {
     expect(_metricText(tester, 'stats-new-testament'), '1/2');
   });
 
-  testWidgets('completed books count is based only on selected plan books', (
+  testWidgets('overall completed books count is shown in main section', (
     tester,
   ) async {
     final plan = _plan(selectedBookIds: const ['obad', 'phlm']);
@@ -169,12 +169,10 @@ void main() {
       readChapters: {const ChapterRef('obad', 1), const ChapterRef('gen', 1)},
     );
 
-    expect(_metricText(tester, 'stats-completed-books-count'), '1');
-    expect(_metricText(tester, 'stats-remaining-books-count'), '1');
-    expect(_metricText(tester, 'stats-fully-completed-books'), 'Abd');
+    expect(_metricText(tester, 'stats-completed-books-overall'), '1/2');
   });
 
-  testWidgets('not started books count is based only on selected plan books', (
+  testWidgets('OT completed books count is shown in OT section', (
     tester,
   ) async {
     final plan = _plan(selectedBookIds: const ['gen', 'matt']);
@@ -185,47 +183,73 @@ void main() {
       days: [
         _day(1, const [ChapterRef('gen', 1), ChapterRef('matt', 1)]),
       ],
-      readChapters: {const ChapterRef('gen', 1), const ChapterRef('exod', 1)},
-    );
-
-    expect(_metricText(tester, 'stats-not-started-books'), 'Mt');
-  });
-
-  testWidgets('deuterocanonical section appears only when relevant', (
-    tester,
-  ) async {
-    final db = _openTestDb();
-    await _pumpStats(
-      tester,
-      db: db,
-      plan: _plan(selectedBookIds: const ['gen']),
-      days: [
-        _day(1, const [ChapterRef('gen', 1)]),
-      ],
       readChapters: {const ChapterRef('gen', 1)},
     );
-    expect(
-      find.byKey(const Key('stats-deuterocanonical-section')),
-      findsNothing,
-    );
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpAndSettle();
+    // gen (OT) is completed, matt (NT) is not
+    expect(_metricText(tester, 'stats-ot-books'), '1/1');
+  });
+
+  testWidgets('NT completed books count is shown in NT section', (
+    tester,
+  ) async {
+    final plan = _plan(selectedBookIds: const ['gen', 'matt']);
 
     await _pumpStats(
       tester,
-      db: db,
-      plan: _plan(selectedBookIds: const ['tob']),
+      plan: plan,
       days: [
-        _day(1, const [ChapterRef('tob', 1), ChapterRef('tob', 2)]),
+        _day(1, const [ChapterRef('gen', 1), ChapterRef('matt', 1)]),
       ],
+      readChapters: {const ChapterRef('matt', 1)},
+    );
+
+    // matt (NT) is completed, gen (OT) is not
+    expect(_metricText(tester, 'stats-nt-books'), '1/1');
+  });
+
+  testWidgets('OT and NT sections are separate widgets', (tester) async {
+    final plan = _plan(selectedBookIds: const ['gen', 'matt']);
+
+    await _pumpStats(
+      tester,
+      plan: plan,
+      days: [
+        _day(1, const [ChapterRef('gen', 1), ChapterRef('matt', 1)]),
+      ],
+    );
+
+    expect(find.byKey(const Key('stats-ot-section')), findsOneWidget);
+    expect(find.byKey(const Key('stats-nt-section')), findsOneWidget);
+  });
+
+  testWidgets('statistics no longer shows Dnešné čítanie v pláne', (
+    tester,
+  ) async {
+    final plan = _plan();
+
+    await _pumpStats(
+      tester,
+      plan: plan,
+      days: [_day(1, const [ChapterRef('gen', 1)])],
+    );
+
+    expect(find.text('Dnešné čítanie v pláne'), findsNothing);
+  });
+
+  testWidgets('statistics no longer shows Deuterokánonické knihy v pláne', (
+    tester,
+  ) async {
+    final plan = _plan(selectedBookIds: const ['tob']);
+
+    await _pumpStats(
+      tester,
+      plan: plan,
+      days: [_day(1, const [ChapterRef('tob', 1)])],
       readChapters: {const ChapterRef('tob', 1)},
     );
-    expect(
-      find.byKey(const Key('stats-deuterocanonical-section')),
-      findsOneWidget,
-    );
-    expect(_metricText(tester, 'stats-deuterocanonical'), '1/2');
+
+    expect(find.text('Deuterokánonické knihy v pláne'), findsNothing);
   });
 
   testWidgets('statistics screen has no read or unread controls', (

@@ -618,6 +618,241 @@ void main() {
     expect(find.byType(BookIconBadge), findsWidgets);
   });
 
+  // ── Ahead / behind display ─────────────────────────────────────────────────
+
+  ReadingPlan _progressPlan() => ReadingPlan(
+    id: 'plan-prog',
+    startDate: DateTime(2026, 5, 12),
+    totalDays: 10,
+    selectedBookIds: const ['gen'],
+    createdAt: DateTime(2026, 5, 1),
+  );
+
+  // 10 days, 3 chapters per day → 30 total (Gen 1–30).
+  List<PlanDay> _progressDays(String planId) => List.generate(
+    10,
+    (i) => PlanDay(
+      planId: planId,
+      dayNumber: i + 1,
+      scheduledDate: DateTime(2026, 5, 12 + i),
+      chapters: [
+        ChapterRef('gen', i * 3 + 1),
+        ChapterRef('gen', i * 3 + 2),
+        ChapterRef('gen', i * 3 + 3),
+      ],
+    ),
+  );
+
+  testWidgets('on track shows on-track label', (tester) async {
+    final db = _openTestDb();
+    final plan = _progressPlan();
+    // Today = day 1, expected 3, read exactly 3 → on track.
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _progressDays(plan.id),
+        readChapters: {
+          const ChapterRef('gen', 1),
+          const ChapterRef('gen', 2),
+          const ChapterRef('gen', 3),
+        },
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-ahead-behind-status')))
+          .data,
+      'Ste presne v pláne',
+    );
+  });
+
+  testWidgets('ahead by chapters shows approximate days ahead', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _progressPlan();
+    // Today = day 1, expected 3, read 6 → delta = +3 → +3*10/30 = +1 deň.
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _progressDays(plan.id),
+        readChapters: {for (var i = 1; i <= 6; i++) ChapterRef('gen', i)},
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-ahead-behind-status')))
+          .data,
+      'Ste popredu približne o 1 deň',
+    );
+  });
+
+  testWidgets('behind by chapters shows approximate days behind', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _progressPlan();
+    // Today = day 1, expected 3, read 0 → delta = -3 → -3*10/30 = -1 deň.
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _progressDays(plan.id),
+        readChapters: const {},
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-ahead-behind-status')))
+          .data,
+      'Ste pozadu približne o 1 deň',
+    );
+  });
+
+  testWidgets('chapter delta is shown when not on track', (tester) async {
+    final db = _openTestDb();
+    final plan = _progressPlan();
+    // Today = day 1, expected 3, read 6 → delta = +3.
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _progressDays(plan.id),
+        readChapters: {for (var i = 1; i <= 6; i++) ChapterRef('gen', i)},
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('plan-chapter-delta'))).data,
+      '+3 kapitol',
+    );
+  });
+
+  testWidgets('Slovak pluralization: "dni" for delta = 2 days', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _progressPlan();
+    // Today = day 1, expected 3, read 9 → delta = +6 → +6*10/30 = +2 dni.
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _progressDays(plan.id),
+        readChapters: {for (var i = 1; i <= 9; i++) ChapterRef('gen', i)},
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-ahead-behind-status')))
+          .data,
+      'Ste popredu približne o 2 dni',
+    );
+  });
+
+  testWidgets('Slovak pluralization: "dní" for delta = 5 days', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _progressPlan();
+    // Today = day 1, expected 3, read 18 → delta = +15 → +15*10/30 = +5 dní.
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _progressDays(plan.id),
+        readChapters: {for (var i = 1; i <= 18; i++) ChapterRef('gen', i)},
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-ahead-behind-status')))
+          .data,
+      'Ste popredu približne o 5 dní',
+    );
+  });
+
+  // ── Crucifix icon ──────────────────────────────────────────────────────────
+
+  testWidgets('deuterocanonical book shows cross icon in BooksInPlanScreen', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = ReadingPlan(
+      id: 'plan-tob',
+      startDate: DateTime(2026, 5, 12),
+      totalDays: 1,
+      selectedBookIds: const ['tob'],
+      createdAt: DateTime(2026, 5, 1),
+    );
+    final days = [
+      PlanDay(
+        planId: plan.id,
+        dayNumber: 1,
+        scheduledDate: DateTime(2026, 5, 12),
+        chapters: const [ChapterRef('tob', 1)],
+      ),
+    ];
+
+    await tester.pumpWidget(
+      _testWidget(
+        BooksInPlanScreen(plan: plan),
+        db,
+        activePlan: plan,
+        days: days,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('✝'), findsOneWidget);
+  });
+
+  testWidgets(
+    'deuterocanonical book shows cross icon in Create Plan book selection',
+    (tester) async {
+      final db = _openTestDb();
+      // Large surface so all groups are rendered without scrolling.
+      await tester.binding.setSurfaceSize(const Size(900, 3000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(_testWidget(const CreatePlanScreen(), db));
+      await tester.pumpAndSettle();
+
+      // Expand the Historical Books group which contains Tobit (deuterocanonical)
+      await tester.tap(
+        find.byKey(const Key('plan-book-group-historicalBooks')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('✝'), findsWidgets);
+    },
+  );
+
   testWidgets('plan deletion keeps read progress', (tester) async {
     final db = _openTestDb();
     final plan = _plan();

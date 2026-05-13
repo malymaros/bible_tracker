@@ -40,15 +40,37 @@ abstract final class PlanProgressCalculator {
     final aheadBehindChapterCount =
         completedPlanChapters - expectedChaptersByToday;
 
+    final approximateDaysDelta = _computeApproximateDaysDelta(
+      aheadBehindChapterCount,
+      totalPlanChapters,
+      plan.totalDays,
+    );
+
     return PlanProgress(
       planId: plan.id,
       totalPlanChapters: totalPlanChapters,
       completedPlanChapters: completedPlanChapters,
       expectedChaptersByToday: expectedChaptersByToday,
       aheadBehindChapterCount: aheadBehindChapterCount,
+      approximateDaysDelta: approximateDaysDelta,
       completionPercent: totalPlanChapters > 0
           ? completedPlanChapters / totalPlanChapters * 100
           : 0.0,
     );
+  }
+
+  /// Converts a chapter delta to an approximate day count.
+  /// Non-zero deltas are clamped to a minimum of ±1 so a tiny delta never
+  /// rounds down to 0 days.
+  static int _computeApproximateDaysDelta(
+    int chapterDelta,
+    int totalChapters,
+    int totalDays,
+  ) {
+    if (chapterDelta == 0 || totalChapters == 0 || totalDays == 0) return 0;
+    final raw = chapterDelta * totalDays / totalChapters;
+    final absRounded = raw.abs().round();
+    final clamped = absRounded == 0 ? 1 : absRounded;
+    return raw > 0 ? clamped : -clamped;
   }
 }

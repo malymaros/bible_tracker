@@ -304,6 +304,82 @@ void main() {
     });
   });
 
+  // ── approximateDaysDelta ────────────────────────────────────────────────
+
+  group('approximateDaysDelta', () {
+    // Plan: 3 days, 9 chapters → average 3 chapters/day.
+
+    test('zero when on track', () {
+      // Jan 1: expected 3, read 3 → delta = 0.
+      final p = _calc(
+        today: DateTime(2024, 1, 1),
+        readChapters: {
+          const ChapterRef('gen', 1),
+          const ChapterRef('gen', 2),
+          const ChapterRef('gen', 3),
+        },
+      );
+      expect(p.approximateDaysDelta, 0);
+    });
+
+    test('positive when ahead by whole days', () {
+      // Jan 1: expected 3, read 6 → chapterDelta = +3 → 3*3/9 = 1 day.
+      final p = _calc(
+        today: DateTime(2024, 1, 1),
+        readChapters: {for (var i = 1; i <= 6; i++) ChapterRef('gen', i)},
+      );
+      expect(p.approximateDaysDelta, 1);
+    });
+
+    test('negative when behind by whole days', () {
+      // Jan 2: expected 6, read 3 → chapterDelta = -3 → -3*3/9 = -1 day.
+      final p = _calc(
+        today: DateTime(2024, 1, 2),
+        readChapters: {
+          const ChapterRef('gen', 1),
+          const ChapterRef('gen', 2),
+          const ChapterRef('gen', 3),
+        },
+      );
+      expect(p.approximateDaysDelta, -1);
+    });
+
+    test('minimum 1 for small non-zero ahead delta', () {
+      // Jan 1: expected 3, read 4 → chapterDelta = +1 → 1*3/9 ≈ 0.33 → clamp to 1.
+      final p = _calc(
+        today: DateTime(2024, 1, 1),
+        readChapters: {
+          const ChapterRef('gen', 1),
+          const ChapterRef('gen', 2),
+          const ChapterRef('gen', 3),
+          const ChapterRef('gen', 4),
+        },
+      );
+      expect(p.approximateDaysDelta, 1);
+    });
+
+    test('minimum -1 for small non-zero behind delta', () {
+      // Jan 1: expected 3, read 2 → chapterDelta = -1 → -1*3/9 ≈ -0.33 → clamp to -1.
+      final p = _calc(
+        today: DateTime(2024, 1, 1),
+        readChapters: {
+          const ChapterRef('gen', 1),
+          const ChapterRef('gen', 2),
+        },
+      );
+      expect(p.approximateDaysDelta, -1);
+    });
+
+    test('value is based on totalPlanChapters / totalPlanDays ratio', () {
+      // Jan 1: expected 3, read 9 → chapterDelta = +6 → 6*3/9 = 2 days.
+      final p = _calc(
+        today: DateTime(2024, 1, 1),
+        readChapters: _allPlanChapters,
+      );
+      expect(p.approximateDaysDelta, 2);
+    });
+  });
+
   // ── Completion percent ───────────────────────────────────────────────────
 
   group('completionPercent', () {

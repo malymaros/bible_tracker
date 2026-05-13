@@ -8,6 +8,11 @@ class PlanProgress {
   /// Positive = ahead, negative = behind, zero = on track.
   final int aheadBehindChapterCount;
 
+  /// Chapter delta expressed as approximate days using the plan's average
+  /// chapters-per-day. Rounded to nearest integer; non-zero delta is clamped
+  /// to a minimum of ±1 so a tiny delta never shows as 0 days.
+  final int approximateDaysDelta;
+
   final double completionPercent;
 
   final bool isAhead;
@@ -20,6 +25,7 @@ class PlanProgress {
     required this.completedPlanChapters,
     required this.expectedChaptersByToday,
     required this.aheadBehindChapterCount,
+    required this.approximateDaysDelta,
     required this.completionPercent,
   })  : isAhead = aheadBehindChapterCount > 0,
         isBehind = aheadBehindChapterCount < 0,

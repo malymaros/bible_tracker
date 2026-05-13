@@ -1,5 +1,3 @@
-import 'package:bible_tracker/core/constants/bible_books.dart';
-import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/plan_day.dart';
 import 'package:bible_tracker/core/models/plan_progress.dart';
@@ -70,15 +68,9 @@ class _PlanStatisticsBody extends ConsumerWidget {
       children: [
         _ProgressSummary(stats: stats, progress: progress),
         const SizedBox(height: 12),
-        _TestamentStats(stats: stats),
-        if (stats.hasDeuterocanonicalBooks) ...[
-          const SizedBox(height: 12),
-          _DeuterocanonicalStats(stats: stats),
-        ],
+        _OldTestamentStats(stats: stats),
         const SizedBox(height: 12),
-        _BookStats(stats: stats),
-        const SizedBox(height: 12),
-        _TodaySummary(days: days, today: today),
+        _NewTestamentStats(stats: stats),
       ],
     );
   }
@@ -126,6 +118,11 @@ class _ProgressSummary extends StatelessWidget {
             valueKey: 'stats-plan-percent',
           ),
           _MetricLine(
+            label: l10n.statsCompletedBooksInPlan,
+            value: '${stats.completedBooksCount}/${stats.totalBooksCount}',
+            valueKey: 'stats-completed-books-overall',
+          ),
+          _MetricLine(
             label: l10n.statsPlanStatus,
             value: status,
             valueKey: 'stats-plan-status',
@@ -146,152 +143,89 @@ class _ProgressSummary extends StatelessWidget {
   }
 }
 
-class _TestamentStats extends StatelessWidget {
+class _OldTestamentStats extends StatelessWidget {
   final PlanStatistics stats;
 
-  const _TestamentStats({required this.stats});
+  const _OldTestamentStats({required this.stats});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final total = stats.oldTestamentTotal;
+    final completed = stats.oldTestamentCompleted;
     return AppCard(
+      key: const Key('stats-ot-section'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SectionHeader(title: l10n.statsTestamentsTitle),
+          const SectionHeader(title: 'Starý zákon'),
           _MetricLine(
-            label: l10n.statsOldTestamentInPlan,
-            value: '${stats.oldTestamentCompleted}/${stats.oldTestamentTotal}',
+            label: l10n.planCompletedChapters,
+            value: '$completed/$total',
             valueKey: 'stats-old-testament',
           ),
           GoldProgressBar(
-            value: stats.oldTestamentTotal == 0
-                ? 0
-                : stats.oldTestamentCompleted / stats.oldTestamentTotal,
+            value: total == 0 ? 0 : completed / total,
           ),
           const SizedBox(height: 12),
           _MetricLine(
-            label: l10n.statsNewTestamentInPlan,
-            value: '${stats.newTestamentCompleted}/${stats.newTestamentTotal}',
+            label: l10n.statsCompletedBooksInPlan,
+            value: '${stats.otCompletedBooksCount}/${stats.otTotalBooksCount}',
+            valueKey: 'stats-ot-books',
+          ),
+          _MetricLine(
+            label: l10n.planCompletionPercent,
+            value: total == 0
+                ? '0.0 %'
+                : '${(completed / total * 100).toStringAsFixed(1)} %',
+            valueKey: 'stats-ot-percent',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NewTestamentStats extends StatelessWidget {
+  final PlanStatistics stats;
+
+  const _NewTestamentStats({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final total = stats.newTestamentTotal;
+    final completed = stats.newTestamentCompleted;
+    return AppCard(
+      key: const Key('stats-nt-section'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SectionHeader(title: 'Nový zákon'),
+          _MetricLine(
+            label: l10n.planCompletedChapters,
+            value: '$completed/$total',
             valueKey: 'stats-new-testament',
           ),
           GoldProgressBar(
-            value: stats.newTestamentTotal == 0
-                ? 0
-                : stats.newTestamentCompleted / stats.newTestamentTotal,
+            value: total == 0 ? 0 : completed / total,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DeuterocanonicalStats extends StatelessWidget {
-  final PlanStatistics stats;
-
-  const _DeuterocanonicalStats({required this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return AppCard(
-      key: const Key('stats-deuterocanonical-section'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SectionHeader(title: l10n.statsDeuterocanonicalInPlan),
-          _MetricLine(
-            label: l10n.statsDeuterocanonicalInPlan,
-            value:
-                '${stats.deuterocanonicalCompleted}/${stats.deuterocanonicalTotal}',
-            valueKey: 'stats-deuterocanonical',
-          ),
-          GoldProgressBar(
-            value: stats.deuterocanonicalTotal == 0
-                ? 0
-                : stats.deuterocanonicalCompleted / stats.deuterocanonicalTotal,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BookStats extends StatelessWidget {
-  final PlanStatistics stats;
-
-  const _BookStats({required this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SectionHeader(title: l10n.statsBooksTitle),
+          const SizedBox(height: 12),
           _MetricLine(
             label: l10n.statsCompletedBooksInPlan,
-            value: '${stats.completedBooksCount}',
-            valueKey: 'stats-completed-books-count',
+            value: '${stats.ntCompletedBooksCount}/${stats.ntTotalBooksCount}',
+            valueKey: 'stats-nt-books',
           ),
           _MetricLine(
-            label: l10n.statsRemainingBooksInPlan,
-            value: '${stats.remainingBooksCount}',
-            valueKey: 'stats-remaining-books-count',
-          ),
-          _MetricLine(
-            label: l10n.statsFullyCompletedSelectedBooks,
-            value: _bookNames(stats.fullyCompletedSelectedBooks),
-            valueKey: 'stats-fully-completed-books',
-          ),
-          _MetricLine(
-            label: l10n.statsNotStartedSelectedBooks,
-            value: _bookNames(stats.notStartedSelectedBooks),
-            valueKey: 'stats-not-started-books',
+            label: l10n.planCompletionPercent,
+            value: total == 0
+                ? '0.0 %'
+                : '${(completed / total * 100).toStringAsFixed(1)} %',
+            valueKey: 'stats-nt-percent',
           ),
         ],
       ),
     );
-  }
-
-  String _bookNames(List<BibleBook> books) {
-    if (books.isEmpty) return '-';
-    return books.map((book) => book.shortName).join(', ');
-  }
-}
-
-class _TodaySummary extends StatelessWidget {
-  final List<PlanDay> days;
-  final DateTime today;
-
-  const _TodaySummary({required this.days, required this.today});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final todayDays = days.where((day) => _sameDate(day.scheduledDate, today));
-    final chapters = [
-      for (final day in todayDays)
-        for (final chapter in day.chapters) _chapterLabel(chapter),
-    ];
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SectionHeader(title: l10n.statsTodaySummary),
-          Text(
-            chapters.isEmpty ? l10n.planNoReadingToday : chapters.join(', '),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _chapterLabel(ChapterRef chapter) {
-    final book = kBibleBooks.firstWhere((book) => book.id == chapter.bookId);
-    return '${book.shortName} ${chapter.chapterNumber}';
   }
 }
 
@@ -335,6 +269,3 @@ class _MetricLine extends StatelessWidget {
   }
 }
 
-bool _sameDate(DateTime a, DateTime b) {
-  return a.year == b.year && a.month == b.month && a.day == b.day;
-}

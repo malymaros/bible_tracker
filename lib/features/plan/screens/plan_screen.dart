@@ -1,6 +1,8 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/constants/verse_counts.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
+import 'package:bible_tracker/core/models/plan_progress.dart';
+import 'package:bible_tracker/core/services/plan_progress_calculator.dart';
 import 'package:bible_tracker/core/utils/chapter_count_format.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
@@ -373,6 +375,12 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
     final readChapters =
         ref.watch(readChaptersProvider).value ?? const <ChapterRef>{};
     final today = ref.watch(todayProvider);
+    final progress = PlanProgressCalculator.calculate(
+      plan: widget.plan,
+      days: days,
+      readChapters: readChapters,
+      today: today,
+    );
     final selectedIndex = _effectiveSelectedIndex(days, today);
     final selectedDay = days.isEmpty ? null : days[selectedIndex];
 
@@ -423,6 +431,7 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
                     plan: widget.plan,
                     days: days,
                     readChapters: readChapters,
+                    progress: progress,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => const StatistikaScreen(),
@@ -522,12 +531,14 @@ class _TotalProgressCard extends StatelessWidget {
   final ReadingPlan plan;
   final List<PlanDay> days;
   final Set<ChapterRef> readChapters;
+  final PlanProgress progress;
   final VoidCallback onTap;
 
   const _TotalProgressCard({
     required this.plan,
     required this.days,
     required this.readChapters,
+    required this.progress,
     required this.onTap,
   });
 
@@ -599,6 +610,29 @@ class _TotalProgressCard extends StatelessWidget {
                     context,
                   ).textTheme.bodyLarge?.copyWith(color: _PlanColors.text),
                 ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _planStatusText(progress),
+                    key: const Key('plan-ahead-behind-status'),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _PlanColors.text,
+                    ),
+                  ),
+                ),
+                if (progress.aheadBehindChapterCount != 0)
+                  Text(
+                    _chapterDeltaLabel(progress.aheadBehindChapterCount),
+                    key: const Key('plan-chapter-delta'),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _PlanColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
               ],
             ),
           ],
@@ -822,12 +856,29 @@ class _PlanBookProgressTile extends ConsumerWidget {
           tilePadding: const EdgeInsets.fromLTRB(14, 8, 10, 8),
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
           leading: BookIconBadge(abbreviation: progress.book.shortName, size: 40),
-          title: Text(
-            progress.book.name,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: _PlanColors.text,
-              fontWeight: FontWeight.w700,
-            ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  progress.book.name,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: _PlanColors.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (progress.book.isDeuterocanonical)
+                const Padding(
+                  padding: EdgeInsets.only(left: 5),
+                  child: Text(
+                    '✝',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _PlanColors.goldDark,
+                    ),
+                  ),
+                ),
+            ],
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 7),
@@ -1157,15 +1208,31 @@ class _BookCheckboxRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    book.name,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: selected
-                          ? _PlanColors.textStrong
-                          : _PlanColors.textMuted,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        book.name,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: selected
+                              ? _PlanColors.textStrong
+                              : _PlanColors.textMuted,
+                        ),
+                      ),
+                      if (book.isDeuterocanonical) ...[
+                        const SizedBox(width: 5),
+                        Text(
+                          '✝',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: selected
+                                ? _PlanColors.goldDark
+                                : _PlanColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     '+${formatChapterCount(book.chapterCount)}',
@@ -1320,6 +1387,25 @@ List<_BookProgress> _bookProgressForPlan(
           readChapters: readChapters,
         ),
   ];
+}
+
+String _dniForm(int n) {
+  if (n == 1) return 'deň';
+  if (n <= 4) return 'dni';
+  return 'dní';
+}
+
+String _planStatusText(PlanProgress progress) {
+  if (progress.isOnTrack) return 'Ste presne v pláne';
+  final days = progress.approximateDaysDelta.abs();
+  final unit = _dniForm(days);
+  if (progress.isAhead) return 'Ste popredu približne o $days $unit';
+  return 'Ste pozadu približne o $days $unit';
+}
+
+String _chapterDeltaLabel(int chapterDelta) {
+  if (chapterDelta > 0) return '+$chapterDelta kapitol';
+  return '$chapterDelta kapitol';
 }
 
 class _PlanColors {
