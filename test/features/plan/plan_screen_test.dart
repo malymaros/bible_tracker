@@ -137,7 +137,36 @@ void main() {
     expect(find.text('Zadajte platný počet dní'), findsOneWidget);
   });
 
-  testWidgets('totalDays greater than selected chapters is invalid', (
+  testWidgets('entering too many days auto-corrects to selectedChapters', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final totalChapters = kBibleBooks.fold(0, (sum, b) => sum + b.chapterCount);
+
+    await tester.pumpWidget(_testWidget(const CreatePlanScreen(), db));
+    await tester.pumpAndSettle();
+    await _enterDays(tester, '9999');
+
+    final controller = tester
+        .widget<TextField>(find.byKey(const Key('plan-total-days-field')))
+        .controller!;
+    expect(controller.text, '$totalChapters');
+  });
+
+  testWidgets('helper text shown when days are auto-clamped', (tester) async {
+    final db = _openTestDb();
+
+    await tester.pumpWidget(_testWidget(const CreatePlanScreen(), db));
+    await tester.pumpAndSettle();
+    await _enterDays(tester, '9999');
+
+    expect(
+      find.text('Počet dní nemôže byť väčší ako počet kapitol.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('plan can be created after day count is auto-clamped', (
     tester,
   ) async {
     final db = _openTestDb();
@@ -147,8 +176,10 @@ void main() {
     await _enterDays(tester, '9999');
 
     expect(
-      find.text('Počet dní nemôže byť väčší ako počet vybraných kapitol'),
-      findsOneWidget,
+      tester
+          .widget<FilledButton>(find.byKey(const Key('plan-create-button')))
+          .onPressed,
+      isNotNull,
     );
   });
 

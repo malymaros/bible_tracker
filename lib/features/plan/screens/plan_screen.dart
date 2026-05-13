@@ -69,13 +69,34 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
   late DateTime _startDate;
   final _daysController = TextEditingController(text: '365');
   late final Set<String> _selectedBookIds;
+  bool _dayCountClamped = false;
 
   @override
   void initState() {
     super.initState();
     _startDate = ref.read(todayProvider);
     _selectedBookIds = {for (final book in kBibleBooks) book.id};
-    _daysController.addListener(() => setState(() {}));
+  }
+
+  void _clampDaysIfNeeded() {
+    final maxDays = _selectedChapterCount;
+    final parsed = int.tryParse(_daysController.text.trim());
+    if (parsed != null && parsed > maxDays) {
+      final clamped = '$maxDays';
+      _daysController.value = TextEditingValue(
+        text: clamped,
+        selection: TextSelection.collapsed(offset: clamped.length),
+      );
+      _dayCountClamped = true;
+    } else {
+      _dayCountClamped = false;
+    }
+  }
+
+  void _onDaysChanged(String _) {
+    setState(() {
+      _clampDaysIfNeeded();
+    });
   }
 
   @override
@@ -141,6 +162,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
               key: const Key('plan-total-days-field'),
               controller: _daysController,
               keyboardType: TextInputType.number,
+              onChanged: _onDaysChanged,
               style: const TextStyle(
                 fontSize: 18,
                 color: _PlanColors.textStrong,
@@ -155,6 +177,8 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
+                helperText: _dayCountClamped ? l10n.planTooManyDays : null,
+                helperStyle: const TextStyle(fontSize: 14),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
@@ -219,6 +243,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
                     } else {
                       _selectedBookIds.remove(bookId);
                     }
+                    _clampDaysIfNeeded();
                   });
                 },
               ),
@@ -234,6 +259,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
                     } else {
                       _selectedBookIds.remove(bookId);
                     }
+                    _clampDaysIfNeeded();
                   });
                 },
               ),
@@ -290,9 +316,6 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
     }
     if (_selectedBookIds.isEmpty) {
       return l10n.planSelectAtLeastOneBook;
-    }
-    if (totalDays > selectedChapters) {
-      return l10n.planTooManyDays;
     }
     return null;
   }

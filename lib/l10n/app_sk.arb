@@ -123,7 +123,7 @@
   "planDateRangeUnavailable": "nedostupné",
   "planCreateAction": "Vytvoriť plán",
   "planInvalidDayCount": "Zadajte platný počet dní",
-  "planTooManyDays": "Počet dní nemôže byť väčší ako počet vybraných kapitol",
+  "planTooManyDays": "Počet dní nemôže byť väčší ako počet kapitol.",
   "planSelectAtLeastOneBook": "Vyberte aspoň jednu knihu",
   "planTodayReading": "Dnešné čítanie",
   "planNoReadingToday": "Na dnes nie je naplánované čítanie",

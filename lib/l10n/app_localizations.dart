@@ -301,7 +301,7 @@ abstract class AppLocalizations {
   /// No description provided for @planTooManyDays.
   ///
   /// In sk, this message translates to:
-  /// **'Počet dní nemôže byť väčší ako počet vybraných kapitol'**
+  /// **'Počet dní nemôže byť väčší ako počet kapitol.'**
   String get planTooManyDays;
 
   /// No description provided for @planSelectAtLeastOneBook.

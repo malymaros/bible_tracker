@@ -112,7 +112,7 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get planTooManyDays =>
-      'Počet dní nemôže byť väčší ako počet vybraných kapitol';
+      'Počet dní nemôže byť väčší ako počet kapitol.';
 
   @override
   String get planSelectAtLeastOneBook => 'Vyberte aspoň jednu knihu';
