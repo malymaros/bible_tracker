@@ -397,7 +397,7 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
         actions: [
           IconButton(
             tooltip: l10n.planDeleteAction,
-            onPressed: () => _confirmDelete(context, ref),
+            onPressed: () => _confirmDelete(context, ref, days),
             icon: Icon(Icons.delete_outline, color: _PlanColors.textMuted),
           ),
         ],
@@ -458,26 +458,59 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
     setState(() => _selectedDayIndex = index);
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    List<PlanDay> days,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
+    var alsoUnread = false;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.planDeleteTitle),
-        content: Text(l10n.planDeleteMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.planCancel),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(l10n.planDeleteTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.planDeleteMessage),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Checkbox(
+                    value: alsoUnread,
+                    onChanged: (v) => setState(() => alsoUnread = v ?? false),
+                  ),
+                  const SizedBox(width: 4),
+                  const Expanded(
+                    child: Text('Označiť všetky prečítané kapitoly ako neprečítané'),
+                  ),
+                ],
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.planDeleteAction),
-          ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.planCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.planDeleteAction),
+            ),
+          ],
+        ),
       ),
     );
     if (confirmed == true) {
+      if (alsoUnread) {
+        final progressDao = ref.read(progressDaoProvider);
+        final chapters = days.expand((d) => d.chapters);
+        for (final chapter in chapters) {
+          await progressDao.markUnread(chapter);
+        }
+      }
       await ref.read(planDaoProvider).deleteActivePlan();
     }
   }
@@ -835,7 +868,7 @@ class _PlanBookProgressTile extends ConsumerWidget {
     return Card(
       key: Key('plan-book-progress-${progress.book.id}'),
       elevation: 0,
-      color: _PlanColors.card,
+      color: isComplete ? _PlanColors.goldSoft.withValues(alpha: 0.55) : _PlanColors.card,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Theme(
@@ -876,6 +909,10 @@ class _PlanBookProgressTile extends ConsumerWidget {
                 Text(
                   '$completed/$total',
                   key: Key('plan-book-count-${progress.book.id}'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _PlanColors.textStrong,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 ClipRRect(
@@ -894,7 +931,8 @@ class _PlanBookProgressTile extends ConsumerWidget {
           trailing: Checkbox(
             key: Key('plan-book-complete-${progress.book.id}'),
             value: isComplete,
-            activeColor: _PlanColors.goldDark,
+            activeColor: _PlanColors.gold,
+            checkColor: const Color(0xFFE8E8E8),
             onChanged: (_) => _toggleBook(context, ref, isComplete),
           ),
           children: [
