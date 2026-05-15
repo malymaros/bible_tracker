@@ -24,6 +24,15 @@ flutter analyze
 # Get/update dependencies
 flutter pub get
 flutter pub upgrade
+
+# Build release APK
+flutter build apk --release
+
+# Build split APKs (smaller, per ABI)
+flutter build apk --release --split-per-abi
+
+# Regenerate Drift/Riverpod generated files
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ## Code style
@@ -35,16 +44,15 @@ Linting is configured via `flutter_lints` (`analysis_options.yaml`). Run `flutte
 Feature-first layout under `lib/`:
 
 ```
-app/          # MaterialApp, GoRouter, theme
+app/          # MaterialApp, GoRouter, theme (light + dark)
 core/
-  constants/  # Static compile-time data (kBibleBooks — never in DB)
+  constants/  # Static compile-time data (kBibleBooks, verse counts — never in DB)
   models/     # Domain entities and value objects
   services/   # Pure business logic (SsvScraper, DownloadService, PlanGenerator, StatisticsCalculator)
-  utils/      # ChapterCursor, date helpers
+  utils/      # ChapterCursor, date helpers, chapter count formatting
 db/           # Drift database, tables, DAOs
 features/
-  bible/      # Book browser + download management (tab 1)
-  reader/     # Shared chapter reader (opened from both bible and plan tabs)
+  bible/      # Book browser + download management + chapter reader (tab 1)
   plan/       # Reading plan creation and tracking (tab 2)
   statistics/ # Global reading statistics (tab 3)
 shared/       # Cross-feature providers and widgets
@@ -66,8 +74,35 @@ Riverpod 2.x with `@riverpod` code generation. DB streams feed Riverpod provider
 
 ### Navigation
 
-GoRouter `StatefulShellRoute` for three persistent tabs: `/biblia`, `/plan`, `/statistika`. The reader screen lives in both `/biblia/reader/...` and `/plan/reader/...` route trees — same widget, different parent routes.
+GoRouter with flat named routes. No `StatefulShellRoute` — bottom navigation is handled at the screen level. Routes:
+
+| Path | Screen |
+|---|---|
+| `/plan` | PlanScreen (initial route) |
+| `/books` | BibliaScreen — book browser |
+| `/books/reader/:bookId/:chapter` | ReaderScreen (from Bible tab) |
+| `/plan/reader/:bookId/:chapter` | ReaderScreen (from Plan tab, `ReaderContext.plan`) |
+| `/statistics` | StatistikaScreen |
+
+The reader widget (`ReaderScreen`) is shared between both reader routes; `ReaderContext` tells it which tab it was opened from.
 
 ### Persistence
 
-Drift (SQLite). Four tables: `chapter_texts`, `read_chapters`, `reading_plans`, `plan_days`.
+Drift (SQLite), schema version 2. Five tables:
+
+| Table | Purpose |
+|---|---|
+| `chapter_texts` | Downloaded chapter HTML/text from SSV |
+| `read_chapters` | Global read progress (bookId + chapterNumber + readAt) |
+| `reading_plans` | Active reading plan metadata |
+| `plan_days` | Per-day chapter assignments for the active plan |
+| `bookmarked_chapters` | Chapter bookmarks (bookId + chapterNumber + bookmarkedAt) |
+
+### Features
+
+- **Bible browser** — browse all 73 books grouped by testament; shows download status and bookmarked chapters per book.
+- **Offline reader** — downloads chapter HTML from biblia.ssv.sk; reads offline afterward; FAB toggles read/unread state.
+- **Bookmarks** — bookmark any chapter from the reader; accessible via the bookmark icon in the Bible tab app bar.
+- **Reading plan** — create a plan by selecting books and a day count; immutable schedule after creation; tracks daily progress with ahead/behind status.
+- **Statistics** — global chapter counts by testament, plan progress metrics.
+- **Light + dark theme** — follows system theme (`ThemeMode.system`).
