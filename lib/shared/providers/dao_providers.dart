@@ -1,3 +1,4 @@
+import 'package:bible_tracker/db/daos/bookmark_dao.dart';
 import 'package:bible_tracker/db/daos/chapter_text_dao.dart';
 import 'package:bible_tracker/db/daos/plan_dao.dart';
 import 'package:bible_tracker/db/daos/progress_dao.dart';
@@ -14,4 +15,8 @@ final planDaoProvider = Provider<PlanDao>((ref) {
 
 final chapterTextDaoProvider = Provider<ChapterTextDao>((ref) {
   return ref.watch(appDatabaseProvider).chapterTextDao;
+});
+
+final bookmarkDaoProvider = Provider<BookmarkDao>((ref) {
+  return ref.watch(appDatabaseProvider).bookmarkDao;
 });

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bible_tracker/core/models/chapter_ref.dart';
+import 'package:bible_tracker/core/models/reader_context.dart';
 import 'package:bible_tracker/db/app_database.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
@@ -20,15 +21,20 @@ AppDatabase _openTestDb() {
 Widget _testReader(
   AppDatabase db,
   ChapterRef ref, {
-  bool canMarkRead = false,
+  ReaderContext readerContext = ReaderContext.books,
   Stream<Set<ChapterRef>>? readChaptersStream,
+  Stream<Set<ChapterRef>>? bookmarkedChaptersStream,
 }) {
   return ProviderScope(
     overrides: [
       appDatabaseProvider.overrideWith((_) => db),
-      if (canMarkRead)
+      if (readerContext == ReaderContext.plan)
         readChaptersProvider.overrideWith(
           (_) => readChaptersStream ?? Stream.value(const {}),
+        ),
+      if (readerContext == ReaderContext.books)
+        bookmarkedChaptersProvider.overrideWith(
+          (_) => bookmarkedChaptersStream ?? Stream.value(const {}),
         ),
     ],
     child: MaterialApp(
@@ -37,7 +43,7 @@ Widget _testReader(
       home: ReaderScreen(
         bookId: ref.bookId,
         chapterNumber: ref.chapterNumber,
-        canMarkRead: canMarkRead,
+        readerContext: readerContext,
       ),
     ),
   );
@@ -83,6 +89,18 @@ void main() {
     expect(find.text('Otvoriť na webe SSV'), findsOneWidget);
   });
 
+  testWidgets('books reader shows bookmark icon in AppBar', (tester) async {
+    final db = _openTestDb();
+    const ref = ChapterRef('gen', 1);
+    await _insertChapter(db, ref, 'Free reading chapter');
+
+    await tester.pumpWidget(_testReader(db, ref));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('reader-bookmark-button')), findsOneWidget);
+    expect(find.byKey(const Key('reader-mark-read-fab')), findsNothing);
+  });
+
   testWidgets('books reader has no read controls', (tester) async {
     final db = _openTestDb();
     const ref = ChapterRef('gen', 1);
@@ -97,12 +115,55 @@ void main() {
     expect(find.byKey(const Key('reader-mark-read-fab')), findsNothing);
   });
 
+  testWidgets('books reader can toggle bookmark', (tester) async {
+    final db = _openTestDb();
+    const ref = ChapterRef('gen', 1);
+    await _insertChapter(db, ref, 'Bookmarkable chapter');
+    final bookmarks = StreamController<Set<ChapterRef>>();
+    addTearDown(bookmarks.close);
+
+    await tester.pumpWidget(
+      _testReader(
+        db,
+        ref,
+        bookmarkedChaptersStream: bookmarks.stream,
+      ),
+    );
+    bookmarks.add(const <ChapterRef>{});
+    await tester.pumpAndSettle();
+
+    expect(await db.bookmarkDao.isBookmarked(ref), isFalse);
+
+    await tester.tap(find.byKey(const Key('reader-bookmark-button')));
+    await tester.pump();
+    bookmarks.add({ref});
+    await tester.pumpAndSettle();
+
+    expect(await db.bookmarkDao.isBookmarked(ref), isTrue);
+  });
+
+  testWidgets('plan reader does not show bookmark icon', (tester) async {
+    final db = _openTestDb();
+    const ref = ChapterRef('gen', 1);
+    await _insertChapter(db, ref, 'Plan reading chapter');
+
+    await tester.pumpWidget(
+      _testReader(db, ref, readerContext: ReaderContext.plan),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('reader-bookmark-button')), findsNothing);
+    expect(find.byKey(const Key('reader-mark-read-fab')), findsOneWidget);
+  });
+
   testWidgets('plan reader shows mark read controls', (tester) async {
     final db = _openTestDb();
     const ref = ChapterRef('gen', 1);
     await _insertChapter(db, ref, 'Plan reading chapter');
 
-    await tester.pumpWidget(_testReader(db, ref, canMarkRead: true));
+    await tester.pumpWidget(
+      _testReader(db, ref, readerContext: ReaderContext.plan),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('reader-mark-read-fab')), findsOneWidget);
@@ -119,7 +180,7 @@ void main() {
       _testReader(
         db,
         ref,
-        canMarkRead: true,
+        readerContext: ReaderContext.plan,
         readChaptersStream: Stream.value({ref}),
       ),
     );
@@ -138,7 +199,12 @@ void main() {
     addTearDown(reads.close);
 
     await tester.pumpWidget(
-      _testReader(db, ref, canMarkRead: true, readChaptersStream: reads.stream),
+      _testReader(
+        db,
+        ref,
+        readerContext: ReaderContext.plan,
+        readChaptersStream: reads.stream,
+      ),
     );
     reads.add(const <ChapterRef>{});
     await tester.pumpAndSettle();

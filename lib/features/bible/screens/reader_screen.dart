@@ -1,6 +1,7 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
+import 'package:bible_tracker/core/models/reader_context.dart';
 import 'package:bible_tracker/core/services/ssv_scraper.dart';
 import 'package:bible_tracker/core/utils/chapter_cursor.dart';
 import 'package:bible_tracker/db/app_database.dart';
@@ -24,13 +25,13 @@ final _chapterTextProvider = FutureProvider.family<ChapterTextRow?, ChapterRef>(
 class ReaderScreen extends ConsumerStatefulWidget {
   final String bookId;
   final int chapterNumber;
-  final bool canMarkRead;
+  final ReaderContext readerContext;
 
   const ReaderScreen({
     super.key,
     required this.bookId,
     required this.chapterNumber,
-    this.canMarkRead = false,
+    this.readerContext = ReaderContext.books,
   });
 
   @override
@@ -50,6 +51,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   BibleBook get _book => _bookById(_chapterRef.bookId);
 
+  bool get _isBooks => widget.readerContext == ReaderContext.books;
+  bool get _isPlan => widget.readerContext == ReaderContext.plan;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -58,16 +62,38 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final previous = ChapterCursor.full.previousOf(_chapterRef);
     final next = ChapterCursor.full.nextOf(_chapterRef);
 
-    final isCurrentChapterRead = widget.canMarkRead
-        ? (ref.watch(readChaptersProvider).value ?? const {}).contains(
-            _chapterRef,
-          )
-        : false;
+    final allRead = _isPlan
+        ? (ref.watch(readChaptersProvider).value ?? const <ChapterRef>{})
+        : const <ChapterRef>{};
+    final allBookmarked = _isBooks
+        ? (ref.watch(bookmarkedChaptersProvider).value ?? const <ChapterRef>{})
+        : const <ChapterRef>{};
+
+    final isCurrentChapterRead = allRead.contains(_chapterRef);
+    final isCurrentChapterBookmarked = allBookmarked.contains(_chapterRef);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text('${book.name} ${_chapterRef.chapterNumber}')),
-      floatingActionButton: widget.canMarkRead
+      appBar: AppBar(
+        title: Text('${book.name} ${_chapterRef.chapterNumber}'),
+        actions: [
+          if (_isBooks)
+            IconButton(
+              key: const Key('reader-bookmark-button'),
+              icon: Icon(
+                isCurrentChapterBookmarked
+                    ? Icons.bookmark
+                    : Icons.bookmark_border,
+                color: isCurrentChapterBookmarked
+                    ? AppColors.error
+                    : AppColors.textMuted,
+              ),
+              onPressed: () =>
+                  ref.read(bookmarkDaoProvider).toggle(_chapterRef),
+            ),
+        ],
+      ),
+      floatingActionButton: _isPlan
           ? FloatingActionButton.extended(
               key: const Key('reader-mark-read-fab'),
               onPressed: () async {
@@ -85,9 +111,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   ? AppColors.textMuted
                   : Colors.white,
               icon: Icon(
-                isCurrentChapterRead
-                    ? Icons.undo
-                    : Icons.check_circle_outline,
+                isCurrentChapterRead ? Icons.undo : Icons.check_circle_outline,
               ),
               label: Text(
                 isCurrentChapterRead

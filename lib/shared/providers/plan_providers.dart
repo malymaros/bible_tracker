@@ -4,6 +4,7 @@ import 'package:bible_tracker/core/models/reading_plan.dart';
 import 'package:bible_tracker/shared/providers/dao_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+
 final activePlanProvider = StreamProvider<ReadingPlan?>((ref) {
   return ref.watch(planDaoProvider).watchActivePlan();
 });
@@ -22,4 +23,8 @@ final readChaptersProvider = StreamProvider<Set<ChapterRef>>((ref) {
 final todayProvider = Provider<DateTime>((_) {
   final now = DateTime.now();
   return DateTime(now.year, now.month, now.day);
+});
+
+final bookmarkedChaptersProvider = StreamProvider<Set<ChapterRef>>((ref) {
+  return ref.watch(bookmarkDaoProvider).watchAll();
 });

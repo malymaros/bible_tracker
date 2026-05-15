@@ -1,9 +1,12 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/book_download_progress.dart';
+import 'package:bible_tracker/core/models/chapter_ref.dart';
+import 'package:bible_tracker/core/models/reader_context.dart';
 import 'package:bible_tracker/core/services/ssv_scraper.dart';
 import 'package:bible_tracker/shared/providers/dao_providers.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
+import 'package:bible_tracker/shared/providers/plan_providers.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
@@ -23,10 +26,25 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final counts = ref.watch(downloadedChapterCountsProvider).value ?? {};
+    final bookmarkedChapters =
+        ref.watch(bookmarkedChaptersProvider).value ?? const {};
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(l10n.screenBiblia)),
+      appBar: AppBar(
+        title: Text(l10n.screenBiblia),
+        actions: [
+          IconButton(
+            key: const Key('biblia-bookmarks-button'),
+            icon: const Icon(Icons.bookmark, color: AppColors.error),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const _BookmarksListScreen(),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: Column(
@@ -36,6 +54,7 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
               _BookGroupSection(
                 group: group,
                 counts: counts,
+                bookmarkedChapters: bookmarkedChapters,
                 onTapBook: _openBook,
               ),
             const TestamentHeader(title: 'Nový zákon'),
@@ -43,6 +62,7 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
               _BookGroupSection(
                 group: group,
                 counts: counts,
+                bookmarkedChapters: bookmarkedChapters,
                 onTapBook: _openBook,
               ),
           ],
@@ -76,6 +96,8 @@ class _BookChaptersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final bookmarkedChapters =
+        ref.watch(bookmarkedChaptersProvider).value ?? const {};
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -94,28 +116,43 @@ class _BookChaptersScreen extends ConsumerWidget {
               itemCount: book.chapterCount,
               itemBuilder: (_, index) {
                 final chapter = index + 1;
-                return OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ReaderScreen(
-                        bookId: book.id,
-                        chapterNumber: chapter,
+                final ref = ChapterRef(book.id, chapter);
+                final isBookmarked = bookmarkedChapters.contains(ref);
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ReaderScreen(
+                              bookId: book.id,
+                              chapterNumber: chapter,
+                              readerContext: ReaderContext.books,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          '$chapter',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  child: Text(
-                    '$chapter',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                    if (isBookmarked)
+                      const Positioned(
+                        top: 4,
+                        right: 4,
+                        child: _BookmarkDot(),
+                      ),
+                  ],
                 );
               },
             ),
@@ -147,6 +184,101 @@ class _BookChaptersScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BookmarksListScreen extends ConsumerWidget {
+  const _BookmarksListScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bookmarked =
+        ref.watch(bookmarkedChaptersProvider).value ?? const {};
+
+    final sorted = bookmarked.toList()
+      ..sort((a, b) {
+        final bookA = kBibleBooks.firstWhere((book) => book.id == a.bookId);
+        final bookB = kBibleBooks.firstWhere((book) => book.id == b.bookId);
+        final byBook = bookA.order.compareTo(bookB.order);
+        return byBook != 0 ? byBook : a.chapterNumber.compareTo(b.chapterNumber);
+      });
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(title: const Text('Záložky')),
+      body: sorted.isEmpty
+          ? const Center(
+              child: Text(
+                'Žiadne záložky',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 16),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              itemCount: sorted.length,
+              itemBuilder: (_, index) {
+                final chapterRef = sorted[index];
+                final book = kBibleBooks.firstWhere(
+                  (b) => b.id == chapterRef.bookId,
+                );
+                return _BookmarkRow(book: book, chapterRef: chapterRef);
+              },
+            ),
+    );
+  }
+}
+
+class _BookmarkRow extends StatelessWidget {
+  final BibleBook book;
+  final ChapterRef chapterRef;
+
+  const _BookmarkRow({required this.book, required this.chapterRef});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        key: Key('bookmark-row-${chapterRef.bookId}-${chapterRef.chapterNumber}'),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        leading: const Icon(Icons.bookmark, color: AppColors.error, size: 24),
+        title: Text(
+          '${book.name} ${chapterRef.chapterNumber}',
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: AppColors.text,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ReaderScreen(
+              bookId: chapterRef.bookId,
+              chapterNumber: chapterRef.chapterNumber,
+              readerContext: ReaderContext.books,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BookmarkDot extends StatelessWidget {
+  const _BookmarkDot();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: const BoxDecoration(
+        color: AppColors.error,
+        shape: BoxShape.circle,
       ),
     );
   }
@@ -355,11 +487,13 @@ const _ntBookGroups = [
 class _BookGroupSection extends StatelessWidget {
   final _BookGroup group;
   final Map<String, int> counts;
+  final Set<ChapterRef> bookmarkedChapters;
   final void Function(BibleBook book, _BookDownloadState state) onTapBook;
 
   const _BookGroupSection({
     required this.group,
     required this.counts,
+    required this.bookmarkedChapters,
     required this.onTapBook,
   });
 
@@ -382,6 +516,7 @@ class _BookGroupSection extends StatelessWidget {
               book: book,
               state: _stateForBook(book),
               statusLabel: _statusLabel(l10n, _stateForBook(book)),
+              hasBookmark: bookmarkedChapters.any((r) => r.bookId == book.id),
               onTap: () => onTapBook(book, _stateForBook(book)),
             ),
         ],
@@ -401,12 +536,14 @@ class _BookRow extends StatelessWidget {
   final BibleBook book;
   final _BookDownloadState state;
   final String statusLabel;
+  final bool hasBookmark;
   final VoidCallback onTap;
 
   const _BookRow({
     required this.book,
     required this.state,
     required this.statusLabel,
+    required this.hasBookmark,
     required this.onTap,
   });
 
@@ -469,7 +606,17 @@ class _BookRow extends StatelessWidget {
             ),
           ),
         ),
-        trailing: Icon(Icons.chevron_right, color: AppColors.textMuted),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (hasBookmark)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Icon(Icons.bookmark, color: AppColors.error, size: 18),
+              ),
+            const Icon(Icons.chevron_right, color: AppColors.textMuted),
+          ],
+        ),
         onTap: onTap,
       ),
     );

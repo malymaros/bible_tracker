@@ -46,6 +46,7 @@ Widget _testWidget(
       downloadedChapterCountsProvider.overrideWith(
         (_) => Stream.value(const {}),
       ),
+      bookmarkedChaptersProvider.overrideWith((_) => Stream.value(const {})),
       todayProvider.overrideWithValue(today ?? DateTime(2026, 5, 12)),
     ],
     child: MaterialApp(

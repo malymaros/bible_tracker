@@ -10,6 +10,7 @@ import 'package:bible_tracker/core/models/plan_day.dart';
 import 'package:bible_tracker/core/models/reading_plan.dart';
 import 'package:bible_tracker/core/services/plan_generator.dart';
 import 'package:bible_tracker/features/bible/screens/biblia_screen.dart';
+import 'package:bible_tracker/core/models/reader_context.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/features/statistics/screens/statistika_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
@@ -1023,7 +1024,7 @@ class _PlanChapterCheckboxTile extends ConsumerWidget {
         builder: (_) => ReaderScreen(
           bookId: chapter.bookId,
           chapterNumber: chapter.chapterNumber,
-          canMarkRead: true,
+          readerContext: ReaderContext.plan,
         ),
       ),
     );

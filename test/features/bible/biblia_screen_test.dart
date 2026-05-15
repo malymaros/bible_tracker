@@ -7,6 +7,7 @@ import 'package:bible_tracker/features/bible/screens/biblia_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
+import 'package:bible_tracker/shared/providers/plan_providers.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +33,9 @@ Widget _testScreen(
       }),
       downloadedChapterCountsProvider.overrideWith(
         (ref) => Stream.value(downloadedCounts),
+      ),
+      bookmarkedChaptersProvider.overrideWith(
+        (ref) => Stream.value(const {}),
       ),
       if (downloadService != null)
         downloadServiceProvider.overrideWithValue(downloadService),

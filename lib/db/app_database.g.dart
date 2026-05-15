@@ -1450,6 +1450,285 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
   }
 }
 
+class $BookmarkedChaptersTable extends BookmarkedChapters
+    with TableInfo<$BookmarkedChaptersTable, BookmarkedChapterRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BookmarkedChaptersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<String> bookId = GeneratedColumn<String>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _chapterNumberMeta = const VerificationMeta(
+    'chapterNumber',
+  );
+  @override
+  late final GeneratedColumn<int> chapterNumber = GeneratedColumn<int>(
+    'chapter_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bookmarkedAtMeta = const VerificationMeta(
+    'bookmarkedAt',
+  );
+  @override
+  late final GeneratedColumn<int> bookmarkedAt = GeneratedColumn<int>(
+    'bookmarked_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [bookId, chapterNumber, bookmarkedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bookmarked_chapters';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BookmarkedChapterRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookIdMeta);
+    }
+    if (data.containsKey('chapter_number')) {
+      context.handle(
+        _chapterNumberMeta,
+        chapterNumber.isAcceptableOrUnknown(
+          data['chapter_number']!,
+          _chapterNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_chapterNumberMeta);
+    }
+    if (data.containsKey('bookmarked_at')) {
+      context.handle(
+        _bookmarkedAtMeta,
+        bookmarkedAt.isAcceptableOrUnknown(
+          data['bookmarked_at']!,
+          _bookmarkedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_bookmarkedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {bookId, chapterNumber};
+  @override
+  BookmarkedChapterRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BookmarkedChapterRow(
+      bookId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}book_id'],
+      )!,
+      chapterNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chapter_number'],
+      )!,
+      bookmarkedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bookmarked_at'],
+      )!,
+    );
+  }
+
+  @override
+  $BookmarkedChaptersTable createAlias(String alias) {
+    return $BookmarkedChaptersTable(attachedDatabase, alias);
+  }
+}
+
+class BookmarkedChapterRow extends DataClass
+    implements Insertable<BookmarkedChapterRow> {
+  final String bookId;
+  final int chapterNumber;
+  final int bookmarkedAt;
+  const BookmarkedChapterRow({
+    required this.bookId,
+    required this.chapterNumber,
+    required this.bookmarkedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['book_id'] = Variable<String>(bookId);
+    map['chapter_number'] = Variable<int>(chapterNumber);
+    map['bookmarked_at'] = Variable<int>(bookmarkedAt);
+    return map;
+  }
+
+  BookmarkedChaptersCompanion toCompanion(bool nullToAbsent) {
+    return BookmarkedChaptersCompanion(
+      bookId: Value(bookId),
+      chapterNumber: Value(chapterNumber),
+      bookmarkedAt: Value(bookmarkedAt),
+    );
+  }
+
+  factory BookmarkedChapterRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BookmarkedChapterRow(
+      bookId: serializer.fromJson<String>(json['bookId']),
+      chapterNumber: serializer.fromJson<int>(json['chapterNumber']),
+      bookmarkedAt: serializer.fromJson<int>(json['bookmarkedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'bookId': serializer.toJson<String>(bookId),
+      'chapterNumber': serializer.toJson<int>(chapterNumber),
+      'bookmarkedAt': serializer.toJson<int>(bookmarkedAt),
+    };
+  }
+
+  BookmarkedChapterRow copyWith({
+    String? bookId,
+    int? chapterNumber,
+    int? bookmarkedAt,
+  }) => BookmarkedChapterRow(
+    bookId: bookId ?? this.bookId,
+    chapterNumber: chapterNumber ?? this.chapterNumber,
+    bookmarkedAt: bookmarkedAt ?? this.bookmarkedAt,
+  );
+  BookmarkedChapterRow copyWithCompanion(BookmarkedChaptersCompanion data) {
+    return BookmarkedChapterRow(
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      chapterNumber: data.chapterNumber.present
+          ? data.chapterNumber.value
+          : this.chapterNumber,
+      bookmarkedAt: data.bookmarkedAt.present
+          ? data.bookmarkedAt.value
+          : this.bookmarkedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookmarkedChapterRow(')
+          ..write('bookId: $bookId, ')
+          ..write('chapterNumber: $chapterNumber, ')
+          ..write('bookmarkedAt: $bookmarkedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(bookId, chapterNumber, bookmarkedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BookmarkedChapterRow &&
+          other.bookId == this.bookId &&
+          other.chapterNumber == this.chapterNumber &&
+          other.bookmarkedAt == this.bookmarkedAt);
+}
+
+class BookmarkedChaptersCompanion
+    extends UpdateCompanion<BookmarkedChapterRow> {
+  final Value<String> bookId;
+  final Value<int> chapterNumber;
+  final Value<int> bookmarkedAt;
+  final Value<int> rowid;
+  const BookmarkedChaptersCompanion({
+    this.bookId = const Value.absent(),
+    this.chapterNumber = const Value.absent(),
+    this.bookmarkedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BookmarkedChaptersCompanion.insert({
+    required String bookId,
+    required int chapterNumber,
+    required int bookmarkedAt,
+    this.rowid = const Value.absent(),
+  }) : bookId = Value(bookId),
+       chapterNumber = Value(chapterNumber),
+       bookmarkedAt = Value(bookmarkedAt);
+  static Insertable<BookmarkedChapterRow> custom({
+    Expression<String>? bookId,
+    Expression<int>? chapterNumber,
+    Expression<int>? bookmarkedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (bookId != null) 'book_id': bookId,
+      if (chapterNumber != null) 'chapter_number': chapterNumber,
+      if (bookmarkedAt != null) 'bookmarked_at': bookmarkedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BookmarkedChaptersCompanion copyWith({
+    Value<String>? bookId,
+    Value<int>? chapterNumber,
+    Value<int>? bookmarkedAt,
+    Value<int>? rowid,
+  }) {
+    return BookmarkedChaptersCompanion(
+      bookId: bookId ?? this.bookId,
+      chapterNumber: chapterNumber ?? this.chapterNumber,
+      bookmarkedAt: bookmarkedAt ?? this.bookmarkedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (bookId.present) {
+      map['book_id'] = Variable<String>(bookId.value);
+    }
+    if (chapterNumber.present) {
+      map['chapter_number'] = Variable<int>(chapterNumber.value);
+    }
+    if (bookmarkedAt.present) {
+      map['bookmarked_at'] = Variable<int>(bookmarkedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookmarkedChaptersCompanion(')
+          ..write('bookId: $bookId, ')
+          ..write('chapterNumber: $chapterNumber, ')
+          ..write('bookmarkedAt: $bookmarkedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1457,11 +1736,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReadingPlansTable readingPlans = $ReadingPlansTable(this);
   late final $PlanDaysTable planDays = $PlanDaysTable(this);
   late final $ChapterTextsTable chapterTexts = $ChapterTextsTable(this);
+  late final $BookmarkedChaptersTable bookmarkedChapters =
+      $BookmarkedChaptersTable(this);
   late final ProgressDao progressDao = ProgressDao(this as AppDatabase);
   late final PlanDao planDao = PlanDao(this as AppDatabase);
   late final ChapterTextDao chapterTextDao = ChapterTextDao(
     this as AppDatabase,
   );
+  late final BookmarkDao bookmarkDao = BookmarkDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1471,6 +1753,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     readingPlans,
     planDays,
     chapterTexts,
+    bookmarkedChapters,
   ];
 }
 
@@ -2266,6 +2549,185 @@ typedef $$ChapterTextsTableProcessedTableManager =
       ChapterTextRow,
       PrefetchHooks Function()
     >;
+typedef $$BookmarkedChaptersTableCreateCompanionBuilder =
+    BookmarkedChaptersCompanion Function({
+      required String bookId,
+      required int chapterNumber,
+      required int bookmarkedAt,
+      Value<int> rowid,
+    });
+typedef $$BookmarkedChaptersTableUpdateCompanionBuilder =
+    BookmarkedChaptersCompanion Function({
+      Value<String> bookId,
+      Value<int> chapterNumber,
+      Value<int> bookmarkedAt,
+      Value<int> rowid,
+    });
+
+class $$BookmarkedChaptersTableFilterComposer
+    extends Composer<_$AppDatabase, $BookmarkedChaptersTable> {
+  $$BookmarkedChaptersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get chapterNumber => $composableBuilder(
+    column: $table.chapterNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bookmarkedAt => $composableBuilder(
+    column: $table.bookmarkedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BookmarkedChaptersTableOrderingComposer
+    extends Composer<_$AppDatabase, $BookmarkedChaptersTable> {
+  $$BookmarkedChaptersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get chapterNumber => $composableBuilder(
+    column: $table.chapterNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bookmarkedAt => $composableBuilder(
+    column: $table.bookmarkedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BookmarkedChaptersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BookmarkedChaptersTable> {
+  $$BookmarkedChaptersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get bookId =>
+      $composableBuilder(column: $table.bookId, builder: (column) => column);
+
+  GeneratedColumn<int> get chapterNumber => $composableBuilder(
+    column: $table.chapterNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get bookmarkedAt => $composableBuilder(
+    column: $table.bookmarkedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$BookmarkedChaptersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BookmarkedChaptersTable,
+          BookmarkedChapterRow,
+          $$BookmarkedChaptersTableFilterComposer,
+          $$BookmarkedChaptersTableOrderingComposer,
+          $$BookmarkedChaptersTableAnnotationComposer,
+          $$BookmarkedChaptersTableCreateCompanionBuilder,
+          $$BookmarkedChaptersTableUpdateCompanionBuilder,
+          (
+            BookmarkedChapterRow,
+            BaseReferences<
+              _$AppDatabase,
+              $BookmarkedChaptersTable,
+              BookmarkedChapterRow
+            >,
+          ),
+          BookmarkedChapterRow,
+          PrefetchHooks Function()
+        > {
+  $$BookmarkedChaptersTableTableManager(
+    _$AppDatabase db,
+    $BookmarkedChaptersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BookmarkedChaptersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BookmarkedChaptersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BookmarkedChaptersTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> bookId = const Value.absent(),
+                Value<int> chapterNumber = const Value.absent(),
+                Value<int> bookmarkedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BookmarkedChaptersCompanion(
+                bookId: bookId,
+                chapterNumber: chapterNumber,
+                bookmarkedAt: bookmarkedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String bookId,
+                required int chapterNumber,
+                required int bookmarkedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => BookmarkedChaptersCompanion.insert(
+                bookId: bookId,
+                chapterNumber: chapterNumber,
+                bookmarkedAt: bookmarkedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BookmarkedChaptersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BookmarkedChaptersTable,
+      BookmarkedChapterRow,
+      $$BookmarkedChaptersTableFilterComposer,
+      $$BookmarkedChaptersTableOrderingComposer,
+      $$BookmarkedChaptersTableAnnotationComposer,
+      $$BookmarkedChaptersTableCreateCompanionBuilder,
+      $$BookmarkedChaptersTableUpdateCompanionBuilder,
+      (
+        BookmarkedChapterRow,
+        BaseReferences<
+          _$AppDatabase,
+          $BookmarkedChaptersTable,
+          BookmarkedChapterRow
+        >,
+      ),
+      BookmarkedChapterRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2278,4 +2740,6 @@ class $AppDatabaseManager {
       $$PlanDaysTableTableManager(_db, _db.planDays);
   $$ChapterTextsTableTableManager get chapterTexts =>
       $$ChapterTextsTableTableManager(_db, _db.chapterTexts);
+  $$BookmarkedChaptersTableTableManager get bookmarkedChapters =>
+      $$BookmarkedChaptersTableTableManager(_db, _db.bookmarkedChapters);
 }

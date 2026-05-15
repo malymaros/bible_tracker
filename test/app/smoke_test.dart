@@ -29,6 +29,7 @@ Widget _testApp(
     ),
     activePlanProvider.overrideWith((ref) => Stream.value(null)),
     readChaptersProvider.overrideWith((ref) => Stream.value(const {})),
+    bookmarkedChaptersProvider.overrideWith((ref) => Stream.value(const {})),
   ],
   child: const BibleTrackerApp(),
 );
