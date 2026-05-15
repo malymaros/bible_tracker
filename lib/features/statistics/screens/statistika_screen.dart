@@ -5,11 +5,20 @@ import 'package:bible_tracker/core/models/plan_statistics.dart';
 import 'package:bible_tracker/core/models/reading_plan.dart';
 import 'package:bible_tracker/core/services/plan_progress_calculator.dart';
 import 'package:bible_tracker/core/services/plan_statistics_calculator.dart';
+import 'package:bible_tracker/core/utils/chapter_count_format.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/plan_providers.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+String _formatDelta(int delta) {
+  final abs = delta.abs();
+  final sign = delta > 0 ? '+' : '';
+  if (abs == 1) return '$sign$delta kapitola';
+  if (abs <= 4) return '$sign$delta kapitoly';
+  return '$sign$delta kapitol';
+}
 
 class StatistikaScreen extends ConsumerWidget {
   const StatistikaScreen({super.key});
@@ -139,12 +148,12 @@ class _ProgressSummary extends StatelessWidget {
           ),
           _MetricLine(
             label: l10n.planExpectedByToday,
-            value: '${progress.expectedChaptersByToday}',
+            value: formatChapterCount(progress.expectedChaptersByToday),
             valueKey: 'stats-expected-by-today',
           ),
           _MetricLine(
             label: l10n.planAheadBehind,
-            value: '${progress.aheadBehindChapterCount}',
+            value: _formatDelta(progress.aheadBehindChapterCount),
             valueKey: 'stats-ahead-behind',
           ),
         ],
