@@ -107,6 +107,27 @@ void main() {
 
     expect(find.byKey(const Key('reader-mark-read-fab')), findsOneWidget);
     expect(find.text('Označiť ako prečítané'), findsOneWidget);
+    expect(find.text('Označiť ako neprečítané'), findsNothing);
+  });
+
+  testWidgets('read state shows different label on FAB', (tester) async {
+    final db = _openTestDb();
+    const ref = ChapterRef('gen', 1);
+    await _insertChapter(db, ref, 'Plan reading chapter');
+
+    await tester.pumpWidget(
+      _testReader(
+        db,
+        ref,
+        canMarkRead: true,
+        readChaptersStream: Stream.value({ref}),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('reader-mark-read-fab')), findsOneWidget);
+    expect(find.text('Označiť ako neprečítané'), findsOneWidget);
+    expect(find.text('Označiť ako prečítané'), findsNothing);
   });
 
   testWidgets('plan reader marks chapter read via FAB', (tester) async {

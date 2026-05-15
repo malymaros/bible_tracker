@@ -78,12 +78,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   await dao.markRead(_chapterRef, DateTime.now());
                 }
               },
-              backgroundColor: AppColors.goldSoft,
-              foregroundColor: AppColors.goldDark,
+              backgroundColor: isCurrentChapterRead
+                  ? AppColors.surfaceMuted.withValues(alpha: 0.75)
+                  : AppColors.gold.withValues(alpha: 0.75),
+              foregroundColor: isCurrentChapterRead
+                  ? AppColors.textMuted
+                  : Colors.white,
               icon: Icon(
                 isCurrentChapterRead
-                    ? Icons.bookmark_remove_outlined
-                    : Icons.bookmark_add_outlined,
+                    ? Icons.undo
+                    : Icons.check_circle_outline,
               ),
               label: Text(
                 isCurrentChapterRead
