@@ -127,6 +127,8 @@
   "planSelectAtLeastOneBook": "Vyberte aspoň jednu knihu",
   "planTodayReading": "Dnešné čítanie",
   "planNoReadingToday": "Na dnes nie je naplánované čítanie",
+  "planJumpToUnread": "Pokračovať v čítaní.",
+  "planJumpToToday": "Návrat na dnešný deň.",
   "planSchedule": "Rozpis",
   "planDay": "Deň",
   "planToday": "dnes",

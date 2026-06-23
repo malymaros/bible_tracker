@@ -267,6 +267,118 @@ void main() {
     expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
   });
 
+  testWidgets('jump-to-unread button appears when behind and jumps to first '
+      'unread day', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    // Today = day 3; days 1 and 2 have unread chapters, so the user is behind.
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+        readChapters: const {},
+        today: DateTime(2026, 5, 14),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Landed on today (day 3) with the jump button visible.
+    expect(find.byKey(const Key('plan-current-day-3')), findsOneWidget);
+    expect(find.byKey(const Key('plan-jump-to-unread-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('plan-jump-to-unread-button')));
+    await tester.pumpAndSettle();
+
+    // Jumped to the first day with an unread chapter (day 1).
+    expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
+  });
+
+  testWidgets('continue-reading button shows on today and is the only button', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    // Today = day 1 with unread chapters → only the continue-reading button is
+    // shown (never the return-to-today button while on today).
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+        readChapters: const {},
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
+    expect(find.byKey(const Key('plan-jump-to-unread-button')), findsOneWidget);
+    expect(find.byKey(const Key('plan-jump-to-today-button')), findsNothing);
+  });
+
+  testWidgets('continue-reading button hidden when whole plan is read', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _plan();
+    final days = _days(plan.id);
+    final allChapters = {for (final d in days) ...d.chapters};
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: days,
+        readChapters: allChapters,
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
+    expect(find.byKey(const Key('plan-jump-to-unread-button')), findsNothing);
+    expect(find.byKey(const Key('plan-jump-to-today-button')), findsNothing);
+  });
+
+  testWidgets('jump-to-today button appears when not on today and jumps back '
+      'to today', (tester) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // On today (day 1) the jump-to-today button is hidden.
+    expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
+    expect(find.byKey(const Key('plan-jump-to-today-button')), findsNothing);
+
+    // Navigate forward to day 2 → button should appear.
+    await tester.tap(find.byKey(const Key('plan-next-day-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('plan-current-day-2')), findsOneWidget);
+    expect(find.byKey(const Key('plan-jump-to-today-button')), findsOneWidget);
+
+    // Tapping it returns to today (day 1).
+    await tester.tap(find.byKey(const Key('plan-jump-to-today-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('plan-current-day-1')), findsOneWidget);
+    expect(find.byKey(const Key('plan-jump-to-today-button')), findsNothing);
+  });
+
   testWidgets('total progress widget shows plan completion', (tester) async {
     final db = _openTestDb();
     final plan = _plan();

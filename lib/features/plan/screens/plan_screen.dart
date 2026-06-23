@@ -384,6 +384,16 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
     );
     final selectedIndex = _effectiveSelectedIndex(days, today);
     final selectedDay = days.isEmpty ? null : days[selectedIndex];
+    final firstUnreadIndex = _firstUnreadDayIndex(days, readChapters);
+    final todayIndex = days.indexWhere(
+      (day) => _sameDate(day.scheduledDate, today),
+    );
+    final onToday = todayIndex != -1 && selectedIndex == todayIndex;
+    // Exactly one action is offered: on the current day the user can continue
+    // reading from the first unread chapter; on any other day they can return
+    // to today.
+    final canJumpToUnread = onToday && firstUnreadIndex != -1;
+    final canJumpToToday = !onToday && todayIndex != -1;
 
     return Scaffold(
       backgroundColor: _PlanColors.background,
@@ -414,6 +424,11 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
                   canGoNext: selectedIndex < days.length - 1,
                   onPrevious: () => _selectDay(selectedIndex - 1, days.length),
                   onNext: () => _selectDay(selectedIndex + 1, days.length),
+                  canJumpToUnread: canJumpToUnread,
+                  onJumpToUnread: () =>
+                      _selectDay(firstUnreadIndex, days.length),
+                  canJumpToToday: canJumpToToday,
+                  onJumpToToday: () => _selectDay(todayIndex, days.length),
                 ),
                 const SizedBox(height: 14),
                 _TotalProgressCard(
@@ -712,6 +727,10 @@ class _DayNavigationCard extends StatelessWidget {
   final bool canGoNext;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final bool canJumpToUnread;
+  final VoidCallback onJumpToUnread;
+  final bool canJumpToToday;
+  final VoidCallback onJumpToToday;
 
   const _DayNavigationCard({
     required this.day,
@@ -720,47 +739,123 @@ class _DayNavigationCard extends StatelessWidget {
     required this.canGoNext,
     required this.onPrevious,
     required this.onNext,
+    required this.canJumpToUnread,
+    required this.onJumpToUnread,
+    required this.canJumpToToday,
+    required this.onJumpToToday,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return _PlanCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _RoundGoldIconButton(
-            key: const Key('plan-previous-day-button'),
-            icon: Icons.chevron_left,
-            onPressed: canGoPrevious ? onPrevious : null,
+          Row(
+            children: [
+              _RoundGoldIconButton(
+                key: const Key('plan-previous-day-button'),
+                icon: Icons.chevron_left,
+                onPressed: canGoPrevious ? onPrevious : null,
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      '${l10n.planDay} ${day.dayNumber} / $totalDays',
+                      key: Key('plan-current-day-${day.dayNumber}'),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: _PlanColors.textStrong,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDate(day.scheduledDate),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: _PlanColors.text,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _RoundGoldIconButton(
+                key: const Key('plan-next-day-button'),
+                icon: Icons.chevron_right,
+                onPressed: canGoNext ? onNext : null,
+              ),
+            ],
           ),
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  '${l10n.planDay} ${day.dayNumber} / $totalDays',
-                  key: Key('plan-current-day-${day.dayNumber}'),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: _PlanColors.textStrong,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatDate(day.scheduledDate),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _PlanColors.text,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+          if (canJumpToUnread || canJumpToToday) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(
+                height: 1,
+                thickness: 1,
+                color: _PlanColors.cardBorder,
+              ),
             ),
-          ),
-          _RoundGoldIconButton(
-            key: const Key('plan-next-day-button'),
-            icon: Icons.chevron_right,
-            onPressed: canGoNext ? onNext : null,
-          ),
+            if (canJumpToUnread)
+              _JumpButton(
+                buttonKey: const Key('plan-jump-to-unread-button'),
+                icon: Icons.menu_book_outlined,
+                label: l10n.planJumpToUnread,
+                onPressed: onJumpToUnread,
+              ),
+            if (canJumpToToday)
+              _JumpButton(
+                buttonKey: const Key('plan-jump-to-today-button'),
+                icon: Icons.today,
+                label: l10n.planJumpToToday,
+                onPressed: onJumpToToday,
+                backgroundColor: _PlanColors.greenSoft,
+                foregroundColor: _PlanColors.greenDark,
+              ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _JumpButton extends StatelessWidget {
+  final Key buttonKey;
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  const _JumpButton({
+    required this.buttonKey,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.backgroundColor = _PlanColors.goldSoft,
+    this.foregroundColor = _PlanColors.goldDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      key: buttonKey,
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        minimumSize: const Size.fromHeight(46),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+      icon: Icon(icon, size: 19),
+      label: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -1345,6 +1440,13 @@ bool _sameDate(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
+int _firstUnreadDayIndex(List<PlanDay> days, Set<ChapterRef> readChapters) {
+  return days.indexWhere(
+    (day) =>
+        day.chapters.any((chapter) => !readChapters.contains(chapter)),
+  );
+}
+
 int _completedCount(List<ChapterRef> chapters, Set<ChapterRef> readChapters) {
   return chapters.where((chapter) => readChapters.contains(chapter)).length;
 }
@@ -1445,4 +1547,6 @@ class _PlanColors {
   static const text = Color(0xFF2B2418);
   static const textStrong = Color(0xFF1A110A);
   static const textMuted = Color(0xFF5A5047);
+  static const greenSoft = Color(0xFFDDF1DC);
+  static const greenDark = Color(0xFF2E6B2E);
 }

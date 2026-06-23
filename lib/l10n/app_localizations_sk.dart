@@ -123,6 +123,12 @@ class AppLocalizationsSk extends AppLocalizations {
   String get planNoReadingToday => 'Na dnes nie je naplánované čítanie';
 
   @override
+  String get planJumpToUnread => 'Pokračovať v čítaní.';
+
+  @override
+  String get planJumpToToday => 'Návrat na dnešný deň.';
+
+  @override
   String get planSchedule => 'Rozpis';
 
   @override

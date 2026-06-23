@@ -23,9 +23,10 @@ ThemeData lightTheme() {
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.background,
       foregroundColor: AppColors.text,
-      surfaceTintColor: AppColors.background,
+      surfaceTintColor: Colors.transparent,
       centerTitle: true,
       elevation: 0,
+      scrolledUnderElevation: 0,
     ),
     cardTheme: CardThemeData(
       color: AppColors.surface,
@@ -105,8 +106,19 @@ ThemeData lightTheme() {
   );
 }
 
-ThemeData darkTheme() => ThemeData(
-  useMaterial3: true,
-  colorSchemeSeed: AppColors.goldDark,
-  brightness: Brightness.dark,
-);
+ThemeData darkTheme() {
+  final base = ThemeData(
+    useMaterial3: true,
+    colorSchemeSeed: AppColors.goldDark,
+    brightness: Brightness.dark,
+  );
+  // Keep the app bar at its resting (dark) colour and stop Material 3 from
+  // tinting it lighter when content scrolls underneath.
+  return base.copyWith(
+    appBarTheme: const AppBarTheme(
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      elevation: 0,
+    ),
+  );
+}

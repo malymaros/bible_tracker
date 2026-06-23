@@ -57,6 +57,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    // Pin the app bar to its resting colour (dark in dark mode, cream in light)
+    // so it does not switch to a lighter surface tone when content scrolls
+    // underneath it.
+    final appBarColor =
+        theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface;
     final book = _book;
     final chapter = ref.watch(_chapterTextProvider(_chapterRef));
     final previous = ChapterCursor.full.previousOf(_chapterRef);
@@ -75,6 +81,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: appBarColor,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        elevation: 0,
         title: Text('${book.name} ${_chapterRef.chapterNumber}'),
         actions: [
           if (_isBooks)
@@ -186,19 +196,49 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 }
 
-class _DownloadedChapterView extends StatelessWidget {
+class _DownloadedChapterView extends StatefulWidget {
   final ChapterTextRow row;
 
   const _DownloadedChapterView({required this.row});
 
   @override
+  State<_DownloadedChapterView> createState() => _DownloadedChapterViewState();
+}
+
+class _DownloadedChapterViewState extends State<_DownloadedChapterView> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      key: const Key('reader-scroll'),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      child: AppCard(
-        padding: const EdgeInsets.all(20),
-        child: _ChapterHtml(htmlContent: row.htmlContent),
+    return ScrollbarTheme(
+      data: ScrollbarThemeData(
+        thumbVisibility: const WidgetStatePropertyAll(true),
+        thickness: const WidgetStatePropertyAll(4),
+        radius: const Radius.circular(999),
+        thumbColor: const WidgetStatePropertyAll(AppColors.gold),
+        trackColor: WidgetStatePropertyAll(
+          AppColors.goldSoft.withValues(alpha: 0.4),
+        ),
+        trackVisibility: const WidgetStatePropertyAll(true),
+        crossAxisMargin: 2,
+      ),
+      child: Scrollbar(
+        controller: _scrollController,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          key: const Key('reader-scroll'),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          child: AppCard(
+            padding: const EdgeInsets.all(20),
+            child: _ChapterHtml(htmlContent: widget.row.htmlContent),
+          ),
+        ),
       ),
     );
   }

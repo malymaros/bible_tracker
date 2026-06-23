@@ -322,6 +322,18 @@ abstract class AppLocalizations {
   /// **'Na dnes nie je naplánované čítanie'**
   String get planNoReadingToday;
 
+  /// No description provided for @planJumpToUnread.
+  ///
+  /// In sk, this message translates to:
+  /// **'Pokračovať v čítaní.'**
+  String get planJumpToUnread;
+
+  /// No description provided for @planJumpToToday.
+  ///
+  /// In sk, this message translates to:
+  /// **'Návrat na dnešný deň.'**
+  String get planJumpToToday;
+
   /// No description provided for @planSchedule.
   ///
   /// In sk, this message translates to:
