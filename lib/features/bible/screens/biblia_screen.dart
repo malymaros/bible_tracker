@@ -45,27 +45,30 @@ class _BibliaScreenState extends ConsumerState<BibliaScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: Column(
-          children: [
-            const TestamentHeader(title: 'Starý zákon'),
-            for (final group in _otBookGroups)
-              _BookGroupSection(
-                group: group,
-                counts: counts,
-                bookmarkedChapters: bookmarkedChapters,
-                onTapBook: _openBook,
-              ),
-            const TestamentHeader(title: 'Nový zákon'),
-            for (final group in _ntBookGroups)
-              _BookGroupSection(
-                group: group,
-                counts: counts,
-                bookmarkedChapters: bookmarkedChapters,
-                onTapBook: _openBook,
-              ),
-          ],
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            children: [
+              const TestamentHeader(title: 'Starý zákon'),
+              for (final group in _otBookGroups)
+                _BookGroupSection(
+                  group: group,
+                  counts: counts,
+                  bookmarkedChapters: bookmarkedChapters,
+                  onTapBook: _openBook,
+                ),
+              const TestamentHeader(title: 'Nový zákon'),
+              for (final group in _ntBookGroups)
+                _BookGroupSection(
+                  group: group,
+                  counts: counts,
+                  bookmarkedChapters: bookmarkedChapters,
+                  onTapBook: _openBook,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -147,11 +150,7 @@ class _BookChaptersScreen extends ConsumerWidget {
                       ),
                     ),
                     if (isBookmarked)
-                      const Positioned(
-                        top: 4,
-                        right: 4,
-                        child: _BookmarkDot(),
-                      ),
+                      const Positioned(top: 4, right: 4, child: _BookmarkDot()),
                   ],
                 );
               },
@@ -194,15 +193,16 @@ class _BookmarksListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookmarked =
-        ref.watch(bookmarkedChaptersProvider).value ?? const {};
+    final bookmarked = ref.watch(bookmarkedChaptersProvider).value ?? const {};
 
     final sorted = bookmarked.toList()
       ..sort((a, b) {
         final bookA = kBibleBooks.firstWhere((book) => book.id == a.bookId);
         final bookB = kBibleBooks.firstWhere((book) => book.id == b.bookId);
         final byBook = bookA.order.compareTo(bookB.order);
-        return byBook != 0 ? byBook : a.chapterNumber.compareTo(b.chapterNumber);
+        return byBook != 0
+            ? byBook
+            : a.chapterNumber.compareTo(b.chapterNumber);
       });
 
     return Scaffold(
@@ -242,7 +242,9 @@ class _BookmarkRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: EdgeInsets.zero,
       child: ListTile(
-        key: Key('bookmark-row-${chapterRef.bookId}-${chapterRef.chapterNumber}'),
+        key: Key(
+          'bookmark-row-${chapterRef.bookId}-${chapterRef.chapterNumber}',
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         leading: const Icon(Icons.bookmark, color: AppColors.error, size: 24),
         title: Text(
@@ -288,13 +290,11 @@ class _BookDownloadScreen extends ConsumerStatefulWidget {
   final BibleBook book;
   final _BookDownloadState initialState;
 
-  const _BookDownloadScreen({
-    required this.book,
-    required this.initialState,
-  });
+  const _BookDownloadScreen({required this.book, required this.initialState});
 
   @override
-  ConsumerState<_BookDownloadScreen> createState() => _BookDownloadScreenState();
+  ConsumerState<_BookDownloadScreen> createState() =>
+      _BookDownloadScreenState();
 }
 
 class _BookDownloadScreenState extends ConsumerState<_BookDownloadScreen> {
@@ -353,11 +353,8 @@ class _BookDownloadScreenState extends ConsumerState<_BookDownloadScreen> {
                       Expanded(
                         child: Text(
                           widget.book.name,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                       ),
                     ],
@@ -450,9 +447,7 @@ class _BookDownloadScreenState extends ConsumerState<_BookDownloadScreen> {
   }
 
   Future<void> _deleteText() async {
-    await ref
-        .read(chapterTextDaoProvider)
-        .deleteBookChapters(widget.book.id);
+    await ref.read(chapterTextDaoProvider).deleteBookChapters(widget.book.id);
     if (!mounted) return;
     setState(() => _state = _BookDownloadState.notDownloaded);
     ref.invalidate(downloadedChapterCountsProvider);
@@ -562,7 +557,10 @@ class _BookRow extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: ListTile(
         key: Key('book-row-${book.id}'),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 10,
+        ),
         leading: BookIconBadge(abbreviation: book.shortName),
         title: book.isDeuterocanonical
             ? RichText(

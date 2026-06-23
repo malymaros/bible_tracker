@@ -72,15 +72,18 @@ class _PlanStatisticsBody extends ConsumerWidget {
       today: today,
     );
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      children: [
-        _ProgressSummary(stats: stats, progress: progress),
-        const SizedBox(height: 12),
-        _OldTestamentStats(stats: stats),
-        const SizedBox(height: 12),
-        _NewTestamentStats(stats: stats),
-      ],
+    return SafeArea(
+      top: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          _ProgressSummary(stats: stats, progress: progress),
+          const SizedBox(height: 12),
+          _OldTestamentStats(stats: stats),
+          const SizedBox(height: 12),
+          _NewTestamentStats(stats: stats),
+        ],
+      ),
     );
   }
 }
@@ -102,8 +105,9 @@ class _ProgressSummary extends StatelessWidget {
 
     final booksTotal = stats.totalBooksCount;
     final booksCompleted = stats.completedBooksCount;
-    final booksPercent =
-        booksTotal == 0 ? 0.0 : booksCompleted / booksTotal * 100;
+    final booksPercent = booksTotal == 0
+        ? 0.0
+        : booksCompleted / booksTotal * 100;
 
     return AppCard(
       child: Column(
@@ -112,8 +116,7 @@ class _ProgressSummary extends StatelessWidget {
           SectionHeader(title: l10n.statsPlanProgressTitle),
           _MetricLine(
             label: l10n.planCompletedChapters,
-            value:
-                '${stats.completedPlanChapters}/${stats.totalPlanChapters}',
+            value: '${stats.completedPlanChapters}/${stats.totalPlanChapters}',
             valueKey: 'stats-completed-plan-chapters',
           ),
           GoldProgressBar(
@@ -178,8 +181,9 @@ class _OldTestamentStats extends StatelessWidget {
 
     final booksTotal = stats.otTotalBooksCount;
     final booksCompleted = stats.otCompletedBooksCount;
-    final booksPercent =
-        booksTotal == 0 ? 0.0 : booksCompleted / booksTotal * 100;
+    final booksPercent = booksTotal == 0
+        ? 0.0
+        : booksCompleted / booksTotal * 100;
 
     return AppCard(
       key: const Key('stats-ot-section'),
@@ -236,8 +240,9 @@ class _NewTestamentStats extends StatelessWidget {
 
     final booksTotal = stats.ntTotalBooksCount;
     final booksCompleted = stats.ntCompletedBooksCount;
-    final booksPercent =
-        booksTotal == 0 ? 0.0 : booksCompleted / booksTotal * 100;
+    final booksPercent = booksTotal == 0
+        ? 0.0
+        : booksCompleted / booksTotal * 100;
 
     return AppCard(
       key: const Key('stats-nt-section'),

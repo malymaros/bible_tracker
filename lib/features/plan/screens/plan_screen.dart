@@ -130,161 +130,164 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
         surfaceTintColor: _PlanColors.background,
       ),
       backgroundColor: _PlanColors.background,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.planCreateTitle,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: _PlanColors.textStrong,
-                height: 1.2,
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 52,
-              child: OutlinedButton.icon(
-                key: const Key('plan-start-date-button'),
-                onPressed: _pickStartDate,
-                icon: const Icon(Icons.calendar_today, size: 20),
-                label: Text(
-                  '${l10n.planStartDate}: ${_formatDate(_startDate)}',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              key: const Key('plan-total-days-field'),
-              controller: _daysController,
-              keyboardType: TextInputType.number,
-              onChanged: _onDaysChanged,
-              style: const TextStyle(
-                fontSize: 18,
-                color: _PlanColors.textStrong,
-                fontWeight: FontWeight.w500,
-              ),
-              decoration: InputDecoration(
-                labelText: l10n.planTotalDays,
-                labelStyle: const TextStyle(fontSize: 17),
-                border: const OutlineInputBorder(),
-                errorText: validation,
-                errorStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                helperText: _dayCountClamped ? l10n.planTooManyDays : null,
-                helperStyle: const TextStyle(fontSize: 14),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            AppCard(
-              child: Column(
-                children: [
-                  _PreviewLine(
-                    label: l10n.planSelectedBooks,
-                    value: '${selectedBooks.length}',
-                  ),
-                  const SizedBox(height: 6),
-                  _PreviewLine(
-                    label: l10n.planSelectedChapters,
-                    value: formatChapterCount(selectedChapters),
-                  ),
-                  const SizedBox(height: 6),
-                  _PreviewLine(
-                    label: l10n.planSelectedVerses,
-                    value: '$selectedVerses',
-                  ),
-                  const SizedBox(height: 6),
-                  _PreviewLine(
-                    label: l10n.planApproxVersesPerDay,
-                    value: totalDays == null || totalDays < 1
-                        ? l10n.planDateRangeUnavailable
-                        : '~${(selectedVerses / totalDays).round()}',
-                  ),
-                  const SizedBox(height: 6),
-                  _PreviewLine(
-                    label: l10n.planDateRange,
-                    value: endDate == null
-                        ? l10n.planDateRangeUnavailable
-                        : '${_formatDate(_startDate)} - ${_formatDate(endDate)}',
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
-              child: Text(
-                l10n.planIncludedBooks,
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.planCreateTitle,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: _PlanColors.textStrong,
+                  height: 1.2,
                 ),
               ),
-            ),
-            const TestamentHeader(title: 'Starý zákon'),
-            for (final group in _otBookGroups)
-              _BookSelectionGroup(
-                group: group,
-                selectedBookIds: _selectedBookIds,
-                onChanged: (bookId, selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedBookIds.add(bookId);
-                    } else {
-                      _selectedBookIds.remove(bookId);
-                    }
-                    _clampDaysIfNeeded();
-                  });
-                },
-              ),
-            const TestamentHeader(title: 'Nový zákon'),
-            for (final group in _ntBookGroups)
-              _BookSelectionGroup(
-                group: group,
-                selectedBookIds: _selectedBookIds,
-                onChanged: (bookId, selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedBookIds.add(bookId);
-                    } else {
-                      _selectedBookIds.remove(bookId);
-                    }
-                    _clampDaysIfNeeded();
-                  });
-                },
-              ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 54,
-              child: FilledButton.icon(
-                key: const Key('plan-create-button'),
-                onPressed: validation == null && selectedBooks.isNotEmpty
-                    ? () => _createPlan(selectedBooks, totalDays!)
-                    : null,
-                icon: const Icon(Icons.add, size: 20),
-                label: Text(
-                  l10n.planCreateAction,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 52,
+                child: OutlinedButton.icon(
+                  key: const Key('plan-start-date-button'),
+                  onPressed: _pickStartDate,
+                  icon: const Icon(Icons.calendar_today, size: 20),
+                  label: Text(
+                    '${l10n.planStartDate}: ${_formatDate(_startDate)}',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 14),
+              TextField(
+                key: const Key('plan-total-days-field'),
+                controller: _daysController,
+                keyboardType: TextInputType.number,
+                onChanged: _onDaysChanged,
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: _PlanColors.textStrong,
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  labelText: l10n.planTotalDays,
+                  labelStyle: const TextStyle(fontSize: 17),
+                  border: const OutlineInputBorder(),
+                  errorText: validation,
+                  errorStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  helperText: _dayCountClamped ? l10n.planTooManyDays : null,
+                  helperStyle: const TextStyle(fontSize: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              AppCard(
+                child: Column(
+                  children: [
+                    _PreviewLine(
+                      label: l10n.planSelectedBooks,
+                      value: '${selectedBooks.length}',
+                    ),
+                    const SizedBox(height: 6),
+                    _PreviewLine(
+                      label: l10n.planSelectedChapters,
+                      value: formatChapterCount(selectedChapters),
+                    ),
+                    const SizedBox(height: 6),
+                    _PreviewLine(
+                      label: l10n.planSelectedVerses,
+                      value: '$selectedVerses',
+                    ),
+                    const SizedBox(height: 6),
+                    _PreviewLine(
+                      label: l10n.planApproxVersesPerDay,
+                      value: totalDays == null || totalDays < 1
+                          ? l10n.planDateRangeUnavailable
+                          : '~${(selectedVerses / totalDays).round()}',
+                    ),
+                    const SizedBox(height: 6),
+                    _PreviewLine(
+                      label: l10n.planDateRange,
+                      value: endDate == null
+                          ? l10n.planDateRangeUnavailable
+                          : '${_formatDate(_startDate)} - ${_formatDate(endDate)}',
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
+                child: Text(
+                  l10n.planIncludedBooks,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: _PlanColors.textStrong,
+                  ),
+                ),
+              ),
+              const TestamentHeader(title: 'Starý zákon'),
+              for (final group in _otBookGroups)
+                _BookSelectionGroup(
+                  group: group,
+                  selectedBookIds: _selectedBookIds,
+                  onChanged: (bookId, selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedBookIds.add(bookId);
+                      } else {
+                        _selectedBookIds.remove(bookId);
+                      }
+                      _clampDaysIfNeeded();
+                    });
+                  },
+                ),
+              const TestamentHeader(title: 'Nový zákon'),
+              for (final group in _ntBookGroups)
+                _BookSelectionGroup(
+                  group: group,
+                  selectedBookIds: _selectedBookIds,
+                  onChanged: (bookId, selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedBookIds.add(bookId);
+                      } else {
+                        _selectedBookIds.remove(bookId);
+                      }
+                      _clampDaysIfNeeded();
+                    });
+                  },
+                ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 54,
+                child: FilledButton.icon(
+                  key: const Key('plan-create-button'),
+                  onPressed: validation == null && selectedBooks.isNotEmpty
+                      ? () => _createPlan(selectedBooks, totalDays!)
+                      : null,
+                  icon: const Icon(Icons.add, size: 20),
+                  label: Text(
+                    l10n.planCreateAction,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -414,42 +417,46 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
       ),
       body: selectedDay == null
           ? Center(child: Text(l10n.planNoReadingToday))
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              children: [
-                _DayNavigationCard(
-                  day: selectedDay,
-                  totalDays: days.length,
-                  canGoPrevious: selectedIndex > 0,
-                  canGoNext: selectedIndex < days.length - 1,
-                  onPrevious: () => _selectDay(selectedIndex - 1, days.length),
-                  onNext: () => _selectDay(selectedIndex + 1, days.length),
-                  canJumpToUnread: canJumpToUnread,
-                  onJumpToUnread: () =>
-                      _selectDay(firstUnreadIndex, days.length),
-                  canJumpToToday: canJumpToToday,
-                  onJumpToToday: () => _selectDay(todayIndex, days.length),
-                ),
-                const SizedBox(height: 14),
-                _TotalProgressCard(
-                  plan: widget.plan,
-                  days: days,
-                  readChapters: readChapters,
-                  progress: progress,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const StatistikaScreen(),
+          : SafeArea(
+              top: false,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  _DayNavigationCard(
+                    day: selectedDay,
+                    totalDays: days.length,
+                    canGoPrevious: selectedIndex > 0,
+                    canGoNext: selectedIndex < days.length - 1,
+                    onPrevious: () =>
+                        _selectDay(selectedIndex - 1, days.length),
+                    onNext: () => _selectDay(selectedIndex + 1, days.length),
+                    canJumpToUnread: canJumpToUnread,
+                    onJumpToUnread: () =>
+                        _selectDay(firstUnreadIndex, days.length),
+                    canJumpToToday: canJumpToToday,
+                    onJumpToToday: () => _selectDay(todayIndex, days.length),
+                  ),
+                  const SizedBox(height: 14),
+                  _TotalProgressCard(
+                    plan: widget.plan,
+                    days: days,
+                    readChapters: readChapters,
+                    progress: progress,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const StatistikaScreen(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                _BooksInPlanNavCard(plan: widget.plan),
-                const SizedBox(height: 18),
-                _DailyReadingsCard(
-                  day: selectedDay,
-                  readChapters: readChapters,
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  _BooksInPlanNavCard(plan: widget.plan),
+                  const SizedBox(height: 18),
+                  _DailyReadingsCard(
+                    day: selectedDay,
+                    readChapters: readChapters,
+                  ),
+                ],
+              ),
             ),
     );
   }
@@ -499,7 +506,9 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
                   ),
                   const SizedBox(width: 4),
                   const Expanded(
-                    child: Text('Označiť všetky prečítané kapitoly ako neprečítané'),
+                    child: Text(
+                      'Označiť všetky prečítané kapitoly ako neprečítané',
+                    ),
                   ),
                 ],
               ),
@@ -538,9 +547,9 @@ class _BooksNavLeading extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       key: const Key('plan-books-nav-button'),
-      onPressed: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const BibliaScreen()),
-      ),
+      onPressed: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const BibliaScreen())),
       icon: const Icon(Icons.menu_book_outlined),
       color: _PlanColors.goldDark,
     );
@@ -637,7 +646,10 @@ class _TotalProgressCard extends StatelessWidget {
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Text('·', style: TextStyle(color: _PlanColors.textMuted)),
+                  child: Text(
+                    '·',
+                    style: TextStyle(color: _PlanColors.textMuted),
+                  ),
                 ),
                 Text(
                   '$completed / $total ${l10n.planChaptersCompletedLower}',
@@ -655,9 +667,9 @@ class _TotalProgressCard extends StatelessWidget {
                   child: Text(
                     _planStatusText(progress),
                     key: const Key('plan-ahead-behind-status'),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _PlanColors.text,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: _PlanColors.text),
                   ),
                 ),
                 if (progress.aheadBehindChapterCount != 0)
@@ -689,9 +701,7 @@ class _BooksInPlanNavCard extends StatelessWidget {
     return GestureDetector(
       key: const Key('plan-books-in-plan-button'),
       onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => BooksInPlanScreen(plan: plan),
-        ),
+        MaterialPageRoute<void>(builder: (_) => BooksInPlanScreen(plan: plan)),
       ),
       child: _PlanCard(
         child: Row(
@@ -765,10 +775,11 @@ class _DayNavigationCard extends StatelessWidget {
                     Text(
                       '${l10n.planDay} ${day.dayNumber} / $totalDays',
                       key: Key('plan-current-day-${day.dayNumber}'),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: _PlanColors.textStrong,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: _PlanColors.textStrong,
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -847,9 +858,7 @@ class _JumpButton extends StatelessWidget {
         foregroundColor: foregroundColor,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         minimumSize: const Size.fromHeight(46),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       icon: Icon(icon, size: 19),
       label: Text(
@@ -963,7 +972,9 @@ class _PlanBookProgressTile extends ConsumerWidget {
     return Card(
       key: Key('plan-book-progress-${progress.book.id}'),
       elevation: 0,
-      color: isComplete ? _PlanColors.goldSoft.withValues(alpha: 0.55) : _PlanColors.card,
+      color: isComplete
+          ? _PlanColors.goldSoft.withValues(alpha: 0.55)
+          : _PlanColors.card,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Theme(
@@ -971,7 +982,10 @@ class _PlanBookProgressTile extends ConsumerWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.fromLTRB(14, 8, 10, 8),
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-          leading: BookIconBadge(abbreviation: progress.book.shortName, size: 40),
+          leading: BookIconBadge(
+            abbreviation: progress.book.shortName,
+            size: 40,
+          ),
           title: Row(
             children: [
               Expanded(
@@ -988,10 +1002,7 @@ class _PlanBookProgressTile extends ConsumerWidget {
                   padding: EdgeInsets.only(left: 5),
                   child: Text(
                     '✝',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: _PlanColors.goldDark,
-                    ),
+                    style: TextStyle(fontSize: 13, color: _PlanColors.goldDark),
                   ),
                 ),
             ],
@@ -1100,7 +1111,9 @@ class _PlanChapterCheckboxTile extends ConsumerWidget {
             width: 24,
             height: 24,
             child: Checkbox(
-              key: Key('plan-chapter-${chapter.bookId}-${chapter.chapterNumber}'),
+              key: Key(
+                'plan-chapter-${chapter.bookId}-${chapter.chapterNumber}',
+              ),
               value: isRead,
               activeColor: _PlanColors.goldDark,
               shape: RoundedRectangleBorder(
@@ -1120,7 +1133,9 @@ class _PlanChapterCheckboxTile extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
-                  color: isRead ? _PlanColors.textMuted : _PlanColors.textStrong,
+                  color: isRead
+                      ? _PlanColors.textMuted
+                      : _PlanColors.textStrong,
                   decoration: isRead ? TextDecoration.lineThrough : null,
                   decorationColor: _PlanColors.textMuted,
                   height: 1.4,
@@ -1253,7 +1268,11 @@ class _BookSelectionGroup extends StatelessWidget {
               ),
             ),
             children: [
-              const Divider(height: 1, thickness: 1, color: _PlanColors.cardBorder),
+              const Divider(
+                height: 1,
+                thickness: 1,
+                color: _PlanColors.cardBorder,
+              ),
               for (final book in group.books)
                 _BookCheckboxRow(
                   key: Key('plan-book-${book.id}'),
@@ -1442,8 +1461,7 @@ bool _sameDate(DateTime a, DateTime b) {
 
 int _firstUnreadDayIndex(List<PlanDay> days, Set<ChapterRef> readChapters) {
   return days.indexWhere(
-    (day) =>
-        day.chapters.any((chapter) => !readChapters.contains(chapter)),
+    (day) => day.chapters.any((chapter) => !readChapters.contains(chapter)),
   );
 }
 
@@ -1469,7 +1487,9 @@ int _completedBooksCount(
 ) {
   return _bookProgressForPlan(plan, days, readChapters)
       .where(
-        (bp) => bp.chapters.isNotEmpty && bp.completedChapters == bp.chapters.length,
+        (bp) =>
+            bp.chapters.isNotEmpty &&
+            bp.completedChapters == bp.chapters.length,
       )
       .length;
 }

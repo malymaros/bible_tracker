@@ -216,27 +216,30 @@ class _DownloadedChapterViewState extends State<_DownloadedChapterView> {
 
   @override
   Widget build(BuildContext context) {
-    return ScrollbarTheme(
-      data: ScrollbarThemeData(
-        thumbVisibility: const WidgetStatePropertyAll(true),
-        thickness: const WidgetStatePropertyAll(4),
-        radius: const Radius.circular(999),
-        thumbColor: const WidgetStatePropertyAll(AppColors.gold),
-        trackColor: WidgetStatePropertyAll(
-          AppColors.goldSoft.withValues(alpha: 0.4),
+    return SafeArea(
+      top: false,
+      child: ScrollbarTheme(
+        data: ScrollbarThemeData(
+          thumbVisibility: const WidgetStatePropertyAll(true),
+          thickness: const WidgetStatePropertyAll(4),
+          radius: const Radius.circular(999),
+          thumbColor: const WidgetStatePropertyAll(AppColors.gold),
+          trackColor: WidgetStatePropertyAll(
+            AppColors.goldSoft.withValues(alpha: 0.4),
+          ),
+          trackVisibility: const WidgetStatePropertyAll(true),
+          crossAxisMargin: 2,
         ),
-        trackVisibility: const WidgetStatePropertyAll(true),
-        crossAxisMargin: 2,
-      ),
-      child: Scrollbar(
-        controller: _scrollController,
-        child: SingleChildScrollView(
+        child: Scrollbar(
           controller: _scrollController,
-          key: const Key('reader-scroll'),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          child: AppCard(
-            padding: const EdgeInsets.all(20),
-            child: _ChapterHtml(htmlContent: widget.row.htmlContent),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            key: const Key('reader-scroll'),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            child: AppCard(
+              padding: const EdgeInsets.all(20),
+              child: _ChapterHtml(htmlContent: widget.row.htmlContent),
+            ),
           ),
         ),
       ),
