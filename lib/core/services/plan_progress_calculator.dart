@@ -9,6 +9,12 @@ import 'package:bible_tracker/core/utils/local_date.dart';
 ///
 /// Only chapters that belong to the plan are counted toward plan progress.
 /// Chapters marked as read that are not part of this plan are ignored.
+///
+/// Drift is measured in whole schedule days rather than by converting a
+/// chapter delta through an average. The plan is balanced by verse count, so
+/// chapters per day varies widely and the average matches no real day — a
+/// heavy day used to read as several days of drift. Days are also the unit
+/// the user acts in: an unfinished day is something to go back and read.
 abstract final class PlanProgressCalculator {
   static PlanProgress calculate({
     required ReadingPlan plan,
@@ -16,8 +22,7 @@ abstract final class PlanProgressCalculator {
     required Set<ChapterRef> readChapters,
     required DateTime today,
   }) {
-    final normalizedToday =
-        DateTime(today.year, today.month, today.day);
+    final normalizedToday = DateTime(today.year, today.month, today.day);
 
     // All chapters assigned to the plan (no duplicates guaranteed by generator).
     final planChaptersSet = <ChapterRef>{
@@ -30,51 +35,74 @@ abstract final class PlanProgressCalculator {
     final completedPlanChapters =
         readChapters.intersection(planChaptersSet).length;
 
-    // Expected = chapters in days whose scheduled date is on or before today.
-    // Compared at local-midnight granularity so a stray time component on
-    // scheduledDate can never drop today's day out of the expectation.
+    // Chapters in days scheduled on or before today. Kept as a plain
+    // statistic — it no longer feeds the ahead/behind figures.
     var expectedChaptersByToday = 0;
+
+    // Past days that still hold unread chapters, and how many chapters that
+    // leaves outstanding.
+    var unfinishedPastDays = 0;
+    var unreadPastChapters = 0;
+
+    // Today's day is not overdue until it is over, so it never counts as
+    // drift. It only gates reading ahead: you are not ahead while today is
+    // still open.
+    var todayComplete = true;
+
+    final futureDays = <PlanDay>[];
+
     for (final day in days) {
       final scheduled = normalizeToLocalMidnight(day.scheduledDate);
-      if (!scheduled.isAfter(normalizedToday)) {
-        expectedChaptersByToday += day.chapters.length;
+      final unread =
+          day.chapters.where((c) => !readChapters.contains(c)).length;
+
+      if (scheduled.isAfter(normalizedToday)) {
+        futureDays.add(day);
+        continue;
+      }
+
+      expectedChaptersByToday += day.chapters.length;
+
+      if (scheduled.isBefore(normalizedToday)) {
+        if (unread > 0) {
+          unfinishedPastDays++;
+          unreadPastChapters += unread;
+        }
+      } else if (unread > 0) {
+        todayComplete = false;
       }
     }
 
-    final aheadBehindChapterCount =
-        completedPlanChapters - expectedChaptersByToday;
+    // Reading ahead is an unbroken run of fully read days starting the day
+    // after today. The day that breaks the run still contributes its read
+    // chapters, so partial progress is not lost — that is the nuance whole
+    // days cannot express. Anything past the break is ignored: a day read far
+    // out of order is not a head start.
+    var readAheadDays = 0;
+    var readAheadChapters = 0;
+    if (unfinishedPastDays == 0 && todayComplete) {
+      futureDays.sort((a, b) => a.dayNumber.compareTo(b.dayNumber));
+      for (final day in futureDays) {
+        final readInDay = day.chapters.where(readChapters.contains).length;
+        readAheadChapters += readInDay;
+        if (readInDay < day.chapters.length) break;
+        readAheadDays++;
+      }
+    }
 
-    final approximateDaysDelta = _computeApproximateDaysDelta(
-      aheadBehindChapterCount,
-      totalPlanChapters,
-      plan.totalDays,
-    );
+    final behind = unfinishedPastDays > 0;
 
     return PlanProgress(
       planId: plan.id,
       totalPlanChapters: totalPlanChapters,
       completedPlanChapters: completedPlanChapters,
       expectedChaptersByToday: expectedChaptersByToday,
-      aheadBehindChapterCount: aheadBehindChapterCount,
-      approximateDaysDelta: approximateDaysDelta,
+      aheadBehindChapterCount:
+          behind ? -unreadPastChapters : readAheadChapters,
+      approximateDaysDelta: behind ? -unfinishedPastDays : readAheadDays,
       completionPercent: totalPlanChapters > 0
           ? completedPlanChapters / totalPlanChapters * 100
           : 0.0,
     );
-  }
-
-  /// Converts a chapter delta to an approximate day count.
-  /// Non-zero deltas are clamped to a minimum of ±1 so a tiny delta never
-  /// rounds down to 0 days.
-  static int _computeApproximateDaysDelta(
-    int chapterDelta,
-    int totalChapters,
-    int totalDays,
-  ) {
-    if (chapterDelta == 0 || totalChapters == 0 || totalDays == 0) return 0;
-    final raw = chapterDelta * totalDays / totalChapters;
-    final absRounded = raw.abs().round();
-    final clamped = absRounded == 0 ? 1 : absRounded;
-    return raw > 0 ? clamped : -clamped;
   }
 }

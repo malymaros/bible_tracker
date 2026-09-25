@@ -784,6 +784,33 @@ void main() {
     );
   });
 
+  testWidgets("today's unread chapters do not show as days behind", (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _progressPlan();
+    // Today = day 1, nothing read. Today's reading simply is not done yet.
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _progressDays(plan.id),
+        readChapters: const {},
+        today: DateTime(2026, 5, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-ahead-behind-status')))
+          .data,
+      'Ste presne v pláne',
+    );
+    expect(find.byKey(const Key('plan-chapter-delta')), findsNothing);
+  });
+
   testWidgets('ahead by chapters shows approximate days ahead', (
     tester,
   ) async {
@@ -810,12 +837,11 @@ void main() {
     );
   });
 
-  testWidgets('behind by chapters shows approximate days behind', (
-    tester,
-  ) async {
+  testWidgets('an unfinished past day shows days behind', (tester) async {
     final db = _openTestDb();
     final plan = _progressPlan();
-    // Today = day 1, expected 3, read 0 → delta = -3 → -3*10/30 = -1 deň.
+    // Today = day 2, day 1 untouched → 1 unfinished past day → -1 deň.
+    // Today's own chapters being unread is not drift, so the count is 1, not 2.
     await tester.pumpWidget(
       _testWidget(
         const PlanScreen(),
@@ -823,7 +849,7 @@ void main() {
         activePlan: plan,
         days: _progressDays(plan.id),
         readChapters: const {},
-        today: DateTime(2026, 5, 12),
+        today: DateTime(2026, 5, 13),
       ),
     );
     await tester.pumpAndSettle();

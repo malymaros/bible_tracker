@@ -2,15 +2,31 @@ class PlanProgress {
   final String planId;
   final int totalPlanChapters;
   final int completedPlanChapters;
+
+  /// Chapters scheduled on days up to and including today. Reported as a
+  /// standalone statistic; the ahead/behind figures below no longer derive
+  /// from it.
   final int expectedChaptersByToday;
 
-  /// completedPlanChapters − expectedChaptersByToday.
-  /// Positive = ahead, negative = behind, zero = on track.
+  /// Chapter-level counterpart of [approximateDaysDelta], always carrying the
+  /// same sign so the two never contradict each other.
+  ///
+  /// Behind: negative, the unread chapters left in past days.
+  /// Otherwise: positive, the chapters already read beyond today — the whole
+  /// days in [approximateDaysDelta] plus any partial progress into the day
+  /// that follows them.
   final int aheadBehindChapterCount;
 
-  /// Chapter delta expressed as approximate days using the plan's average
-  /// chapters-per-day. Rounded to nearest integer; non-zero delta is clamped
-  /// to a minimum of ±1 so a tiny delta never shows as 0 days.
+  /// Schedule drift in whole days.
+  ///
+  /// Negative = past days still holding unread chapters. Positive = days
+  /// after today that are fully read, counted as an unbroken run. Zero = on
+  /// track, which includes the ordinary state of today's reading not being
+  /// done yet.
+  ///
+  /// Counted directly off the schedule, never converted from a chapter
+  /// average: days hold wildly different chapter counts because the plan is
+  /// balanced by verses, so an average day does not exist.
   final int approximateDaysDelta;
 
   final double completionPercent;
@@ -27,12 +43,12 @@ class PlanProgress {
     required this.aheadBehindChapterCount,
     required this.approximateDaysDelta,
     required this.completionPercent,
-  })  : isAhead = aheadBehindChapterCount > 0,
-        isBehind = aheadBehindChapterCount < 0,
-        isOnTrack = aheadBehindChapterCount == 0;
+  })  : isAhead = approximateDaysDelta > 0,
+        isBehind = approximateDaysDelta < 0,
+        isOnTrack = approximateDaysDelta == 0;
 
   @override
   String toString() =>
       'PlanProgress($planId, $completedPlanChapters/$totalPlanChapters, '
-      'delta: $aheadBehindChapterCount)';
+      'delta: $approximateDaysDelta d / $aheadBehindChapterCount ch)';
 }
