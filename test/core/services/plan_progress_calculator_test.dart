@@ -423,4 +423,56 @@ void main() {
       expect(progress.expectedChaptersByToday, 3);
     });
   });
+
+  // ── scheduledDate time component stripped ────────────────────────────────
+  //
+  // A DST transition used to leave scheduledDate at 01:00 (spring forward) or
+  // at 23:00 of the previous day (fall back). Either one silently dropped
+  // today's day out of the expectation, so finishing today's reading reported
+  // "ahead by today's chapter count" instead of "on track".
+
+  group('scheduledDate time component is stripped', () {
+    List<PlanDay> daysShiftedBy(Duration offset) => [
+          for (final d in _days)
+            PlanDay(
+              planId: d.planId,
+              dayNumber: d.dayNumber,
+              scheduledDate: d.scheduledDate.add(offset),
+              chapters: d.chapters,
+            ),
+        ];
+
+    PlanProgress calcWith(List<PlanDay> days, Set<ChapterRef> read) =>
+        PlanProgressCalculator.calculate(
+          plan: _plan,
+          days: days,
+          readChapters: read,
+          today: DateTime(2024, 1, 2),
+        );
+
+    final readThroughToday = {
+      const ChapterRef('gen', 1),
+      const ChapterRef('gen', 2),
+      const ChapterRef('gen', 3),
+      const ChapterRef('gen', 4),
+      const ChapterRef('gen', 5),
+      const ChapterRef('gen', 6),
+    };
+
+    test('spring-forward drift (01:00) still counts today as expected', () {
+      final progress =
+          calcWith(daysShiftedBy(const Duration(hours: 1)), readThroughToday);
+      expect(progress.expectedChaptersByToday, 6);
+      expect(progress.aheadBehindChapterCount, 0);
+      expect(progress.isOnTrack, isTrue);
+    });
+
+    test('fall-back drift (-01:00) does not pull tomorrow into expected', () {
+      final progress =
+          calcWith(daysShiftedBy(const Duration(hours: -1)), readThroughToday);
+      expect(progress.expectedChaptersByToday, 6);
+      expect(progress.aheadBehindChapterCount, 0);
+      expect(progress.isOnTrack, isTrue);
+    });
+  });
 }

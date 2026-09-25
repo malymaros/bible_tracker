@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/plan_day.dart';
 import 'package:bible_tracker/core/models/reading_plan.dart';
+import 'package:bible_tracker/core/utils/local_date.dart';
 import 'package:bible_tracker/db/app_database.dart';
 import 'package:bible_tracker/db/tables/plan_days_table.dart';
 import 'package:bible_tracker/db/tables/reading_plans_table.dart';
@@ -73,7 +74,11 @@ ReadingPlansCompanion _planToCompanion(ReadingPlan plan) =>
 PlanDay _rowToDay(PlanDayRow row) => PlanDay(
       planId: row.planId,
       dayNumber: row.dayNumber,
-      scheduledDate: DateTime.fromMillisecondsSinceEpoch(row.scheduledDate),
+      // Repairs schedules written before plan dates used calendar arithmetic:
+      // a DST transition left them at 01:00 or at 23:00 of the previous day.
+      scheduledDate: normalizeToLocalMidnight(
+        DateTime.fromMillisecondsSinceEpoch(row.scheduledDate),
+      ),
       chapters: (jsonDecode(row.chaptersJson) as List)
           .map((m) => ChapterRef(m['b'] as String, m['c'] as int))
           .toList(),

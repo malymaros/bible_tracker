@@ -14,7 +14,9 @@ abstract final class PlanGenerator {
   /// - Whole chapters are always kept together — no chapter is split across days.
   /// - No day is ever empty.
   /// - Scheduled dates start at [startDate] (time component stripped) and
-  ///   advance by one calendar day per day.
+  ///   advance by one *calendar* day per day. Calendar arithmetic is used
+  ///   rather than adding 24-hour durations, so every scheduled date stays at
+  ///   local midnight across daylight-saving transitions.
   ///
   /// Throws [ArgumentError] if:
   /// - [totalDays] < 1
@@ -94,7 +96,7 @@ abstract final class PlanGenerator {
       days.add(PlanDay(
         planId: planId,
         dayNumber: d + 1,
-        scheduledDate: start.add(Duration(days: d)),
+        scheduledDate: DateTime(start.year, start.month, start.day + d),
         chapters: chapters.sublist(prevEnd + 1, splitEnd + 1),
       ));
       prevEnd = splitEnd;

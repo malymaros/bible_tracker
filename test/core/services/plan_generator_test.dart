@@ -475,6 +475,58 @@ void main() {
     });
   });
 
+  // ── daylight-saving safety ────────────────────────────────────────────────
+
+  group('scheduled dates across DST transitions', () {
+    test('every day stays at local midnight over a full year', () {
+      final days = PlanGenerator.generatePlan(
+        planId: planId,
+        // Spans both EU DST transitions in the local zone.
+        startDate: DateTime(2026, 1, 1),
+        totalDays: 365,
+        selectedBooks: [
+          genesis,
+          exodus,
+          _book('ps'),
+          _book('isa'),
+          _book('jer'),
+          matthew,
+        ],
+      );
+      for (final day in days) {
+        expect(
+          day.scheduledDate,
+          DateTime(
+            day.scheduledDate.year,
+            day.scheduledDate.month,
+            day.scheduledDate.day,
+          ),
+          reason: 'day ${day.dayNumber} drifted off midnight',
+        );
+      }
+    });
+
+    test('consecutive days are consecutive calendar days across a shift', () {
+      final days = PlanGenerator.generatePlan(
+        planId: planId,
+        startDate: DateTime(2026, 3, 27),
+        totalDays: 6,
+        selectedBooks: [genesis],
+      );
+      expect(
+        days.map((d) => d.scheduledDate).toList(),
+        [
+          DateTime(2026, 3, 27),
+          DateTime(2026, 3, 28),
+          DateTime(2026, 3, 29),
+          DateTime(2026, 3, 30),
+          DateTime(2026, 3, 31),
+          DateTime(2026, 4, 1),
+        ],
+      );
+    });
+  });
+
   // ── PlanDay immutability ──────────────────────────────────────────────────
 
   group('PlanDay immutability', () {

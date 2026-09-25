@@ -2,6 +2,7 @@ import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/plan_day.dart';
 import 'package:bible_tracker/core/models/plan_progress.dart';
 import 'package:bible_tracker/core/models/reading_plan.dart';
+import 'package:bible_tracker/core/utils/local_date.dart';
 
 /// Pure stateless service. Computes [PlanProgress] from a reading plan,
 /// its generated schedule, the global read-chapter set, and the current date.
@@ -30,9 +31,12 @@ abstract final class PlanProgressCalculator {
         readChapters.intersection(planChaptersSet).length;
 
     // Expected = chapters in days whose scheduled date is on or before today.
+    // Compared at local-midnight granularity so a stray time component on
+    // scheduledDate can never drop today's day out of the expectation.
     var expectedChaptersByToday = 0;
     for (final day in days) {
-      if (!day.scheduledDate.isAfter(normalizedToday)) {
+      final scheduled = normalizeToLocalMidnight(day.scheduledDate);
+      if (!scheduled.isAfter(normalizedToday)) {
         expectedChaptersByToday += day.chapters.length;
       }
     }
