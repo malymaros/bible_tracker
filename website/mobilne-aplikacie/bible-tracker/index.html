@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bible Tracker</title>
+<link rel="icon" type="image/png" href="img/icon.png">
+<meta name="description" content="Bible Tracker - sledovanie čítania Svätého písma s offline čítačkou. Android aplikácia na stiahnutie.">
+<style>
+  :root{--glow:rgba(242,182,50,.16)}
+  :root{
+    --bg:#0b0d13; --panel:#121620; --line:rgba(255,255,255,.10);
+    --text:#fff; --muted:rgba(255,255,255,.62);
+    --gold:#f2b632; --gold-ink:#2a1d02;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  html,body{overflow-x:clip}
+  a{color:var(--gold)}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+
+  /* ---- horná lišta ---- */
+  nav{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:22px 0;font-size:14px;letter-spacing:.04em}
+  nav a{color:var(--muted);text-decoration:none}
+  nav a:hover{color:#fff}
+  nav .sep{opacity:.35}
+
+  /* ---- hero ---- */
+  .top{background:radial-gradient(55% 70% at 75% 50%, var(--glow), transparent 70%),
+               radial-gradient(70% 80% at 10% 0%, #1d1a10 0%, transparent 70%)}
+  .hero{padding:clamp(28px,6vw,72px) 0 clamp(36px,6vw,64px);
+    display:grid;grid-template-columns:1.25fr 1fr;gap:clamp(24px,5vw,64px);align-items:center}
+  .app-id{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+  .app-id img{width:72px;height:72px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .eyebrow{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+  h1{font-size:clamp(38px,6vw,72px);font-weight:900;line-height:.95;letter-spacing:-.02em;
+    text-shadow:0 4px 30px rgba(242,182,50,.30)}
+  .lede{margin-top:18px;font-size:clamp(16px,1.6vw,19px);color:rgba(255,255,255,.86);max-width:44ch}
+  .actions{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:30px}
+  .cta{display:inline-flex;align-items:center;gap:.6em;padding:15px 28px;border-radius:100px;
+    font-weight:700;font-size:17px;text-decoration:none;
+    background:var(--gold);color:var(--gold-ink);box-shadow:0 10px 34px rgba(242,182,50,.35);
+    transition:transform .2s ease, box-shadow .2s ease}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 16px 44px rgba(242,182,50,.5)}
+  .cta svg{width:20px;height:20px;fill:currentColor}
+  .meta{font-size:13px;color:var(--muted)}
+  .meta b{color:#fff;font-weight:600}
+  .sha{margin-top:12px;font-size:12px;color:var(--muted)}
+  .sha code{font-size:11px}
+  .req{margin-top:18px;font-size:14px;color:var(--muted)}
+  /* veľká ikona appky vpravo */
+  .big-icon{justify-self:center;width:min(300px,70vw);aspect-ratio:1;border-radius:22%;
+    filter:drop-shadow(0 24px 60px var(--glow))}
+
+  /* ---- sekcie ---- */
+  section{padding:clamp(36px,6vw,64px) 0;border-top:1px solid var(--line)}
+  h2{font-size:clamp(24px,3vw,34px);font-weight:800;letter-spacing:-.01em;margin-bottom:8px}
+  .sub{color:var(--muted);margin-bottom:28px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:14px}
+  .card{padding:20px;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+  .card .ic{font-size:26px;line-height:1;margin-bottom:12px}
+  .card h3{font-size:17px;margin-bottom:6px}
+  .card p{font-size:14px;color:var(--muted)}
+
+  /* ---- inštalácia ---- */
+  ol.steps{list-style:none;counter-reset:s;display:grid;gap:14px;max-width:760px}
+  ol.steps li{counter-increment:s;position:relative;padding:16px 18px 16px 62px;border-radius:12px;
+    border:1px solid var(--line);background:var(--panel)}
+  ol.steps li::before{content:counter(s);position:absolute;left:16px;top:14px;width:30px;height:30px;
+    border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;
+    background:rgba(242,182,50,.16);color:var(--gold);border:1px solid rgba(242,182,50,.45)}
+  ol.steps li > b{display:block;margin-bottom:2px}
+  ol.steps li > span{font-size:14px;color:var(--muted)}
+  /* spodné oznámenie: zelený neón, ktorý občas preblikne (ako na stránke Agent Controllera) */
+  .info{margin-top:22px;width:fit-content;max-width:100%;padding:16px 18px;border-radius:12px;font-size:15px;font-weight:600;
+    color:#d6ffe4;background:rgba(40,255,120,.07);border:2px solid #2fe37a;
+    text-shadow:0 0 6px rgba(47,227,122,.9),0 0 14px rgba(47,227,122,.5);
+    box-shadow:0 0 8px #2fe37a,0 0 22px rgba(47,227,122,.5),inset 0 0 12px rgba(47,227,122,.3);
+    animation:neon 4s infinite}
+  @keyframes neon{
+    0%,18%,22%,25%,53%,57%,100%{border-color:#2fe37a;opacity:1;
+      box-shadow:0 0 8px #2fe37a,0 0 22px rgba(47,227,122,.5),inset 0 0 12px rgba(47,227,122,.3)}
+    20%,24%,55%{border-color:#164d2c;opacity:.55;box-shadow:none}
+  }
+  code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;word-break:break-all;
+    background:rgba(255,255,255,.07);padding:2px 6px;border-radius:6px}
+
+  footer{padding:28px 0 40px;border-top:1px solid var(--line);font-size:12px;letter-spacing:.05em;color:var(--muted)}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr}
+    .big-icon{width:min(200px,50vw);order:-1}
+  }
+  @media (prefers-reduced-motion:reduce){ .info{animation:none} }
+</style>
+</head>
+<body>
+  <div class="top"><div class="wrap">
+    <nav>
+      <a href="/mobilne-aplikacie/">Mobilné aplikácie</a><span class="sep">/</span>
+      <span>Bible Tracker</span>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <div class="app-id">
+          <img src="img/icon.png" alt="">
+          <div class="eyebrow">Android · po slovensky</div>
+        </div>
+        <h1>Bible Tracker</h1>
+        <p class="lede">Plán čítania Biblie na mieru: zvoľ knihy a obdobie, appka ho rozdelí na dni a ukáže, či ideš podľa plánu. Preklad SSV, aj offline.</p>
+        <div class="actions">
+          <a class="cta" href="bible-tracker-1.0.0.apk" download>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v9.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM5 19h14a1 1 0 1 1 0 2H5a1 1 0 1 1 0-2z"/></svg>
+            Stiahnuť APK
+          </a>
+          <span class="meta"><b>Verzia 1.0.0</b> · 62 MB · Android</span>
+        </div>
+        <p class="sha">SHA-256: <code>0cb532f9fdc09d88be4a79eba908617d9ac0b4684a337ef3071fb406bc204899</code></p>
+        <p class="req">Na stiahnutie kapitol potrebuješ internet, čítať ich potom môžeš kedykoľvek offline.</p>
+      </div>
+      <img class="big-icon" src="img/icon.png" alt="Bible Tracker">
+    </header>
+  </div></div>
+
+  <section>
+    <div class="wrap">
+      <h2>Čo to vie</h2>
+      <div class="grid">
+        <div class="card"><div class="ic">📖</div><h3>Celé Sväté písmo</h3><p>Všetkých 73 kníh katolíckej Biblie, rozdelených na Starý a Nový zákon. Deuterokanonické knihy sú označené.</p></div>
+        <div class="card"><div class="ic">📶</div><h3>Čítanie bez internetu</h3><p>Kapitoly si stiahneš a čítaš kdekoľvek, aj offline. Prečítané kapitoly si označuješ.</p></div>
+        <div class="card"><div class="ic">🗓️</div><h3>Plán čítania</h3><p>Vyber knihy a obdobie - appka ti rozdelí čítanie na dni a ukáže, či si vpredu alebo pozadu.</p></div>
+        <div class="card"><div class="ic">🔖</div><h3>Záložky</h3><p>Kapitolu, ku ktorej sa chceš vrátiť, si označíš záložkou a nájdeš ju jedným ťuknutím.</p></div>
+        <div class="card"><div class="ic">📊</div><h3>Štatistiky</h3><p>Koľko kapitol máš prečítaných v Starom a Novom zákone a ako ti ide plán.</p></div>
+        <div class="card"><div class="ic">💬</div><h3>Po slovensky</h3><p>Celá appka aj text Svätého písma v slovenčine.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Inštalácia</h2>
+      <ol class="steps">
+        <li><b>Stiahni APK</b><span>Tlačidlom hore, priamo v mobile.</span></li>
+        <li><b>Povoľ inštaláciu</b><span>Android sa spýta, či môže prehliadač inštalovať aplikácie z neznámych zdrojov - povoľ to.</span></li>
+        <li><b>Otvor appku</b><span>Nič iné netreba - žiadny účet ani registrácia.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="wrap"><footer>© 2026 Maroš Malý</footer></div>
+</body>
+</html>
