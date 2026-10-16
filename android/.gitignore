@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+# The release keystore is committed on purpose: it is encrypted with its
+# password, which is NOT in the repo (see keys/README.md).
+!keys/release.jks

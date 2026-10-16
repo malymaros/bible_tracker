@@ -1,4 +1,4 @@
-package com.example.bible_tracker
+package sk.marosmaly.bibletracker
 
 import io.flutter.embedding.android.FlutterActivity
 
