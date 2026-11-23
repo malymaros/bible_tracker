@@ -1,54 +1,51 @@
-import 'package:bible_tracker/core/models/chapter_ref.dart';
+import 'package:bible_tracker/core/models/verse_ref.dart';
 import 'package:bible_tracker/db/app_database.dart';
-import 'package:bible_tracker/db/tables/bookmarked_chapters_table.dart';
+import 'package:bible_tracker/db/tables/verse_bookmarks_table.dart';
 import 'package:drift/drift.dart';
 
 part 'bookmark_dao.g.dart';
 
-@DriftAccessor(tables: [BookmarkedChapters])
+@DriftAccessor(tables: [VerseBookmarks])
 class BookmarkDao extends DatabaseAccessor<AppDatabase>
     with _$BookmarkDaoMixin {
   BookmarkDao(super.db);
 
-  Stream<Set<ChapterRef>> watchAll() {
-    return select(bookmarkedChapters).watch().map(
-      (rows) => rows.map((r) => ChapterRef(r.bookId, r.chapterNumber)).toSet(),
+  Stream<List<VerseBookmark>> watchAll() {
+    return select(verseBookmarks).watch().map(
+      (rows) => [
+        for (final r in rows)
+          VerseBookmark(
+            VerseRef(r.bookId, r.chapterNumber, r.verseNumber),
+            DateTime.fromMillisecondsSinceEpoch(r.bookmarkedAt),
+          ),
+      ],
     );
   }
 
-  Future<void> toggle(ChapterRef ref) async {
-    final exists = await (select(bookmarkedChapters)
-          ..where(
-            (t) =>
-                t.bookId.equals(ref.bookId) &
-                t.chapterNumber.equals(ref.chapterNumber),
-          ))
-        .getSingleOrNull();
-    if (exists != null) {
-      await (delete(bookmarkedChapters)
-            ..where(
-              (t) =>
-                  t.bookId.equals(ref.bookId) &
-                  t.chapterNumber.equals(ref.chapterNumber),
-            ))
-          .go();
+  Expression<bool> _matches($VerseBookmarksTable t, VerseRef ref) =>
+      t.bookId.equals(ref.bookId) &
+      t.chapterNumber.equals(ref.chapterNumber) &
+      t.verseNumber.equals(ref.verseNumber);
+
+  Future<void> toggle(VerseRef ref) async {
+    if (await isBookmarked(ref)) {
+      await (delete(verseBookmarks)..where((t) => _matches(t, ref))).go();
     } else {
-      await into(bookmarkedChapters).insert(BookmarkedChaptersCompanion(
-        bookId: Value(ref.bookId),
-        chapterNumber: Value(ref.chapterNumber),
-        bookmarkedAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ));
+      await into(verseBookmarks).insert(
+        VerseBookmarksCompanion(
+          bookId: Value(ref.bookId),
+          chapterNumber: Value(ref.chapterNumber),
+          verseNumber: Value(ref.verseNumber),
+          bookmarkedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        ),
+      );
     }
   }
 
-  Future<bool> isBookmarked(ChapterRef ref) async {
-    final row = await (select(bookmarkedChapters)
-          ..where(
-            (t) =>
-                t.bookId.equals(ref.bookId) &
-                t.chapterNumber.equals(ref.chapterNumber),
-          ))
-        .getSingleOrNull();
+  Future<bool> isBookmarked(VerseRef ref) async {
+    final row = await (select(
+      verseBookmarks,
+    )..where((t) => _matches(t, ref))).getSingleOrNull();
     return row != null;
   }
 }

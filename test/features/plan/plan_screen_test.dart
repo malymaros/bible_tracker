@@ -12,6 +12,7 @@ import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
 import 'package:bible_tracker/shared/providers/plan_providers.dart';
+import 'package:bible_tracker/shared/providers/reader_providers.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +48,10 @@ Widget _testWidget(
         (_) => Stream.value(const {}),
       ),
       bookmarkedChaptersProvider.overrideWith((_) => Stream.value(const {})),
+      verseBookmarksProvider.overrideWith((_) => Stream.value(const [])),
+      readerTextViewProvider.overrideWith(
+        (_) => Stream.value(ReaderTextView.verses),
+      ),
       todayProvider.overrideWithValue(today ?? DateTime(2026, 5, 12)),
     ],
     child: MaterialApp(

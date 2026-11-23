@@ -2,6 +2,7 @@ import 'package:bible_tracker/db/daos/bookmark_dao.dart';
 import 'package:bible_tracker/db/daos/chapter_text_dao.dart';
 import 'package:bible_tracker/db/daos/plan_dao.dart';
 import 'package:bible_tracker/db/daos/progress_dao.dart';
+import 'package:bible_tracker/db/daos/settings_dao.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,4 +20,8 @@ final chapterTextDaoProvider = Provider<ChapterTextDao>((ref) {
 
 final bookmarkDaoProvider = Provider<BookmarkDao>((ref) {
   return ref.watch(appDatabaseProvider).bookmarkDao;
+});
+
+final settingsDaoProvider = Provider<SettingsDao>((ref) {
+  return ref.watch(appDatabaseProvider).settingsDao;
 });

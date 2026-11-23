@@ -111,6 +111,22 @@
     "description": "Generic close button"
   },
 
+  "readerTextViewToggle": "Prepnúť zobrazenie textu",
+  "readerTextViewVerses": "Nové zobrazenie",
+  "readerTextViewOriginal": "Pôvodné zobrazenie",
+  "readerBookmarkChapter": "Záložka na kapitolu",
+  "verseActionBookmark": "Záložka",
+  "verseActionRemoveBookmark": "Odstrániť",
+  "verseActionCopy": "Kopírovať",
+  "verseActionShare": "Zdieľať",
+  "verseCopied": "Skopírované",
+  "verseBookmarkAdded": "Záložka pridaná",
+  "verseBookmarkRemoved": "Záložka odstránená",
+  "bookmarksTitle": "Záložky",
+  "bookmarksEmpty": "Žiadne záložky",
+  "bookmarksSortCanonical": "Podľa Biblie",
+  "bookmarksSortRecent": "Najnovšie",
+
   "planCreateTitle": "Vytvoriť plán čítania",
   "planStartDate": "Začiatok",
   "planTotalDays": "Počet dní",

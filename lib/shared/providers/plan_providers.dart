@@ -25,6 +25,3 @@ final todayProvider = Provider<DateTime>((_) {
   return DateTime(now.year, now.month, now.day);
 });
 
-final bookmarkedChaptersProvider = StreamProvider<Set<ChapterRef>>((ref) {
-  return ref.watch(bookmarkDaoProvider).watchAll();
-});

@@ -6,10 +6,12 @@ import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/book_download_progress.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/reader_context.dart';
+import 'package:bible_tracker/core/models/verse_ref.dart';
 import 'package:bible_tracker/core/services/ssv_scraper.dart';
+import 'package:bible_tracker/core/services/verse_parser.dart';
 import 'package:bible_tracker/shared/providers/dao_providers.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
-import 'package:bible_tracker/shared/providers/plan_providers.dart';
+import 'package:bible_tracker/shared/providers/reader_providers.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
@@ -219,79 +221,168 @@ class _BookChaptersScreen extends ConsumerWidget {
   }
 }
 
-class _BookmarksListScreen extends ConsumerWidget {
+/// The text of a bookmarked verse for the list, read from the downloaded
+/// chapter; null when the chapter is no longer downloaded.
+final _verseSnippetProvider = FutureProvider.autoDispose
+    .family<String?, VerseRef>((ref, verse) async {
+      final row = await ref
+          .watch(chapterTextDaoProvider)
+          .getChapterText(verse.chapter);
+      if (row == null) return null;
+      return VerseParser.parse(row.htmlContent).verseText(verse.verseNumber);
+    });
+
+enum _BookmarkSort { canonical, recent }
+
+class _BookmarksListScreen extends ConsumerStatefulWidget {
   const _BookmarksListScreen();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bookmarked = ref.watch(bookmarkedChaptersProvider).value ?? const {};
+  ConsumerState<_BookmarksListScreen> createState() =>
+      _BookmarksListScreenState();
+}
 
-    final sorted = bookmarked.toList()
+class _BookmarksListScreenState extends ConsumerState<_BookmarksListScreen> {
+  _BookmarkSort _sort = _BookmarkSort.canonical;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final bookmarks =
+        ref.watch(verseBookmarksProvider).value ?? const <VerseBookmark>[];
+    final order = {for (final b in kBibleBooks) b.id: b.order};
+
+    final sorted = bookmarks.toList()
       ..sort((a, b) {
-        final bookA = kBibleBooks.firstWhere((book) => book.id == a.bookId);
-        final bookB = kBibleBooks.firstWhere((book) => book.id == b.bookId);
-        final byBook = bookA.order.compareTo(bookB.order);
-        return byBook != 0
-            ? byBook
-            : a.chapterNumber.compareTo(b.chapterNumber);
+        if (_sort == _BookmarkSort.recent) {
+          return b.bookmarkedAt.compareTo(a.bookmarkedAt);
+        }
+        final va = a.verse, vb = b.verse;
+        final byBook = order[va.bookId]!.compareTo(order[vb.bookId]!);
+        if (byBook != 0) return byBook;
+        final byChapter = va.chapterNumber.compareTo(vb.chapterNumber);
+        if (byChapter != 0) return byChapter;
+        return va.verseNumber.compareTo(vb.verseNumber);
       });
+
+    final children = <Widget>[];
+    String? lastBook;
+    for (final b in sorted) {
+      final book = kBibleBooks.firstWhere((x) => x.id == b.verse.bookId);
+      if (_sort == _BookmarkSort.canonical && book.id != lastBook) {
+        children.add(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 10, 4, 6),
+            child: Text(
+              book.name.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 12,
+                letterSpacing: 1.8,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+        );
+        lastBook = book.id;
+      }
+      children.add(_BookmarkRow(book: book, verse: b.verse));
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Záložky')),
-      body: sorted.isEmpty
-          ? const Center(
-              child: Text(
-                'Žiadne záložky',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 16),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              itemCount: sorted.length,
-              itemBuilder: (_, index) {
-                final chapterRef = sorted[index];
-                final book = kBibleBooks.firstWhere(
-                  (b) => b.id == chapterRef.bookId,
-                );
-                return _BookmarkRow(book: book, chapterRef: chapterRef);
-              },
+      appBar: AppBar(title: Text(l10n.bookmarksTitle)),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            child: SegmentedButton<_BookmarkSort>(
+              key: const Key('bookmarks-sort'),
+              showSelectedIcon: false,
+              segments: [
+                ButtonSegment(
+                  value: _BookmarkSort.canonical,
+                  label: Text(l10n.bookmarksSortCanonical),
+                ),
+                ButtonSegment(
+                  value: _BookmarkSort.recent,
+                  label: Text(l10n.bookmarksSortRecent),
+                ),
+              ],
+              selected: {_sort},
+              onSelectionChanged: (s) => setState(() => _sort = s.single),
             ),
+          ),
+          Expanded(
+            child: sorted.isEmpty
+                ? Center(
+                    child: Text(
+                      l10n.bookmarksEmpty,
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 16,
+                      ),
+                    ),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                    children: children,
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _BookmarkRow extends StatelessWidget {
+class _BookmarkRow extends ConsumerWidget {
   final BibleBook book;
-  final ChapterRef chapterRef;
+  final VerseRef verse;
 
-  const _BookmarkRow({required this.book, required this.chapterRef});
+  const _BookmarkRow({required this.book, required this.verse});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snippet = ref.watch(_verseSnippetProvider(verse)).value;
     return AppCard(
       margin: const EdgeInsets.only(bottom: 8),
       padding: EdgeInsets.zero,
       child: ListTile(
         key: Key(
-          'bookmark-row-${chapterRef.bookId}-${chapterRef.chapterNumber}',
+          'bookmark-row-${verse.bookId}-${verse.chapterNumber}-'
+          '${verse.verseNumber}',
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         leading: const Icon(Icons.bookmark, color: AppColors.error, size: 24),
         title: Text(
-          '${book.name} ${chapterRef.chapterNumber}',
+          '${book.name} ${verse.chapterNumber},${verse.verseNumber}',
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w600,
             color: AppColors.text,
           ),
         ),
+        subtitle: snippet == null
+            ? null
+            : Text(
+                snippet,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: 'serif',
+                  fontSize: 15,
+                  height: 1.5,
+                  color: AppColors.textMuted,
+                ),
+              ),
         trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => ReaderScreen(
-              bookId: chapterRef.bookId,
-              chapterNumber: chapterRef.chapterNumber,
+              bookId: verse.bookId,
+              chapterNumber: verse.chapterNumber,
+              initialVerse: verse.verseNumber,
               readerContext: ReaderContext.books,
             ),
           ),

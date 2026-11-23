@@ -6,6 +6,7 @@ import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:bible_tracker/shared/providers/download_providers.dart';
 import 'package:bible_tracker/shared/providers/plan_providers.dart';
+import 'package:bible_tracker/shared/providers/reader_providers.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +31,10 @@ Widget _testApp(
     activePlanProvider.overrideWith((ref) => Stream.value(null)),
     readChaptersProvider.overrideWith((ref) => Stream.value(const {})),
     bookmarkedChaptersProvider.overrideWith((ref) => Stream.value(const {})),
+    verseBookmarksProvider.overrideWith((ref) => Stream.value(const [])),
+    readerTextViewProvider.overrideWith(
+      (ref) => Stream.value(ReaderTextView.verses),
+    ),
   ],
   child: const BibleTrackerApp(),
 );

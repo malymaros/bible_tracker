@@ -226,6 +226,96 @@ abstract class AppLocalizations {
   /// **'Zavrieť'**
   String get readerClose;
 
+  /// No description provided for @readerTextViewToggle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Prepnúť zobrazenie textu'**
+  String get readerTextViewToggle;
+
+  /// No description provided for @readerTextViewVerses.
+  ///
+  /// In sk, this message translates to:
+  /// **'Nové zobrazenie'**
+  String get readerTextViewVerses;
+
+  /// No description provided for @readerTextViewOriginal.
+  ///
+  /// In sk, this message translates to:
+  /// **'Pôvodné zobrazenie'**
+  String get readerTextViewOriginal;
+
+  /// No description provided for @readerBookmarkChapter.
+  ///
+  /// In sk, this message translates to:
+  /// **'Záložka na kapitolu'**
+  String get readerBookmarkChapter;
+
+  /// No description provided for @verseActionBookmark.
+  ///
+  /// In sk, this message translates to:
+  /// **'Záložka'**
+  String get verseActionBookmark;
+
+  /// No description provided for @verseActionRemoveBookmark.
+  ///
+  /// In sk, this message translates to:
+  /// **'Odstrániť'**
+  String get verseActionRemoveBookmark;
+
+  /// No description provided for @verseActionCopy.
+  ///
+  /// In sk, this message translates to:
+  /// **'Kopírovať'**
+  String get verseActionCopy;
+
+  /// No description provided for @verseActionShare.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zdieľať'**
+  String get verseActionShare;
+
+  /// No description provided for @verseCopied.
+  ///
+  /// In sk, this message translates to:
+  /// **'Skopírované'**
+  String get verseCopied;
+
+  /// No description provided for @verseBookmarkAdded.
+  ///
+  /// In sk, this message translates to:
+  /// **'Záložka pridaná'**
+  String get verseBookmarkAdded;
+
+  /// No description provided for @verseBookmarkRemoved.
+  ///
+  /// In sk, this message translates to:
+  /// **'Záložka odstránená'**
+  String get verseBookmarkRemoved;
+
+  /// No description provided for @bookmarksTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Záložky'**
+  String get bookmarksTitle;
+
+  /// No description provided for @bookmarksEmpty.
+  ///
+  /// In sk, this message translates to:
+  /// **'Žiadne záložky'**
+  String get bookmarksEmpty;
+
+  /// No description provided for @bookmarksSortCanonical.
+  ///
+  /// In sk, this message translates to:
+  /// **'Podľa Biblie'**
+  String get bookmarksSortCanonical;
+
+  /// No description provided for @bookmarksSortRecent.
+  ///
+  /// In sk, this message translates to:
+  /// **'Najnovšie'**
+  String get bookmarksSortRecent;
+
   /// No description provided for @planCreateTitle.
   ///
   /// In sk, this message translates to:

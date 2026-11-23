@@ -75,6 +75,51 @@ class AppLocalizationsSk extends AppLocalizations {
   String get readerClose => 'Zavrieť';
 
   @override
+  String get readerTextViewToggle => 'Prepnúť zobrazenie textu';
+
+  @override
+  String get readerTextViewVerses => 'Nové zobrazenie';
+
+  @override
+  String get readerTextViewOriginal => 'Pôvodné zobrazenie';
+
+  @override
+  String get readerBookmarkChapter => 'Záložka na kapitolu';
+
+  @override
+  String get verseActionBookmark => 'Záložka';
+
+  @override
+  String get verseActionRemoveBookmark => 'Odstrániť';
+
+  @override
+  String get verseActionCopy => 'Kopírovať';
+
+  @override
+  String get verseActionShare => 'Zdieľať';
+
+  @override
+  String get verseCopied => 'Skopírované';
+
+  @override
+  String get verseBookmarkAdded => 'Záložka pridaná';
+
+  @override
+  String get verseBookmarkRemoved => 'Záložka odstránená';
+
+  @override
+  String get bookmarksTitle => 'Záložky';
+
+  @override
+  String get bookmarksEmpty => 'Žiadne záložky';
+
+  @override
+  String get bookmarksSortCanonical => 'Podľa Biblie';
+
+  @override
+  String get bookmarksSortRecent => 'Najnovšie';
+
+  @override
   String get planCreateTitle => 'Vytvoriť plán čítania';
 
   @override
