@@ -42,10 +42,12 @@ class SsvScraper {
     if (response.statusCode != 200) {
       throw SsvHttpException('HTTP ${response.statusCode} for $url');
     }
-    return _parseHtml(response.bodyBytes, url);
+    return parsePage(response.bodyBytes, url);
   }
 
-  ChapterText _parseHtml(List<int> bytes, String sourceUrl) {
+  /// Extracts the chapter text and footnotes from a whole SSV page as served
+  /// (windows-1250 bytes). Public so a saved page can be parsed again offline.
+  static ChapterText parsePage(List<int> bytes, String sourceUrl) {
     final body = _decodeWindows1250(bytes);
     final doc = html_parser.parse(body);
     final inbox = doc.querySelector(SsvConstants.chapterContentSelector);
