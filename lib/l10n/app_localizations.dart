@@ -573,6 +573,60 @@ abstract class AppLocalizations {
   /// In sk, this message translates to:
   /// **'Dnešné čítanie v pláne'**
   String get statsTodaySummary;
+
+  /// Rosary list screen title and tooltip of the rosary button in the plan app bar
+  ///
+  /// In sk, this message translates to:
+  /// **'Ruženec'**
+  String get rosaryTitle;
+
+  /// No description provided for @rosaryTodayBadge.
+  ///
+  /// In sk, this message translates to:
+  /// **'DNES'**
+  String get rosaryTodayBadge;
+
+  /// No description provided for @rosaryMysteriesSection.
+  ///
+  /// In sk, this message translates to:
+  /// **'Tajomstvá'**
+  String get rosaryMysteriesSection;
+
+  /// No description provided for @rosaryPrayerOrderSection.
+  ///
+  /// In sk, this message translates to:
+  /// **'Postup modlitby · ťukni pre znenie'**
+  String get rosaryPrayerOrderSection;
+
+  /// No description provided for @rosaryGuideButton.
+  ///
+  /// In sk, this message translates to:
+  /// **'Sprievodca modlitbou'**
+  String get rosaryGuideButton;
+
+  /// No description provided for @rosaryGuideCaption.
+  ///
+  /// In sk, this message translates to:
+  /// **'Krok za krokom s celým znením každej modlitby'**
+  String get rosaryGuideCaption;
+
+  /// No description provided for @rosaryGuideNext.
+  ///
+  /// In sk, this message translates to:
+  /// **'Ďalej'**
+  String get rosaryGuideNext;
+
+  /// No description provided for @rosaryGuideRestart.
+  ///
+  /// In sk, this message translates to:
+  /// **'Začať odznova'**
+  String get rosaryGuideRestart;
+
+  /// No description provided for @rosaryGuideBack.
+  ///
+  /// In sk, this message translates to:
+  /// **'Späť'**
+  String get rosaryGuideBack;
 }
 
 class _AppLocalizationsDelegate

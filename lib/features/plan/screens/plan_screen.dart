@@ -12,6 +12,7 @@ import 'package:bible_tracker/core/services/plan_generator.dart';
 import 'package:bible_tracker/features/bible/screens/biblia_screen.dart';
 import 'package:bible_tracker/core/models/reader_context.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
+import 'package:bible_tracker/features/rosary/widgets/rosary_ui.dart';
 import 'package:bible_tracker/features/statistics/screens/statistika_screen.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/dao_providers.dart';
@@ -35,6 +36,7 @@ class PlanScreen extends ConsumerWidget {
           centerTitle: true,
           backgroundColor: _PlanColors.background,
           surfaceTintColor: _PlanColors.background,
+          actions: const [RosaryNavButton()],
         ),
         backgroundColor: _PlanColors.background,
         body: const Center(child: CircularProgressIndicator()),
@@ -47,6 +49,7 @@ class PlanScreen extends ConsumerWidget {
           centerTitle: true,
           backgroundColor: _PlanColors.background,
           surfaceTintColor: _PlanColors.background,
+          actions: const [RosaryNavButton()],
         ),
         backgroundColor: _PlanColors.background,
         body: Center(child: Text(error.toString())),
@@ -128,6 +131,7 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
         centerTitle: true,
         backgroundColor: _PlanColors.background,
         surfaceTintColor: _PlanColors.background,
+        actions: const [RosaryNavButton()],
       ),
       backgroundColor: _PlanColors.background,
       body: SafeArea(
@@ -408,6 +412,7 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
         backgroundColor: _PlanColors.background,
         surfaceTintColor: _PlanColors.background,
         actions: [
+          const RosaryNavButton(),
           IconButton(
             tooltip: l10n.planDeleteAction,
             onPressed: () => _confirmDelete(context, ref, days),
