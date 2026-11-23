@@ -13,3 +13,9 @@ version, size and SHA-256 in `index.html`.
 
 The site's homepage, the app list (/mobilne-aplikacie/) and `.htaccess` are
 not in this repo.
+
+The online Bible reader (`mobilne-aplikacie/bible-tracker/biblia/`) is not
+committed either: it is generated from the local SSV backup. Make the backup
+with `dart run tool/ssv_backup.dart <backup-dir>` (once, about 40 minutes),
+then `dart run tool/ssv_site.dart <backup-dir>` and upload the whole
+`biblia/` folder (about 1,400 files, 12 MB).
