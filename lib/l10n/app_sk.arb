@@ -184,5 +184,18 @@
   "statsRemainingBooksInPlan": "Zostávajúce knihy v pláne",
   "statsFullyCompletedSelectedBooks": "Úplne dokončené vybrané knihy",
   "statsNotStartedSelectedBooks": "Nezačaté vybrané knihy",
-  "statsTodaySummary": "Dnešné čítanie v pláne"
+  "statsTodaySummary": "Dnešné čítanie v pláne",
+
+  "rosaryTitle": "Ruženec",
+  "@rosaryTitle": {
+    "description": "Rosary list screen title and tooltip of the rosary button in the plan app bar"
+  },
+  "rosaryTodayBadge": "DNES",
+  "rosaryMysteriesSection": "Tajomstvá",
+  "rosaryPrayerOrderSection": "Postup modlitby · ťukni pre znenie",
+  "rosaryGuideButton": "Sprievodca modlitbou",
+  "rosaryGuideCaption": "Krok za krokom s celým znením každej modlitby",
+  "rosaryGuideNext": "Ďalej",
+  "rosaryGuideRestart": "Začať odznova",
+  "rosaryGuideBack": "Späť"
 }

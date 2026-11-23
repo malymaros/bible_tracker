@@ -295,4 +295,32 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get statsTodaySummary => 'Dnešné čítanie v pláne';
+
+  @override
+  String get rosaryTitle => 'Ruženec';
+
+  @override
+  String get rosaryTodayBadge => 'DNES';
+
+  @override
+  String get rosaryMysteriesSection => 'Tajomstvá';
+
+  @override
+  String get rosaryPrayerOrderSection => 'Postup modlitby · ťukni pre znenie';
+
+  @override
+  String get rosaryGuideButton => 'Sprievodca modlitbou';
+
+  @override
+  String get rosaryGuideCaption =>
+      'Krok za krokom s celým znením každej modlitby';
+
+  @override
+  String get rosaryGuideNext => 'Ďalej';
+
+  @override
+  String get rosaryGuideRestart => 'Začať odznova';
+
+  @override
+  String get rosaryGuideBack => 'Späť';
 }
