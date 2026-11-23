@@ -2045,6 +2045,381 @@ class AppSettingsCompanion extends UpdateCompanion<AppSettingRow> {
   }
 }
 
+class $ColorBookmarksTable extends ColorBookmarks
+    with TableInfo<$ColorBookmarksTable, ColorBookmarkRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ColorBookmarksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<String> bookId = GeneratedColumn<String>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _chapterNumberMeta = const VerificationMeta(
+    'chapterNumber',
+  );
+  @override
+  late final GeneratedColumn<int> chapterNumber = GeneratedColumn<int>(
+    'chapter_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _verseNumberMeta = const VerificationMeta(
+    'verseNumber',
+  );
+  @override
+  late final GeneratedColumn<int> verseNumber = GeneratedColumn<int>(
+    'verse_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _placedAtMeta = const VerificationMeta(
+    'placedAt',
+  );
+  @override
+  late final GeneratedColumn<int> placedAt = GeneratedColumn<int>(
+    'placed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    color,
+    bookId,
+    chapterNumber,
+    verseNumber,
+    placedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'color_bookmarks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ColorBookmarkRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookIdMeta);
+    }
+    if (data.containsKey('chapter_number')) {
+      context.handle(
+        _chapterNumberMeta,
+        chapterNumber.isAcceptableOrUnknown(
+          data['chapter_number']!,
+          _chapterNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_chapterNumberMeta);
+    }
+    if (data.containsKey('verse_number')) {
+      context.handle(
+        _verseNumberMeta,
+        verseNumber.isAcceptableOrUnknown(
+          data['verse_number']!,
+          _verseNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_verseNumberMeta);
+    }
+    if (data.containsKey('placed_at')) {
+      context.handle(
+        _placedAtMeta,
+        placedAt.isAcceptableOrUnknown(data['placed_at']!, _placedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_placedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {color};
+  @override
+  ColorBookmarkRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ColorBookmarkRow(
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
+      bookId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}book_id'],
+      )!,
+      chapterNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chapter_number'],
+      )!,
+      verseNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}verse_number'],
+      )!,
+      placedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}placed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ColorBookmarksTable createAlias(String alias) {
+    return $ColorBookmarksTable(attachedDatabase, alias);
+  }
+}
+
+class ColorBookmarkRow extends DataClass
+    implements Insertable<ColorBookmarkRow> {
+  final String color;
+  final String bookId;
+  final int chapterNumber;
+  final int verseNumber;
+  final int placedAt;
+  const ColorBookmarkRow({
+    required this.color,
+    required this.bookId,
+    required this.chapterNumber,
+    required this.verseNumber,
+    required this.placedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['color'] = Variable<String>(color);
+    map['book_id'] = Variable<String>(bookId);
+    map['chapter_number'] = Variable<int>(chapterNumber);
+    map['verse_number'] = Variable<int>(verseNumber);
+    map['placed_at'] = Variable<int>(placedAt);
+    return map;
+  }
+
+  ColorBookmarksCompanion toCompanion(bool nullToAbsent) {
+    return ColorBookmarksCompanion(
+      color: Value(color),
+      bookId: Value(bookId),
+      chapterNumber: Value(chapterNumber),
+      verseNumber: Value(verseNumber),
+      placedAt: Value(placedAt),
+    );
+  }
+
+  factory ColorBookmarkRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ColorBookmarkRow(
+      color: serializer.fromJson<String>(json['color']),
+      bookId: serializer.fromJson<String>(json['bookId']),
+      chapterNumber: serializer.fromJson<int>(json['chapterNumber']),
+      verseNumber: serializer.fromJson<int>(json['verseNumber']),
+      placedAt: serializer.fromJson<int>(json['placedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'color': serializer.toJson<String>(color),
+      'bookId': serializer.toJson<String>(bookId),
+      'chapterNumber': serializer.toJson<int>(chapterNumber),
+      'verseNumber': serializer.toJson<int>(verseNumber),
+      'placedAt': serializer.toJson<int>(placedAt),
+    };
+  }
+
+  ColorBookmarkRow copyWith({
+    String? color,
+    String? bookId,
+    int? chapterNumber,
+    int? verseNumber,
+    int? placedAt,
+  }) => ColorBookmarkRow(
+    color: color ?? this.color,
+    bookId: bookId ?? this.bookId,
+    chapterNumber: chapterNumber ?? this.chapterNumber,
+    verseNumber: verseNumber ?? this.verseNumber,
+    placedAt: placedAt ?? this.placedAt,
+  );
+  ColorBookmarkRow copyWithCompanion(ColorBookmarksCompanion data) {
+    return ColorBookmarkRow(
+      color: data.color.present ? data.color.value : this.color,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      chapterNumber: data.chapterNumber.present
+          ? data.chapterNumber.value
+          : this.chapterNumber,
+      verseNumber: data.verseNumber.present
+          ? data.verseNumber.value
+          : this.verseNumber,
+      placedAt: data.placedAt.present ? data.placedAt.value : this.placedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ColorBookmarkRow(')
+          ..write('color: $color, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapterNumber: $chapterNumber, ')
+          ..write('verseNumber: $verseNumber, ')
+          ..write('placedAt: $placedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(color, bookId, chapterNumber, verseNumber, placedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ColorBookmarkRow &&
+          other.color == this.color &&
+          other.bookId == this.bookId &&
+          other.chapterNumber == this.chapterNumber &&
+          other.verseNumber == this.verseNumber &&
+          other.placedAt == this.placedAt);
+}
+
+class ColorBookmarksCompanion extends UpdateCompanion<ColorBookmarkRow> {
+  final Value<String> color;
+  final Value<String> bookId;
+  final Value<int> chapterNumber;
+  final Value<int> verseNumber;
+  final Value<int> placedAt;
+  final Value<int> rowid;
+  const ColorBookmarksCompanion({
+    this.color = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.chapterNumber = const Value.absent(),
+    this.verseNumber = const Value.absent(),
+    this.placedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ColorBookmarksCompanion.insert({
+    required String color,
+    required String bookId,
+    required int chapterNumber,
+    required int verseNumber,
+    required int placedAt,
+    this.rowid = const Value.absent(),
+  }) : color = Value(color),
+       bookId = Value(bookId),
+       chapterNumber = Value(chapterNumber),
+       verseNumber = Value(verseNumber),
+       placedAt = Value(placedAt);
+  static Insertable<ColorBookmarkRow> custom({
+    Expression<String>? color,
+    Expression<String>? bookId,
+    Expression<int>? chapterNumber,
+    Expression<int>? verseNumber,
+    Expression<int>? placedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (color != null) 'color': color,
+      if (bookId != null) 'book_id': bookId,
+      if (chapterNumber != null) 'chapter_number': chapterNumber,
+      if (verseNumber != null) 'verse_number': verseNumber,
+      if (placedAt != null) 'placed_at': placedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ColorBookmarksCompanion copyWith({
+    Value<String>? color,
+    Value<String>? bookId,
+    Value<int>? chapterNumber,
+    Value<int>? verseNumber,
+    Value<int>? placedAt,
+    Value<int>? rowid,
+  }) {
+    return ColorBookmarksCompanion(
+      color: color ?? this.color,
+      bookId: bookId ?? this.bookId,
+      chapterNumber: chapterNumber ?? this.chapterNumber,
+      verseNumber: verseNumber ?? this.verseNumber,
+      placedAt: placedAt ?? this.placedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<String>(bookId.value);
+    }
+    if (chapterNumber.present) {
+      map['chapter_number'] = Variable<int>(chapterNumber.value);
+    }
+    if (verseNumber.present) {
+      map['verse_number'] = Variable<int>(verseNumber.value);
+    }
+    if (placedAt.present) {
+      map['placed_at'] = Variable<int>(placedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ColorBookmarksCompanion(')
+          ..write('color: $color, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapterNumber: $chapterNumber, ')
+          ..write('verseNumber: $verseNumber, ')
+          ..write('placedAt: $placedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2054,6 +2429,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ChapterTextsTable chapterTexts = $ChapterTextsTable(this);
   late final $VerseBookmarksTable verseBookmarks = $VerseBookmarksTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
+  late final $ColorBookmarksTable colorBookmarks = $ColorBookmarksTable(this);
   late final ProgressDao progressDao = ProgressDao(this as AppDatabase);
   late final PlanDao planDao = PlanDao(this as AppDatabase);
   late final ChapterTextDao chapterTextDao = ChapterTextDao(
@@ -2072,6 +2448,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     chapterTexts,
     verseBookmarks,
     appSettings,
+    colorBookmarks,
   ];
 }
 
@@ -3218,6 +3595,216 @@ typedef $$AppSettingsTableProcessedTableManager =
       AppSettingRow,
       PrefetchHooks Function()
     >;
+typedef $$ColorBookmarksTableCreateCompanionBuilder =
+    ColorBookmarksCompanion Function({
+      required String color,
+      required String bookId,
+      required int chapterNumber,
+      required int verseNumber,
+      required int placedAt,
+      Value<int> rowid,
+    });
+typedef $$ColorBookmarksTableUpdateCompanionBuilder =
+    ColorBookmarksCompanion Function({
+      Value<String> color,
+      Value<String> bookId,
+      Value<int> chapterNumber,
+      Value<int> verseNumber,
+      Value<int> placedAt,
+      Value<int> rowid,
+    });
+
+class $$ColorBookmarksTableFilterComposer
+    extends Composer<_$AppDatabase, $ColorBookmarksTable> {
+  $$ColorBookmarksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get chapterNumber => $composableBuilder(
+    column: $table.chapterNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get verseNumber => $composableBuilder(
+    column: $table.verseNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get placedAt => $composableBuilder(
+    column: $table.placedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ColorBookmarksTableOrderingComposer
+    extends Composer<_$AppDatabase, $ColorBookmarksTable> {
+  $$ColorBookmarksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get chapterNumber => $composableBuilder(
+    column: $table.chapterNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get verseNumber => $composableBuilder(
+    column: $table.verseNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get placedAt => $composableBuilder(
+    column: $table.placedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ColorBookmarksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ColorBookmarksTable> {
+  $$ColorBookmarksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<String> get bookId =>
+      $composableBuilder(column: $table.bookId, builder: (column) => column);
+
+  GeneratedColumn<int> get chapterNumber => $composableBuilder(
+    column: $table.chapterNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get verseNumber => $composableBuilder(
+    column: $table.verseNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get placedAt =>
+      $composableBuilder(column: $table.placedAt, builder: (column) => column);
+}
+
+class $$ColorBookmarksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ColorBookmarksTable,
+          ColorBookmarkRow,
+          $$ColorBookmarksTableFilterComposer,
+          $$ColorBookmarksTableOrderingComposer,
+          $$ColorBookmarksTableAnnotationComposer,
+          $$ColorBookmarksTableCreateCompanionBuilder,
+          $$ColorBookmarksTableUpdateCompanionBuilder,
+          (
+            ColorBookmarkRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ColorBookmarksTable,
+              ColorBookmarkRow
+            >,
+          ),
+          ColorBookmarkRow,
+          PrefetchHooks Function()
+        > {
+  $$ColorBookmarksTableTableManager(
+    _$AppDatabase db,
+    $ColorBookmarksTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ColorBookmarksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ColorBookmarksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ColorBookmarksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> color = const Value.absent(),
+                Value<String> bookId = const Value.absent(),
+                Value<int> chapterNumber = const Value.absent(),
+                Value<int> verseNumber = const Value.absent(),
+                Value<int> placedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ColorBookmarksCompanion(
+                color: color,
+                bookId: bookId,
+                chapterNumber: chapterNumber,
+                verseNumber: verseNumber,
+                placedAt: placedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String color,
+                required String bookId,
+                required int chapterNumber,
+                required int verseNumber,
+                required int placedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ColorBookmarksCompanion.insert(
+                color: color,
+                bookId: bookId,
+                chapterNumber: chapterNumber,
+                verseNumber: verseNumber,
+                placedAt: placedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ColorBookmarksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ColorBookmarksTable,
+      ColorBookmarkRow,
+      $$ColorBookmarksTableFilterComposer,
+      $$ColorBookmarksTableOrderingComposer,
+      $$ColorBookmarksTableAnnotationComposer,
+      $$ColorBookmarksTableCreateCompanionBuilder,
+      $$ColorBookmarksTableUpdateCompanionBuilder,
+      (
+        ColorBookmarkRow,
+        BaseReferences<_$AppDatabase, $ColorBookmarksTable, ColorBookmarkRow>,
+      ),
+      ColorBookmarkRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3234,4 +3821,6 @@ class $AppDatabaseManager {
       $$VerseBookmarksTableTableManager(_db, _db.verseBookmarks);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
+  $$ColorBookmarksTableTableManager get colorBookmarks =>
+      $$ColorBookmarksTableTableManager(_db, _db.colorBookmarks);
 }

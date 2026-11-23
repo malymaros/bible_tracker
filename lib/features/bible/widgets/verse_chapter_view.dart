@@ -6,12 +6,15 @@ import 'package:flutter/material.dart';
 
 /// Draws a chapter split into verses ("Nové zobrazenie"): section headings,
 /// paragraph headings, indented poetry, verse numbers. Each verse can be
-/// tapped; [selectedVerse] is highlighted and [bookmarkedVerses] carry a
-/// bookmark mark. A verse that opens an SSV footnote ([notes]) ends with a
+/// tapped; [selectedVerse] is highlighted and the verses in [verseMarks]
+/// start with their bookmarks (gold favourite first, then the colours).
+/// A verse that opens an SSV footnote ([notes]) ends with a
 /// "⋮" mark. When [scrollToVerse] is set the view scrolls to it once.
 class VerseChapterView extends StatefulWidget {
   final ParsedChapter chapter;
-  final Set<int> bookmarkedVerses;
+
+  /// Bookmark colours per verse number, in drawing order.
+  final Map<int, List<Color>> verseMarks;
   final List<ChapterNote> notes;
   final int? selectedVerse;
   final int? scrollToVerse;
@@ -23,7 +26,7 @@ class VerseChapterView extends StatefulWidget {
   const VerseChapterView({
     super.key,
     required this.chapter,
-    required this.bookmarkedVerses,
+    this.verseMarks = const {},
     required this.onVerseTap,
     this.notes = const [],
     this.selectedVerse,
@@ -199,22 +202,31 @@ class _VerseChapterViewState extends State<VerseChapterView> {
       final verse = s.verse;
       final selected = verse != null && verse == widget.selectedVerse;
       final inRange = verse != null && !selected && range.contains(verse);
-      final marked = verse != null && widget.bookmarkedVerses.contains(verse);
+      final ribbons = verse == null
+          ? const <Color>[]
+          : widget.verseMarks[verse] ?? const <Color>[];
       final background = selected
           ? AppColors.goldSoft
           : inRange
           ? AppColors.gold.withValues(alpha: 0.12)
-          : marked
-          ? AppColors.error.withValues(alpha: 0.07)
+          : ribbons.isNotEmpty
+          ? ribbons.first.withValues(alpha: 0.07)
           : null;
       if (s.startsVerse) {
-        if (marked) {
+        if (ribbons.isNotEmpty) {
           spans.add(
-            const WidgetSpan(
+            WidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: Padding(
-                padding: EdgeInsets.only(right: 2),
-                child: Icon(Icons.bookmark, size: 14, color: AppColors.error),
+                key: Key('verse-marks-$verse'),
+                padding: const EdgeInsets.only(right: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final color in ribbons)
+                      Icon(Icons.bookmark, size: 14, color: color),
+                  ],
+                ),
               ),
             ),
           );

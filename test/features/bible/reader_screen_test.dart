@@ -32,6 +32,7 @@ Widget _testReader(
   ReaderContext readerContext = ReaderContext.books,
   Stream<Set<ChapterRef>>? readChaptersStream,
   Stream<List<VerseBookmark>>? verseBookmarksStream,
+  Stream<List<ColorBookmark>>? colorBookmarksStream,
   ReaderTextView textView = ReaderTextView.verses,
   int? initialVerse,
   _FakeDownloadService? downloads,
@@ -47,6 +48,9 @@ Widget _testReader(
       ),
       verseBookmarksProvider.overrideWith(
         (_) => verseBookmarksStream ?? Stream.value(const []),
+      ),
+      colorBookmarksProvider.overrideWith(
+        (_) => colorBookmarksStream ?? Stream.value(const []),
       ),
       readerTextViewProvider.overrideWith((_) => Stream.value(textView)),
       if (readerContext == ReaderContext.plan)
@@ -346,7 +350,7 @@ void main() {
       expect(rows.single.value, 'original');
     });
 
-    testWidgets('tapping a verse opens actions and bookmarks it', (
+    testWidgets('tapping a verse opens actions and makes it a favourite', (
       tester,
     ) async {
       final db = _openTestDb();
@@ -361,13 +365,138 @@ void main() {
       expect(find.byKey(const Key('verse-action-panel')), findsOneWidget);
       expect(find.text('Genezis 1,2'), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('verse-action-bookmark')));
+      await tester.tap(find.byKey(const Key('verse-action-favourite')));
       await tester.pumpAndSettle();
 
       expect(
         await db.bookmarkDao.isBookmarked(const VerseRef('gen', 1, 2)),
         isTrue,
       );
+    });
+
+    Future<Map<String, VerseRef>> colorRows(AppDatabase db) async => {
+      for (final r in await db.select(db.colorBookmarks).get())
+        r.color: VerseRef(r.bookId, r.chapterNumber, r.verseNumber),
+    };
+
+    Future<void> openVerse2(WidgetTester tester) async {
+      await tester.tapOnText(find.textRange.ofSubstring('Druhý verš'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a free colour goes on the verse at once', (tester) async {
+      final db = _openTestDb();
+      await insertVerses(db);
+
+      await tester.pumpWidget(_testReader(db, gen1));
+      await tester.pumpAndSettle();
+      await openVerse2(tester);
+
+      // Each free colour shows a dash.
+      expect(find.text('–'), findsNWidgets(BookmarkColor.values.length));
+
+      await tester.tap(find.byKey(const Key('verse-action-color-blue')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('bookmark-move-dialog')), findsNothing);
+      expect(await colorRows(db), {'blue': const VerseRef('gen', 1, 2)});
+    });
+
+    testWidgets('a colour on this verse is taken out by tapping it', (
+      tester,
+    ) async {
+      final db = _openTestDb();
+      await insertVerses(db);
+      const here = VerseRef('gen', 1, 2);
+      await db.bookmarkDao.placeColor(BookmarkColor.green, here);
+
+      await tester.pumpWidget(
+        _testReader(
+          db,
+          gen1,
+          colorBookmarksStream: Stream.value([
+            ColorBookmark(BookmarkColor.green, here, DateTime(2026)),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The verse starts with its bookmark.
+      expect(find.byKey(const Key('verse-marks-2')), findsOneWidget);
+
+      await openVerse2(tester);
+      expect(find.text('Gn 1,2'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('verse-action-color-green')));
+      await tester.pumpAndSettle();
+
+      expect(await colorRows(db), isEmpty);
+    });
+
+    testWidgets('moving a colour from another verse asks first', (
+      tester,
+    ) async {
+      final db = _openTestDb();
+      await insertVerses(db);
+      const elsewhere = VerseRef('ps', 46, 2);
+      await db.bookmarkDao.placeColor(BookmarkColor.red, elsewhere);
+
+      await tester.pumpWidget(
+        _testReader(
+          db,
+          gen1,
+          colorBookmarksStream: Stream.value([
+            ColorBookmark(BookmarkColor.red, elsewhere, DateTime(2026)),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openVerse2(tester);
+
+      // Cancel keeps it where it was.
+      await tester.tap(find.byKey(const Key('verse-action-color-red')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('bookmark-move-dialog')), findsOneWidget);
+      expect(find.text('Ž 46,2'), findsWidgets);
+      await tester.tap(find.byKey(const Key('bookmark-move-cancel')));
+      await tester.pumpAndSettle();
+      expect(await colorRows(db), {'red': elsewhere});
+
+      // Confirm moves it here.
+      await tester.tap(find.byKey(const Key('verse-action-color-red')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('bookmark-move-confirm')));
+      await tester.pumpAndSettle();
+      expect(await colorRows(db), {'red': const VerseRef('gen', 1, 2)});
+    });
+
+    testWidgets('a verse can be a favourite and carry several colours', (
+      tester,
+    ) async {
+      final db = _openTestDb();
+      await insertVerses(db);
+      const here = VerseRef('gen', 1, 2);
+
+      await tester.pumpWidget(
+        _testReader(
+          db,
+          gen1,
+          verseBookmarksStream: Stream.value([
+            VerseBookmark(here, DateTime(2026)),
+          ]),
+          colorBookmarksStream: Stream.value([
+            ColorBookmark(BookmarkColor.blue, here, DateTime(2026)),
+            ColorBookmark(BookmarkColor.purple, here, DateTime(2026)),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final marks = find.descendant(
+        of: find.byKey(const Key('verse-marks-2')),
+        matching: find.byIcon(Icons.bookmark),
+      );
+      expect(marks, findsNWidgets(3));
     });
 
     testWidgets('opening at a verse highlights it without the panel', (

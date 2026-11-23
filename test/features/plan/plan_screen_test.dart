@@ -49,6 +49,7 @@ Widget _testWidget(
       ),
       bookmarkedChaptersProvider.overrideWith((_) => Stream.value(const {})),
       verseBookmarksProvider.overrideWith((_) => Stream.value(const [])),
+      colorBookmarksProvider.overrideWith((_) => Stream.value(const [])),
       readerTextViewProvider.overrideWith(
         (_) => Stream.value(ReaderTextView.verses),
       ),

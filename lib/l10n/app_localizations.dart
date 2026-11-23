@@ -244,18 +244,6 @@ abstract class AppLocalizations {
   /// **'Pôvodné zobrazenie'**
   String get readerTextViewOriginal;
 
-  /// No description provided for @verseActionBookmark.
-  ///
-  /// In sk, this message translates to:
-  /// **'Záložka'**
-  String get verseActionBookmark;
-
-  /// No description provided for @verseActionRemoveBookmark.
-  ///
-  /// In sk, this message translates to:
-  /// **'Odstrániť'**
-  String get verseActionRemoveBookmark;
-
   /// No description provided for @verseActionCopy.
   ///
   /// In sk, this message translates to:
@@ -304,17 +292,71 @@ abstract class AppLocalizations {
   /// **'Skopírované'**
   String get verseCopied;
 
-  /// No description provided for @verseBookmarkAdded.
+  /// No description provided for @bookmarkFavourite.
   ///
   /// In sk, this message translates to:
-  /// **'Záložka pridaná'**
-  String get verseBookmarkAdded;
+  /// **'Obľúbený verš'**
+  String get bookmarkFavourite;
 
-  /// No description provided for @verseBookmarkRemoved.
+  /// No description provided for @bookmarkClassic.
   ///
   /// In sk, this message translates to:
-  /// **'Záložka odstránená'**
-  String get verseBookmarkRemoved;
+  /// **'Klasická záložka'**
+  String get bookmarkClassic;
+
+  /// No description provided for @bookmarkMoveTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Presunúť záložku?'**
+  String get bookmarkMoveTitle;
+
+  /// No description provided for @bookmarkMoveConfirm.
+  ///
+  /// In sk, this message translates to:
+  /// **'Presunúť'**
+  String get bookmarkMoveConfirm;
+
+  /// No description provided for @bookmarkMoveCancel.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zrušiť'**
+  String get bookmarkMoveCancel;
+
+  /// No description provided for @bookmarkColorRed.
+  ///
+  /// In sk, this message translates to:
+  /// **'Červená'**
+  String get bookmarkColorRed;
+
+  /// No description provided for @bookmarkColorBlue.
+  ///
+  /// In sk, this message translates to:
+  /// **'Modrá'**
+  String get bookmarkColorBlue;
+
+  /// No description provided for @bookmarkColorGreen.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zelená'**
+  String get bookmarkColorGreen;
+
+  /// No description provided for @bookmarkColorPurple.
+  ///
+  /// In sk, this message translates to:
+  /// **'Fialová'**
+  String get bookmarkColorPurple;
+
+  /// No description provided for @bookmarkColorGray.
+  ///
+  /// In sk, this message translates to:
+  /// **'Sivá'**
+  String get bookmarkColorGray;
+
+  /// Screen-reader label of a classic bookmark that lies on no verse
+  ///
+  /// In sk, this message translates to:
+  /// **'voľná'**
+  String get bookmarkFree;
 
   /// No description provided for @bookmarksTitle.
   ///
@@ -327,6 +369,18 @@ abstract class AppLocalizations {
   /// In sk, this message translates to:
   /// **'Žiadne záložky'**
   String get bookmarksEmpty;
+
+  /// No description provided for @bookmarksTabFavourites.
+  ///
+  /// In sk, this message translates to:
+  /// **'Obľúbené'**
+  String get bookmarksTabFavourites;
+
+  /// No description provided for @bookmarksTabClassic.
+  ///
+  /// In sk, this message translates to:
+  /// **'Klasické'**
+  String get bookmarksTabClassic;
 
   /// No description provided for @planCreateTitle.
   ///

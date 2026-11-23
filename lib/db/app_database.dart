@@ -5,6 +5,7 @@ import 'package:bible_tracker/db/daos/progress_dao.dart';
 import 'package:bible_tracker/db/daos/settings_dao.dart';
 import 'package:bible_tracker/db/tables/app_settings_table.dart';
 import 'package:bible_tracker/db/tables/chapter_texts_table.dart';
+import 'package:bible_tracker/db/tables/color_bookmarks_table.dart';
 import 'package:bible_tracker/db/tables/plan_days_table.dart';
 import 'package:bible_tracker/db/tables/read_chapters_table.dart';
 import 'package:bible_tracker/db/tables/reading_plans_table.dart';
@@ -21,6 +22,7 @@ part 'app_database.g.dart';
     ChapterTexts,
     VerseBookmarks,
     AppSettings,
+    ColorBookmarks,
   ],
   daos: [ProgressDao, PlanDao, ChapterTextDao, BookmarkDao, SettingsDao],
 )
@@ -28,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +54,11 @@ class AppDatabase extends _$AppDatabase {
         // Footnotes. Older rows keep parserVersion 1 and are fetched again
         // when the reader opens them.
         await m.addColumn(chapterTexts, chapterTexts.notesHtml);
+      }
+      if (from < 5) {
+        // Classic colour bookmarks. Existing verse bookmarks stay where they
+        // are and show as favourites.
+        await m.createTable(colorBookmarks);
       }
     },
   );

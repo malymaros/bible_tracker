@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-/// Bookmarked verses. Replaced `bookmarked_chapters` in schema 3; a chapter
+/// Favourite verses (gold bookmarks; any number). Replaced `bookmarked_chapters` in schema 3; a chapter
 /// bookmark from before became a bookmark on its verse 1.
 @DataClassName('VerseBookmarkRow')
 class VerseBookmarks extends Table {

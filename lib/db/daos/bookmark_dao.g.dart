@@ -5,6 +5,7 @@ part of 'bookmark_dao.dart';
 // ignore_for_file: type=lint
 mixin _$BookmarkDaoMixin on DatabaseAccessor<AppDatabase> {
   $VerseBookmarksTable get verseBookmarks => attachedDatabase.verseBookmarks;
+  $ColorBookmarksTable get colorBookmarks => attachedDatabase.colorBookmarks;
   BookmarkDaoManager get managers => BookmarkDaoManager(this);
 }
 
@@ -15,5 +16,10 @@ class BookmarkDaoManager {
       $$VerseBookmarksTableTableManager(
         _db.attachedDatabase,
         _db.verseBookmarks,
+      );
+  $$ColorBookmarksTableTableManager get colorBookmarks =>
+      $$ColorBookmarksTableTableManager(
+        _db.attachedDatabase,
+        _db.colorBookmarks,
       );
 }

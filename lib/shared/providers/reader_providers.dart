@@ -30,16 +30,18 @@ Future<void> setReaderTextView(WidgetRef ref, ReaderTextView view) {
   return ref.read(settingsDaoProvider).setValue(_textViewKey, view.name);
 }
 
-/// All verse bookmarks.
+/// Favourite verses (gold bookmarks).
 final verseBookmarksProvider = StreamProvider<List<VerseBookmark>>((ref) {
   return ref.watch(bookmarkDaoProvider).watchAll();
 });
 
-/// Chapters that hold at least one bookmarked verse (for the dots in the
-/// chapter grid).
+/// The classic colour bookmarks that lie somewhere.
+final colorBookmarksProvider = StreamProvider<List<ColorBookmark>>((ref) {
+  return ref.watch(bookmarkDaoProvider).watchColors();
+});
+
+/// Chapters that hold at least one bookmark, favourite or classic (for the
+/// dots in the chapter grid).
 final bookmarkedChaptersProvider = StreamProvider<Set<ChapterRef>>((ref) {
-  return ref
-      .watch(bookmarkDaoProvider)
-      .watchAll()
-      .map((all) => {for (final b in all) b.verse.chapter});
+  return ref.watch(bookmarkDaoProvider).watchBookmarkedChapters();
 });

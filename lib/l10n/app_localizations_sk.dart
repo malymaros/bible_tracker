@@ -84,12 +84,6 @@ class AppLocalizationsSk extends AppLocalizations {
   String get readerTextViewOriginal => 'Pôvodné zobrazenie';
 
   @override
-  String get verseActionBookmark => 'Záložka';
-
-  @override
-  String get verseActionRemoveBookmark => 'Odstrániť';
-
-  @override
   String get verseActionCopy => 'Kopírovať';
 
   @override
@@ -116,16 +110,49 @@ class AppLocalizationsSk extends AppLocalizations {
   String get verseCopied => 'Skopírované';
 
   @override
-  String get verseBookmarkAdded => 'Záložka pridaná';
+  String get bookmarkFavourite => 'Obľúbený verš';
 
   @override
-  String get verseBookmarkRemoved => 'Záložka odstránená';
+  String get bookmarkClassic => 'Klasická záložka';
+
+  @override
+  String get bookmarkMoveTitle => 'Presunúť záložku?';
+
+  @override
+  String get bookmarkMoveConfirm => 'Presunúť';
+
+  @override
+  String get bookmarkMoveCancel => 'Zrušiť';
+
+  @override
+  String get bookmarkColorRed => 'Červená';
+
+  @override
+  String get bookmarkColorBlue => 'Modrá';
+
+  @override
+  String get bookmarkColorGreen => 'Zelená';
+
+  @override
+  String get bookmarkColorPurple => 'Fialová';
+
+  @override
+  String get bookmarkColorGray => 'Sivá';
+
+  @override
+  String get bookmarkFree => 'voľná';
 
   @override
   String get bookmarksTitle => 'Záložky';
 
   @override
   String get bookmarksEmpty => 'Žiadne záložky';
+
+  @override
+  String get bookmarksTabFavourites => 'Obľúbené';
+
+  @override
+  String get bookmarksTabClassic => 'Klasické';
 
   @override
   String get planCreateTitle => 'Vytvoriť plán čítania';

@@ -18,6 +18,7 @@ import 'package:bible_tracker/shared/providers/download_providers.dart';
 import 'package:bible_tracker/shared/providers/plan_providers.dart';
 import 'package:bible_tracker/shared/providers/reader_providers.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
+import 'package:bible_tracker/shared/widgets/bookmark_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -139,12 +140,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final allRead = _isPlan
         ? (ref.watch(readChaptersProvider).value ?? const <ChapterRef>{})
         : const <ChapterRef>{};
-    final bookmarks =
+    final favourites =
         ref.watch(verseBookmarksProvider).value ?? const <VerseBookmark>[];
-    final bookmarkedVerses = {
-      for (final b in bookmarks)
+    final favouriteVerses = {
+      for (final b in favourites)
         if (b.verse.chapter == _chapterRef) b.verse.verseNumber,
     };
+    final colorPlaces = {
+      for (final c
+          in ref.watch(colorBookmarksProvider).value ?? const <ColorBookmark>[])
+        c.color: c.verse,
+    };
+    // Marks drawn at each verse: gold first, then the colours in order.
+    final verseMarks = <int, List<Color>>{
+      for (final v in favouriteVerses) v: [kFavouriteBookmarkColor],
+    };
+    for (final color in BookmarkColor.values) {
+      final at = colorPlaces[color];
+      if (at == null || at.chapter != _chapterRef) continue;
+      verseMarks
+          .putIfAbsent(at.verseNumber, () => [])
+          .add(bookmarkColorOf(color));
+    }
 
     final isCurrentChapterRead = allRead.contains(_chapterRef);
 
@@ -245,15 +262,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   if (showVerses) {
                     return VerseChapterView(
                       chapter: parsed,
-                      bookmarkedVerses: bookmarkedVerses,
+                      verseMarks: verseMarks,
                       notes: notes,
                       selectedVerse: selected ?? _highlightVerse,
                       scrollToVerse: _scrollToVerse,
                       bottomPadding: selected == null
                           ? 120
                           : selectedNotes.isEmpty
-                          ? 240
-                          : 380,
+                          ? 420
+                          : 560,
                       onVerseTap: (v) => setState(() {
                         _selectedVerse = _selectedVerse == v ? null : v;
                         _highlightVerse = null;
@@ -275,10 +292,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 notes: selectedNotes,
                 title: '${book.name} ${_chapterRef.chapterNumber},$selected',
                 text: parsed!.verseText(selected) ?? '',
-                isBookmarked: bookmarkedVerses.contains(selected),
+                verse: VerseRef.inChapter(_chapterRef, selected),
+                isFavourite: favouriteVerses.contains(selected),
+                colorPlaces: colorPlaces,
                 onClose: () => setState(() => _selectedVerse = null),
-                onBookmark: () =>
-                    _toggleVerseBookmark(selected, bookmarkedVerses),
+                onFavourite: () => ref
+                    .read(bookmarkDaoProvider)
+                    .toggle(VerseRef.inChapter(_chapterRef, selected)),
+                onColor: (color) => _tapColor(color, selected, colorPlaces),
                 onCopy: () => _copyVerse(parsed, selected),
                 onShare: () => _shareVerse(parsed, selected),
               ),
@@ -305,17 +326,75 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
-  Future<void> _toggleVerseBookmark(int verse, Set<int> bookmarked) async {
+  /// A classic bookmark tapped in the panel: on this verse it is taken out;
+  /// free it is put here; on another verse it moves here after the reader
+  /// confirms.
+  Future<void> _tapColor(
+    BookmarkColor color,
+    int verse,
+    Map<BookmarkColor, VerseRef> places,
+  ) async {
+    final dao = ref.read(bookmarkDaoProvider);
+    final here = VerseRef.inChapter(_chapterRef, verse);
+    final at = places[color];
+    if (at == here) {
+      await dao.clearColor(color);
+      return;
+    }
+    if (at != null && !await _confirmMove(color, at, here)) return;
+    await dao.placeColor(color, here);
+  }
+
+  Future<bool> _confirmMove(
+    BookmarkColor color,
+    VerseRef from,
+    VerseRef to,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
-    final wasBookmarked = bookmarked.contains(verse);
-    await ref
-        .read(bookmarkDaoProvider)
-        .toggle(VerseRef.inChapter(_chapterRef, verse));
-    _snack(
-      wasBookmarked
-          ? l10n.verseBookmarkRemoved
-          : '${l10n.verseBookmarkAdded} · ${_citation(verse)}',
+    const refStyle = TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+      color: AppColors.text,
     );
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('bookmark-move-dialog'),
+        title: Text(l10n.bookmarkMoveTitle, textAlign: TextAlign.center),
+        content: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 10,
+          runSpacing: 6,
+          children: [
+            Text(
+              verseAbbreviation(from),
+              style: refStyle.copyWith(
+                color: AppColors.textMuted,
+                decoration: TextDecoration.lineThrough,
+              ),
+            ),
+            BookmarkGlyph(color: bookmarkColorOf(color), size: 30),
+            const Icon(Icons.arrow_forward, color: AppColors.textMuted),
+            Text(verseAbbreviation(to), style: refStyle),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [
+          TextButton(
+            key: const Key('bookmark-move-cancel'),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.bookmarkMoveCancel),
+          ),
+          FilledButton(
+            key: const Key('bookmark-move-confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.bookmarkMoveConfirm),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
   }
 
   Future<void> _copyVerse(ParsedChapter parsed, int verse) async {
@@ -383,9 +462,16 @@ class _VerseActionPanel extends StatelessWidget {
 
   /// SSV footnotes that cover the verse; shown between the text and actions.
   final List<ChapterNote> notes;
-  final bool isBookmarked;
+
+  /// The tapped verse.
+  final VerseRef verse;
+  final bool isFavourite;
+
+  /// Where each classic bookmark lies; free colours are absent.
+  final Map<BookmarkColor, VerseRef> colorPlaces;
   final VoidCallback onClose;
-  final VoidCallback onBookmark;
+  final VoidCallback onFavourite;
+  final ValueChanged<BookmarkColor> onColor;
   final VoidCallback onCopy;
   final VoidCallback onShare;
 
@@ -394,9 +480,12 @@ class _VerseActionPanel extends StatelessWidget {
     required this.title,
     required this.text,
     this.notes = const [],
-    required this.isBookmarked,
+    required this.verse,
+    required this.isFavourite,
+    required this.colorPlaces,
     required this.onClose,
-    required this.onBookmark,
+    required this.onFavourite,
+    required this.onColor,
     required this.onCopy,
     required this.onShare,
   });
@@ -412,7 +501,9 @@ class _VerseActionPanel extends StatelessWidget {
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: SafeArea(
         top: false,
-        child: Padding(
+        // Scrolls on short screens, where a verse with a note and both
+        // bookmark rows would not fit.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 10, 12, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -463,20 +554,28 @@ class _VerseActionPanel extends StatelessWidget {
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.only(right: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _FavouriteButton(
+                      selected: isFavourite,
+                      label: l10n.bookmarkFavourite,
+                      onTap: onFavourite,
+                    ),
+                    const SizedBox(height: 10),
+                    _ClassicBookmarks(
+                      verse: verse,
+                      places: colorPlaces,
+                      onTap: onColor,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
                 child: Row(
                   children: [
-                    _VerseActionButton(
-                      key: const Key('verse-action-bookmark'),
-                      icon: isBookmarked
-                          ? Icons.bookmark
-                          : Icons.bookmark_border,
-                      iconColor: AppColors.error,
-                      label: isBookmarked
-                          ? l10n.verseActionRemoveBookmark
-                          : l10n.verseActionBookmark,
-                      onTap: onBookmark,
-                    ),
-                    const SizedBox(width: 10),
                     _VerseActionButton(
                       key: const Key('verse-action-copy'),
                       icon: Icons.copy_outlined,
@@ -501,9 +600,174 @@ class _VerseActionPanel extends StatelessWidget {
   }
 }
 
+/// "Obľúbený verš": a switch; a gold bookmark, ticked while on.
+class _FavouriteButton extends StatelessWidget {
+  final bool selected;
+  final String label;
+  final VoidCallback onTap;
+
+  const _FavouriteButton({
+    required this.selected,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      toggled: selected,
+      child: OutlinedButton(
+        key: const Key('verse-action-favourite'),
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.text,
+          backgroundColor: selected ? const Color(0xFFFBF1D8) : null,
+          side: BorderSide(
+            color: selected ? AppColors.gold : AppColors.border,
+            width: selected ? 2 : 1,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+        child: Row(
+          children: [
+            const BookmarkGlyph(color: kFavouriteBookmarkColor, size: 26),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (selected) const Icon(Icons.check, color: AppColors.goldDark),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Klasická záložka": the five colour bookmarks, each with the short
+/// reference of the verse it lies on ("–" when free). The ones on [verse]
+/// carry a tick.
+class _ClassicBookmarks extends StatelessWidget {
+  final VerseRef verse;
+  final Map<BookmarkColor, VerseRef> places;
+  final ValueChanged<BookmarkColor> onTap;
+
+  const _ClassicBookmarks({
+    required this.verse,
+    required this.places,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 6),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.bookmarkClassic,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              for (final color in BookmarkColor.values)
+                Expanded(
+                  child: _ColorBookmarkButton(
+                    color: color,
+                    at: places[color],
+                    onHere: places[color] == verse,
+                    onTap: () => onTap(color),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ColorBookmarkButton extends StatelessWidget {
+  final BookmarkColor color;
+  final VerseRef? at;
+  final bool onHere;
+  final VoidCallback onTap;
+
+  const _ColorBookmarkButton({
+    required this.color,
+    required this.at,
+    required this.onHere,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final place = at == null ? '–' : verseAbbreviation(at!);
+    return Semantics(
+      button: true,
+      toggled: onHere,
+      label:
+          '${bookmarkColorName(l10n, color)}, '
+          '${at == null ? l10n.bookmarkFree : place}',
+      excludeSemantics: true,
+      child: InkWell(
+        key: Key('verse-action-color-${color.name}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: onHere ? AppColors.surfaceMuted : null,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              BookmarkGlyph(
+                color: bookmarkColorOf(color),
+                size: 32,
+                checked: onHere,
+              ),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  place,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: at == null ? AppColors.textMuted : AppColors.text,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _VerseActionButton extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
   final String label;
   final VoidCallback onTap;
 
@@ -512,7 +776,6 @@ class _VerseActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.iconColor = AppColors.goldDark,
   });
 
   @override
@@ -528,7 +791,7 @@ class _VerseActionButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: iconColor),
+            Icon(icon, color: AppColors.goldDark),
             const SizedBox(height: 4),
             Text(label, style: const TextStyle(fontSize: 13)),
           ],

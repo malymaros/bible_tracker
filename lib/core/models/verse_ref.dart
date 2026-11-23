@@ -38,3 +38,17 @@ class VerseBookmark {
 
   const VerseBookmark(this.verse, this.bookmarkedAt);
 }
+
+/// The five classic bookmarks. Each colour is one bookmark: it lies on at
+/// most one verse at a time (like a ribbon in a book), and a verse can carry
+/// any number of colours besides being a favourite.
+enum BookmarkColor { red, blue, green, purple, gray }
+
+/// Where one classic bookmark lies.
+class ColorBookmark {
+  final BookmarkColor color;
+  final VerseRef verse;
+  final DateTime placedAt;
+
+  const ColorBookmark(this.color, this.verse, this.placedAt);
+}

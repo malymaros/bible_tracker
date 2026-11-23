@@ -38,6 +38,7 @@ Widget _testScreen(
         (ref) => Stream.value(const {}),
       ),
       verseBookmarksProvider.overrideWith((ref) => Stream.value(const [])),
+      colorBookmarksProvider.overrideWith((ref) => Stream.value(const [])),
       if (downloadService != null)
         downloadServiceProvider.overrideWithValue(downloadService),
     ],

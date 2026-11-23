@@ -14,6 +14,7 @@ import 'package:bible_tracker/shared/providers/download_providers.dart';
 import 'package:bible_tracker/shared/providers/reader_providers.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
+import 'package:bible_tracker/shared/widgets/bookmark_ui.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -232,9 +233,176 @@ final _verseSnippetProvider = FutureProvider.autoDispose
       return VerseParser.parse(row.htmlContent).verseText(verse.verseNumber);
     });
 
-/// Bookmarks grouped by book, in Bible order.
-class _BookmarksListScreen extends ConsumerWidget {
+/// Bookmarks: favourite verses grouped by book in Bible order (shown
+/// first), or the five classic bookmarks, one row per colour.
+class _BookmarksListScreen extends ConsumerStatefulWidget {
   const _BookmarksListScreen();
+
+  @override
+  ConsumerState<_BookmarksListScreen> createState() =>
+      _BookmarksListScreenState();
+}
+
+class _BookmarksListScreenState extends ConsumerState<_BookmarksListScreen> {
+  bool _classic = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(title: Text(l10n.bookmarksTitle)),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: _BookmarkTabs(
+              classic: _classic,
+              favouritesLabel: l10n.bookmarksTabFavourites,
+              classicLabel: l10n.bookmarksTabClassic,
+              onChanged: (classic) => setState(() => _classic = classic),
+            ),
+          ),
+          Expanded(
+            child: _classic
+                ? const _ClassicBookmarkList()
+                : const _FavouriteBookmarkList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookmarkTabs extends StatelessWidget {
+  final bool classic;
+  final String favouritesLabel;
+  final String classicLabel;
+  final ValueChanged<bool> onChanged;
+
+  const _BookmarkTabs({
+    required this.classic,
+    required this.favouritesLabel,
+    required this.classicLabel,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tab(Key key, bool on, Color color, String label, bool value) {
+      return Expanded(
+        child: Semantics(
+          selected: on,
+          button: true,
+          child: Material(
+            color: on ? AppColors.surface : Colors.transparent,
+            elevation: on ? 1 : 0,
+            borderRadius: BorderRadius.circular(11),
+            child: InkWell(
+              key: key,
+              borderRadius: BorderRadius.circular(11),
+              onTap: () => onChanged(value),
+              child: SizedBox(
+                height: 44,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.bookmark, color: color, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: on ? FontWeight.w700 : FontWeight.w600,
+                        color: on ? AppColors.text : AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          tab(
+            const Key('bookmarks-tab-favourites'),
+            !classic,
+            kFavouriteBookmarkColor,
+            favouritesLabel,
+            false,
+          ),
+          const SizedBox(width: 4),
+          tab(
+            const Key('bookmarks-tab-classic'),
+            classic,
+            bookmarkColorOf(BookmarkColor.red),
+            classicLabel,
+            true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The five classic bookmarks in colour order; a free one shows "–".
+class _ClassicBookmarkList extends ConsumerWidget {
+  const _ClassicBookmarkList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final places = {
+      for (final c
+          in ref.watch(colorBookmarksProvider).value ?? const <ColorBookmark>[])
+        c.color: c.verse,
+    };
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      children: [
+        for (final color in BookmarkColor.values)
+          if (places[color] case final verse?)
+            _BookmarkRow(
+              book: kBibleBooks.firstWhere((b) => b.id == verse.bookId),
+              verse: verse,
+              color: bookmarkColorOf(color),
+            )
+          else
+            AppCard(
+              key: Key('bookmark-free-${color.name}'),
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              child: Row(
+                children: [
+                  BookmarkGlyph(color: bookmarkColorOf(color)),
+                  const SizedBox(width: 16),
+                  const Text(
+                    '–',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+      ],
+    );
+  }
+}
+
+class _FavouriteBookmarkList extends ConsumerWidget {
+  const _FavouriteBookmarkList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -274,26 +442,26 @@ class _BookmarksListScreen extends ConsumerWidget {
         );
         lastBook = book.id;
       }
-      children.add(_BookmarkRow(book: book, verse: b.verse));
+      children.add(
+        _BookmarkRow(
+          book: book,
+          verse: b.verse,
+          color: kFavouriteBookmarkColor,
+        ),
+      );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(l10n.bookmarksTitle)),
-      body: sorted.isEmpty
-          ? Center(
-              child: Text(
-                l10n.bookmarksEmpty,
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 16,
-                ),
-              ),
-            )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              children: children,
-            ),
+    if (sorted.isEmpty) {
+      return Center(
+        child: Text(
+          l10n.bookmarksEmpty,
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 16),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: children,
     );
   }
 }
@@ -301,8 +469,13 @@ class _BookmarksListScreen extends ConsumerWidget {
 class _BookmarkRow extends ConsumerWidget {
   final BibleBook book;
   final VerseRef verse;
+  final Color color;
 
-  const _BookmarkRow({required this.book, required this.verse});
+  const _BookmarkRow({
+    required this.book,
+    required this.verse,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -316,7 +489,7 @@ class _BookmarkRow extends ConsumerWidget {
           '${verse.verseNumber}',
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        leading: const Icon(Icons.bookmark, color: AppColors.error, size: 24),
+        leading: BookmarkGlyph(color: color),
         title: Text(
           '${book.name} ${verse.chapterNumber},${verse.verseNumber}',
           style: const TextStyle(
