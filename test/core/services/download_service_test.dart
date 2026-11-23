@@ -153,4 +153,101 @@ void main() {
     expect(progress.last.errorMessage, contains('SsvHttpException'));
     expect(await db.chapterTextDao.countDownloadedChapters(_testBook.id), 1);
   });
+
+  group('retries', () {
+    DownloadService retrying(AppDatabase db, MockClient client) =>
+        DownloadService(
+          SsvScraper(client),
+          db.chapterTextDao,
+          requestDelay: Duration.zero,
+          retryDelays: const [Duration.zero, Duration.zero],
+        );
+
+    test('HTTP 429 is retried and the download completes', () async {
+      final db = _openTestDb();
+      addTearDown(db.close);
+      var refusals = 0;
+
+      final service = retrying(
+        db,
+        MockClient((request) async {
+          final chapter = int.parse(
+            request.url.pathSegments[4].replaceAll('.xhtml', ''),
+          );
+          if (chapter == 2 && refusals < 2) {
+            refusals++;
+            return http.Response('Too Many Requests', 429);
+          }
+          return http.Response(_chapterHtml(chapter), 200);
+        }),
+      );
+
+      final progress = await service.downloadBook(_testBook).toList();
+
+      expect(refusals, 2);
+      expect(progress.last.status, BookDownloadStatus.completed);
+      expect(await db.chapterTextDao.countDownloadedChapters(_testBook.id), 3);
+    });
+
+    test('a dropped connection is retried', () async {
+      final db = _openTestDb();
+      addTearDown(db.close);
+      var drops = 0;
+
+      final service = retrying(
+        db,
+        MockClient((request) async {
+          final chapter = int.parse(
+            request.url.pathSegments[4].replaceAll('.xhtml', ''),
+          );
+          if (chapter == 1 && drops == 0) {
+            drops++;
+            throw http.ClientException('Connection closed', request.url);
+          }
+          return http.Response(_chapterHtml(chapter), 200);
+        }),
+      );
+
+      final progress = await service.downloadBook(_testBook).toList();
+
+      expect(progress.last.status, BookDownloadStatus.completed);
+    });
+
+    test('fails after the last retry', () async {
+      final db = _openTestDb();
+      addTearDown(db.close);
+      var requests = 0;
+
+      final service = retrying(
+        db,
+        MockClient((request) async {
+          requests++;
+          return http.Response('Too Many Requests', 429);
+        }),
+      );
+
+      final progress = await service.downloadBook(_testBook).toList();
+
+      expect(requests, 3, reason: 'first try + 2 retries');
+      expect(progress.last.status, BookDownloadStatus.failed);
+    });
+
+    test('other HTTP errors are not retried', () async {
+      final db = _openTestDb();
+      addTearDown(db.close);
+      var requests = 0;
+
+      final service = retrying(
+        db,
+        MockClient((request) async {
+          requests++;
+          return http.Response('Not Found', 404);
+        }),
+      );
+
+      await service.downloadBook(_testBook).toList();
+
+      expect(requests, 1);
+    });
+  });
 }
