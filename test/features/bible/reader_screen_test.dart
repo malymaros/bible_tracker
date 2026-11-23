@@ -5,6 +5,7 @@ import 'package:bible_tracker/core/models/reader_context.dart';
 import 'package:bible_tracker/core/models/verse_ref.dart';
 import 'package:bible_tracker/db/app_database.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
+import 'package:bible_tracker/features/bible/widgets/verse_chapter_view.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
 import 'package:bible_tracker/shared/providers/plan_providers.dart';
@@ -366,14 +367,21 @@ void main() {
       );
     });
 
-    testWidgets('opening at a verse selects it', (tester) async {
+    testWidgets('opening at a verse highlights it without the panel', (
+      tester,
+    ) async {
       final db = _openTestDb();
       await insertVerses(db);
 
       await tester.pumpWidget(_testReader(db, gen1, initialVerse: 2));
       await tester.pumpAndSettle();
 
-      expect(find.text('Genezis 1,2'), findsOneWidget);
+      final view = tester.widget<VerseChapterView>(
+        find.byType(VerseChapterView),
+      );
+      expect(view.selectedVerse, 2);
+      expect(view.scrollToVerse, 2);
+      expect(find.byKey(const Key('verse-action-panel')), findsNothing);
     });
   });
 }

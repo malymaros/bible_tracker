@@ -57,6 +57,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   int? _selectedVerse;
   int? _scrollToVerse;
 
+  // Verse the chapter was opened at: highlighted, without the action panel.
+  int? _highlightVerse;
+
   // The last parse, kept so a rebuild does not parse the same HTML again.
   String? _parsedHtml;
   ParsedChapter? _parsed;
@@ -66,7 +69,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     super.initState();
     _chapterRef = ChapterRef(widget.bookId, widget.chapterNumber);
     _scrollToVerse = widget.initialVerse;
-    _selectedVerse = widget.initialVerse;
+    _highlightVerse = widget.initialVerse;
   }
 
   BibleBook get _book => _bookById(_chapterRef.bookId);
@@ -216,11 +219,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     return VerseChapterView(
                       chapter: parsed,
                       bookmarkedVerses: bookmarkedVerses,
-                      selectedVerse: selected,
+                      selectedVerse: selected ?? _highlightVerse,
                       scrollToVerse: _scrollToVerse,
                       bottomPadding: selected != null ? 240 : 120,
                       onVerseTap: (v) => setState(() {
                         _selectedVerse = _selectedVerse == v ? null : v;
+                        _highlightVerse = null;
                       }),
                     );
                   }
@@ -315,6 +319,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _chapterRef = nextRef;
       _selectedVerse = null;
       _scrollToVerse = null;
+      _highlightVerse = null;
     });
   }
 

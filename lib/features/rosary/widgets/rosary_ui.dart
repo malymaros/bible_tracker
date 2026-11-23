@@ -117,6 +117,7 @@ class ScriptureRefLink extends StatelessWidget {
           builder: (_) => ReaderScreen(
             bookId: scriptureRef.bookId,
             chapterNumber: scriptureRef.chapter,
+            initialVerse: scriptureRef.verseStart,
             readerContext: ReaderContext.books,
           ),
         ),
