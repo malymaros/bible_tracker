@@ -53,6 +53,7 @@ core/
 db/           # Drift database, tables, DAOs
 features/
   bible/      # Book browser + download management + chapter reader (tab 1)
+  rosary/     # Rosary list, detail and guide (from the plan app bar)
   plan/       # Reading plan creation and tracking (tab 2)
   statistics/ # Global reading statistics (tab 3)
 shared/       # Cross-feature providers and widgets
@@ -88,7 +89,7 @@ The reader widget (`ReaderScreen`) is shared between both reader routes; `Reader
 
 ### Persistence
 
-Drift (SQLite), schema version 2. Five tables:
+Drift (SQLite), schema version 3. Six tables:
 
 | Table | Purpose |
 |---|---|
@@ -96,13 +97,17 @@ Drift (SQLite), schema version 2. Five tables:
 | `read_chapters` | Global read progress (bookId + chapterNumber + readAt) |
 | `reading_plans` | Active reading plan metadata |
 | `plan_days` | Per-day chapter assignments for the active plan |
-| `bookmarked_chapters` | Chapter bookmarks (bookId + chapterNumber + bookmarkedAt) |
+| `verse_bookmarks` | Verse bookmarks (bookId + chapterNumber + verseNumber + bookmarkedAt); schema 2 chapter bookmarks were migrated to verse 1 |
+| `app_settings` | Key/value user preferences (e.g. `reader_text_view`) |
 
 ### Features
 
 - **Bible browser** — browse all 73 books grouped by testament; shows download status and bookmarked chapters per book.
 - **Offline reader** — downloads chapter HTML from biblia.ssv.sk; reads offline afterward; FAB toggles read/unread state.
-- **Bookmarks** — bookmark any chapter from the reader; accessible via the bookmark icon in the Bible tab app bar.
+- **Verse view** — `VerseParser` splits the stored SSV HTML into verses; the reader draws them with its own layout (default). A neutral app-bar toggle switches every reader to the original HTML view (one app-wide setting). Chapters whose verse numbers do not only go up fall back to the original view.
+- **Bookmarks** — tap a verse for bookmark / copy / share; the app-bar bookmark marks verse 1. List via the bookmark icon in the Bible tab app bar; opens the reader at the verse.
+- **Verse counts** — `verse_counts.dart` is generated from the SSV text (`tool/verse_counts_from_ssv.dart`); shown in the chapter grid and plan rows.
+- **Rosary** — `features/rosary/`, reached only from the plan app bar: list of the 4 rosaries (today preselected), detail with mysteries and prayer order, step-by-step guide. Content in `core/constants/rosary.dart`.
 - **Reading plan** — create a plan by selecting books and a day count; immutable schedule after creation; tracks daily progress with ahead/behind status.
 - **Statistics** — global chapter counts by testament, plan progress metrics.
 - **Light + dark theme** — follows system theme (`ThemeMode.system`).
