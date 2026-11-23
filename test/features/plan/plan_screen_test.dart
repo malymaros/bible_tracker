@@ -474,6 +474,30 @@ void main() {
     );
   });
 
+  testWidgets('today reading rows show the chapter verse count', (
+    tester,
+  ) async {
+    final db = _openTestDb();
+    final plan = _plan();
+
+    await tester.pumpWidget(
+      _testWidget(
+        const PlanScreen(),
+        db,
+        activePlan: plan,
+        days: _days(plan.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('plan-chapter-verses-gen-1')))
+          .data,
+      '31 veršov',
+    );
+  });
+
   testWidgets('chapter tap opens ReaderScreen', (tester) async {
     final db = _openTestDb();
     final plan = _plan();

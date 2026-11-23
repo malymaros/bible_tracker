@@ -306,3 +306,14 @@ int verseCountForChapter(String bookId, int chapterNumber) {
   );
   return counts[chapterNumber - 1];
 }
+
+/// Returns the total number of verses in [bookId].
+///
+/// Throws [StateError] if [bookId] has no entry in [kVerseCountsByBook].
+int verseCountForBook(String bookId) {
+  final counts = kVerseCountsByBook[bookId];
+  if (counts == null) {
+    throw StateError('No verse counts for bookId "$bookId".');
+  }
+  return counts.fold(0, (sum, c) => sum + c);
+}

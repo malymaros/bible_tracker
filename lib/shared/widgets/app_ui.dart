@@ -41,7 +41,12 @@ class AppCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(padding: padding, child: child),
+      // A transparent Material inside the decoration so ListTiles and ink
+      // splashes in the card paint above its background, not under it.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Padding(padding: padding, child: child),
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/plan_progress.dart';
 import 'package:bible_tracker/core/services/plan_progress_calculator.dart';
 import 'package:bible_tracker/core/utils/chapter_count_format.dart';
+import 'package:bible_tracker/core/utils/verse_count_format.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/plan_day.dart';
@@ -1142,6 +1143,15 @@ class _PlanChapterCheckboxTile extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
+          Text(
+            formatVerseCount(
+              verseCountForChapter(chapter.bookId, chapter.chapterNumber),
+            ),
+            key: Key(
+              'plan-chapter-verses-${chapter.bookId}-${chapter.chapterNumber}',
+            ),
+            style: const TextStyle(fontSize: 13, color: _PlanColors.textMuted),
           ),
           IconButton(
             key: Key(

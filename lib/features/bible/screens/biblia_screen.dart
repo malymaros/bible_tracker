@@ -1,4 +1,7 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
+import 'package:bible_tracker/core/constants/verse_counts.dart';
+import 'package:bible_tracker/core/utils/chapter_count_format.dart';
+import 'package:bible_tracker/core/utils/verse_count_format.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/book_download_progress.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
@@ -108,6 +111,16 @@ class _BookChaptersScreen extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Text(
+              '${formatChapterCount(book.chapterCount)} · '
+              '${formatVerseCount(verseCountForBook(book.id))}',
+              key: const Key('chapters-screen-summary'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+            ),
+          ),
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -140,12 +153,30 @@ class _BookChaptersScreen extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        child: Text(
-                          '$chapter',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$chapter',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                height: 1.1,
+                              ),
+                            ),
+                            Text(
+                              formatVerseCountShort(
+                                verseCountForChapter(book.id, chapter),
+                              ),
+                              key: Key('chapter-verse-count-$chapter'),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textMuted,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
