@@ -1015,6 +1015,17 @@ class $ChapterTextsTable extends ChapterTexts
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _notesHtmlMeta = const VerificationMeta(
+    'notesHtml',
+  );
+  @override
+  late final GeneratedColumn<String> notesHtml = GeneratedColumn<String>(
+    'notes_html',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sourceUrlMeta = const VerificationMeta(
     'sourceUrl',
   );
@@ -1054,6 +1065,7 @@ class $ChapterTextsTable extends ChapterTexts
     chapterNumber,
     htmlContent,
     plainText,
+    notesHtml,
     sourceUrl,
     parserVersion,
     cachedAt,
@@ -1104,6 +1116,12 @@ class $ChapterTextsTable extends ChapterTexts
       context.handle(
         _plainTextMeta,
         plainText.isAcceptableOrUnknown(data['plain_text']!, _plainTextMeta),
+      );
+    }
+    if (data.containsKey('notes_html')) {
+      context.handle(
+        _notesHtmlMeta,
+        notesHtml.isAcceptableOrUnknown(data['notes_html']!, _notesHtmlMeta),
       );
     }
     if (data.containsKey('source_url')) {
@@ -1158,6 +1176,10 @@ class $ChapterTextsTable extends ChapterTexts
         DriftSqlType.string,
         data['${effectivePrefix}plain_text'],
       ),
+      notesHtml: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes_html'],
+      ),
       sourceUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}source_url'],
@@ -1184,6 +1206,10 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
   final int chapterNumber;
   final String htmlContent;
   final String? plainText;
+
+  /// SSV footnotes (`div.faqs` inner HTML); null for chapters without notes
+  /// and for rows cached before schema 4 (parserVersion 1).
+  final String? notesHtml;
   final String sourceUrl;
   final int parserVersion;
   final int cachedAt;
@@ -1192,6 +1218,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
     required this.chapterNumber,
     required this.htmlContent,
     this.plainText,
+    this.notesHtml,
     required this.sourceUrl,
     required this.parserVersion,
     required this.cachedAt,
@@ -1204,6 +1231,9 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
     map['html_content'] = Variable<String>(htmlContent);
     if (!nullToAbsent || plainText != null) {
       map['plain_text'] = Variable<String>(plainText);
+    }
+    if (!nullToAbsent || notesHtml != null) {
+      map['notes_html'] = Variable<String>(notesHtml);
     }
     map['source_url'] = Variable<String>(sourceUrl);
     map['parser_version'] = Variable<int>(parserVersion);
@@ -1219,6 +1249,9 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
       plainText: plainText == null && nullToAbsent
           ? const Value.absent()
           : Value(plainText),
+      notesHtml: notesHtml == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notesHtml),
       sourceUrl: Value(sourceUrl),
       parserVersion: Value(parserVersion),
       cachedAt: Value(cachedAt),
@@ -1235,6 +1268,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
       chapterNumber: serializer.fromJson<int>(json['chapterNumber']),
       htmlContent: serializer.fromJson<String>(json['htmlContent']),
       plainText: serializer.fromJson<String?>(json['plainText']),
+      notesHtml: serializer.fromJson<String?>(json['notesHtml']),
       sourceUrl: serializer.fromJson<String>(json['sourceUrl']),
       parserVersion: serializer.fromJson<int>(json['parserVersion']),
       cachedAt: serializer.fromJson<int>(json['cachedAt']),
@@ -1248,6 +1282,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
       'chapterNumber': serializer.toJson<int>(chapterNumber),
       'htmlContent': serializer.toJson<String>(htmlContent),
       'plainText': serializer.toJson<String?>(plainText),
+      'notesHtml': serializer.toJson<String?>(notesHtml),
       'sourceUrl': serializer.toJson<String>(sourceUrl),
       'parserVersion': serializer.toJson<int>(parserVersion),
       'cachedAt': serializer.toJson<int>(cachedAt),
@@ -1259,6 +1294,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
     int? chapterNumber,
     String? htmlContent,
     Value<String?> plainText = const Value.absent(),
+    Value<String?> notesHtml = const Value.absent(),
     String? sourceUrl,
     int? parserVersion,
     int? cachedAt,
@@ -1267,6 +1303,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
     chapterNumber: chapterNumber ?? this.chapterNumber,
     htmlContent: htmlContent ?? this.htmlContent,
     plainText: plainText.present ? plainText.value : this.plainText,
+    notesHtml: notesHtml.present ? notesHtml.value : this.notesHtml,
     sourceUrl: sourceUrl ?? this.sourceUrl,
     parserVersion: parserVersion ?? this.parserVersion,
     cachedAt: cachedAt ?? this.cachedAt,
@@ -1281,6 +1318,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
           ? data.htmlContent.value
           : this.htmlContent,
       plainText: data.plainText.present ? data.plainText.value : this.plainText,
+      notesHtml: data.notesHtml.present ? data.notesHtml.value : this.notesHtml,
       sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
       parserVersion: data.parserVersion.present
           ? data.parserVersion.value
@@ -1296,6 +1334,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
           ..write('chapterNumber: $chapterNumber, ')
           ..write('htmlContent: $htmlContent, ')
           ..write('plainText: $plainText, ')
+          ..write('notesHtml: $notesHtml, ')
           ..write('sourceUrl: $sourceUrl, ')
           ..write('parserVersion: $parserVersion, ')
           ..write('cachedAt: $cachedAt')
@@ -1309,6 +1348,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
     chapterNumber,
     htmlContent,
     plainText,
+    notesHtml,
     sourceUrl,
     parserVersion,
     cachedAt,
@@ -1321,6 +1361,7 @@ class ChapterTextRow extends DataClass implements Insertable<ChapterTextRow> {
           other.chapterNumber == this.chapterNumber &&
           other.htmlContent == this.htmlContent &&
           other.plainText == this.plainText &&
+          other.notesHtml == this.notesHtml &&
           other.sourceUrl == this.sourceUrl &&
           other.parserVersion == this.parserVersion &&
           other.cachedAt == this.cachedAt);
@@ -1331,6 +1372,7 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
   final Value<int> chapterNumber;
   final Value<String> htmlContent;
   final Value<String?> plainText;
+  final Value<String?> notesHtml;
   final Value<String> sourceUrl;
   final Value<int> parserVersion;
   final Value<int> cachedAt;
@@ -1340,6 +1382,7 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
     this.chapterNumber = const Value.absent(),
     this.htmlContent = const Value.absent(),
     this.plainText = const Value.absent(),
+    this.notesHtml = const Value.absent(),
     this.sourceUrl = const Value.absent(),
     this.parserVersion = const Value.absent(),
     this.cachedAt = const Value.absent(),
@@ -1350,6 +1393,7 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
     required int chapterNumber,
     required String htmlContent,
     this.plainText = const Value.absent(),
+    this.notesHtml = const Value.absent(),
     required String sourceUrl,
     required int parserVersion,
     required int cachedAt,
@@ -1365,6 +1409,7 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
     Expression<int>? chapterNumber,
     Expression<String>? htmlContent,
     Expression<String>? plainText,
+    Expression<String>? notesHtml,
     Expression<String>? sourceUrl,
     Expression<int>? parserVersion,
     Expression<int>? cachedAt,
@@ -1375,6 +1420,7 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
       if (chapterNumber != null) 'chapter_number': chapterNumber,
       if (htmlContent != null) 'html_content': htmlContent,
       if (plainText != null) 'plain_text': plainText,
+      if (notesHtml != null) 'notes_html': notesHtml,
       if (sourceUrl != null) 'source_url': sourceUrl,
       if (parserVersion != null) 'parser_version': parserVersion,
       if (cachedAt != null) 'cached_at': cachedAt,
@@ -1387,6 +1433,7 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
     Value<int>? chapterNumber,
     Value<String>? htmlContent,
     Value<String?>? plainText,
+    Value<String?>? notesHtml,
     Value<String>? sourceUrl,
     Value<int>? parserVersion,
     Value<int>? cachedAt,
@@ -1397,6 +1444,7 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
       chapterNumber: chapterNumber ?? this.chapterNumber,
       htmlContent: htmlContent ?? this.htmlContent,
       plainText: plainText ?? this.plainText,
+      notesHtml: notesHtml ?? this.notesHtml,
       sourceUrl: sourceUrl ?? this.sourceUrl,
       parserVersion: parserVersion ?? this.parserVersion,
       cachedAt: cachedAt ?? this.cachedAt,
@@ -1418,6 +1466,9 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
     }
     if (plainText.present) {
       map['plain_text'] = Variable<String>(plainText.value);
+    }
+    if (notesHtml.present) {
+      map['notes_html'] = Variable<String>(notesHtml.value);
     }
     if (sourceUrl.present) {
       map['source_url'] = Variable<String>(sourceUrl.value);
@@ -1441,6 +1492,7 @@ class ChapterTextsCompanion extends UpdateCompanion<ChapterTextRow> {
           ..write('chapterNumber: $chapterNumber, ')
           ..write('htmlContent: $htmlContent, ')
           ..write('plainText: $plainText, ')
+          ..write('notesHtml: $notesHtml, ')
           ..write('sourceUrl: $sourceUrl, ')
           ..write('parserVersion: $parserVersion, ')
           ..write('cachedAt: $cachedAt, ')
@@ -2577,6 +2629,7 @@ typedef $$ChapterTextsTableCreateCompanionBuilder =
       required int chapterNumber,
       required String htmlContent,
       Value<String?> plainText,
+      Value<String?> notesHtml,
       required String sourceUrl,
       required int parserVersion,
       required int cachedAt,
@@ -2588,6 +2641,7 @@ typedef $$ChapterTextsTableUpdateCompanionBuilder =
       Value<int> chapterNumber,
       Value<String> htmlContent,
       Value<String?> plainText,
+      Value<String?> notesHtml,
       Value<String> sourceUrl,
       Value<int> parserVersion,
       Value<int> cachedAt,
@@ -2620,6 +2674,11 @@ class $$ChapterTextsTableFilterComposer
 
   ColumnFilters<String> get plainText => $composableBuilder(
     column: $table.plainText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notesHtml => $composableBuilder(
+    column: $table.notesHtml,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2668,6 +2727,11 @@ class $$ChapterTextsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get notesHtml => $composableBuilder(
+    column: $table.notesHtml,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get sourceUrl => $composableBuilder(
     column: $table.sourceUrl,
     builder: (column) => ColumnOrderings(column),
@@ -2708,6 +2772,9 @@ class $$ChapterTextsTableAnnotationComposer
 
   GeneratedColumn<String> get plainText =>
       $composableBuilder(column: $table.plainText, builder: (column) => column);
+
+  GeneratedColumn<String> get notesHtml =>
+      $composableBuilder(column: $table.notesHtml, builder: (column) => column);
 
   GeneratedColumn<String> get sourceUrl =>
       $composableBuilder(column: $table.sourceUrl, builder: (column) => column);
@@ -2756,6 +2823,7 @@ class $$ChapterTextsTableTableManager
                 Value<int> chapterNumber = const Value.absent(),
                 Value<String> htmlContent = const Value.absent(),
                 Value<String?> plainText = const Value.absent(),
+                Value<String?> notesHtml = const Value.absent(),
                 Value<String> sourceUrl = const Value.absent(),
                 Value<int> parserVersion = const Value.absent(),
                 Value<int> cachedAt = const Value.absent(),
@@ -2765,6 +2833,7 @@ class $$ChapterTextsTableTableManager
                 chapterNumber: chapterNumber,
                 htmlContent: htmlContent,
                 plainText: plainText,
+                notesHtml: notesHtml,
                 sourceUrl: sourceUrl,
                 parserVersion: parserVersion,
                 cachedAt: cachedAt,
@@ -2776,6 +2845,7 @@ class $$ChapterTextsTableTableManager
                 required int chapterNumber,
                 required String htmlContent,
                 Value<String?> plainText = const Value.absent(),
+                Value<String?> notesHtml = const Value.absent(),
                 required String sourceUrl,
                 required int parserVersion,
                 required int cachedAt,
@@ -2785,6 +2855,7 @@ class $$ChapterTextsTableTableManager
                 chapterNumber: chapterNumber,
                 htmlContent: htmlContent,
                 plainText: plainText,
+                notesHtml: notesHtml,
                 sourceUrl: sourceUrl,
                 parserVersion: parserVersion,
                 cachedAt: cachedAt,

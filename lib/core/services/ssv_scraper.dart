@@ -56,9 +56,12 @@ class SsvScraper {
     }
     final htmlContent = inbox.innerHtml;
     final plainText = inbox.text.trim().replaceAll(RegExp(r'[ \t\r\n]+'), ' ');
+    final notes = doc.querySelector(SsvConstants.notesSelector);
+    final notesHtml = notes?.innerHtml.trim();
     return ChapterText(
       htmlContent: htmlContent,
       plainText: plainText.isEmpty ? null : plainText,
+      notesHtml: notesHtml == null || notesHtml.isEmpty ? null : notesHtml,
       sourceUrl: sourceUrl,
       parserVersion: SsvConstants.parserVersion,
     );

@@ -67,6 +67,9 @@ class _FakeDownloadService implements DownloadService {
 
   @override
   Stream<BookDownloadProgress> downloadBook(BibleBook book) => handler(book);
+
+  @override
+  Future<void> refreshChapter(BibleBook book, int chapter) async {}
 }
 
 void main() {

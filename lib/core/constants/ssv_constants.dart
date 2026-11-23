@@ -6,9 +6,13 @@ abstract final class SsvConstants {
   static const String chapterContentSelector =
       '.ssv-bb-module .wrapper > .inbox';
 
+  /// CSS selector for the chapter footnotes: `<div id="vN"><div class="faq">`
+  /// entries, a sibling of the chapter text.
+  static const String notesSelector = '.ssv-bb-module .faqs';
+
   /// Bumped when the parser logic changes so stale cached rows can be
-  /// identified and re-fetched.
-  static const int parserVersion = 1;
+  /// identified and re-fetched. 2: footnotes are stored too.
+  static const int parserVersion = 2;
 
   /// Polite delay between consecutive HTTP requests to biblia.ssv.sk.
   static const Duration requestDelay = Duration(milliseconds: 300);

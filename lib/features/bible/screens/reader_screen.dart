@@ -1,9 +1,12 @@
 import 'package:bible_tracker/core/constants/bible_books.dart';
+import 'package:bible_tracker/core/constants/ssv_constants.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
+import 'package:bible_tracker/core/models/chapter_note.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/parsed_chapter.dart';
 import 'package:bible_tracker/core/models/reader_context.dart';
 import 'package:bible_tracker/core/models/verse_ref.dart';
+import 'package:bible_tracker/core/services/note_parser.dart';
 import 'package:bible_tracker/core/services/ssv_scraper.dart';
 import 'package:bible_tracker/core/services/verse_parser.dart';
 import 'package:bible_tracker/core/utils/chapter_cursor.dart';
@@ -63,6 +66,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   // The last parse, kept so a rebuild does not parse the same HTML again.
   String? _parsedHtml;
   ParsedChapter? _parsed;
+  String? _parsedNotesHtml;
+  List<ChapterNote> _notes = const [];
+
+  // Chapters cached by an older parser (no footnotes) that this screen has
+  // already tried to fetch again.
+  final _refreshTried = <ChapterRef>{};
 
   @override
   void initState() {
@@ -82,6 +91,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _parsed = VerseParser.parse(html);
     }
     return _parsed!;
+  }
+
+  List<ChapterNote> _parseNotes(String? html) {
+    if (_parsedNotesHtml != html) {
+      _parsedNotesHtml = html;
+      _notes = NoteParser.parse(html);
+    }
+    return _notes;
+  }
+
+  /// A chapter cached before footnotes were stored is fetched once more in
+  /// the background; offline or on error the old text simply stays.
+  void _refreshIfStale(ChapterTextRow row) {
+    if (row.parserVersion >= SsvConstants.parserVersion) return;
+    final chapterRef = _chapterRef;
+    if (!_refreshTried.add(chapterRef)) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(downloadServiceProvider)
+          .refreshChapter(
+            _bookById(chapterRef.bookId),
+            chapterRef.chapterNumber,
+          )
+          .then((_) {
+            if (mounted) ref.invalidate(_chapterTextProvider(chapterRef));
+          }, onError: (Object _) {});
+    });
   }
 
   @override
@@ -114,9 +150,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     final row = chapter.value;
     final parsed = row == null ? null : _parse(row.htmlContent);
+    final notes = row == null
+        ? const <ChapterNote>[]
+        : _parseNotes(row.notesHtml);
+    if (row != null) _refreshIfStale(row);
     final showVerses =
         textView == ReaderTextView.verses && parsed != null && parsed.isUsable;
     final selected = showVerses ? _selectedVerse : null;
+    final selectedNotes = selected == null
+        ? const <ChapterNote>[]
+        : NoteParser.forVerse(notes, selected);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -203,16 +246,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     return VerseChapterView(
                       chapter: parsed,
                       bookmarkedVerses: bookmarkedVerses,
+                      notes: notes,
                       selectedVerse: selected ?? _highlightVerse,
                       scrollToVerse: _scrollToVerse,
-                      bottomPadding: selected != null ? 240 : 120,
+                      bottomPadding: selected == null
+                          ? 120
+                          : selectedNotes.isEmpty
+                          ? 240
+                          : 380,
                       onVerseTap: (v) => setState(() {
                         _selectedVerse = _selectedVerse == v ? null : v;
                         _highlightVerse = null;
                       }),
                     );
                   }
-                  return _DownloadedChapterView(row: row);
+                  return _DownloadedChapterView(row: row, notes: notes);
                 },
               ),
             ),
@@ -223,6 +271,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               right: 0,
               bottom: 0,
               child: _VerseActionPanel(
+                key: ValueKey('verse-action-panel-$selected'),
+                notes: selectedNotes,
                 title: '${book.name} ${_chapterRef.chapterNumber},$selected',
                 text: parsed!.verseText(selected) ?? '',
                 isBookmarked: bookmarkedVerses.contains(selected),
@@ -330,6 +380,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 class _VerseActionPanel extends StatelessWidget {
   final String title;
   final String text;
+
+  /// SSV footnotes that cover the verse; shown between the text and actions.
+  final List<ChapterNote> notes;
   final bool isBookmarked;
   final VoidCallback onClose;
   final VoidCallback onBookmark;
@@ -337,8 +390,10 @@ class _VerseActionPanel extends StatelessWidget {
   final VoidCallback onShare;
 
   const _VerseActionPanel({
+    super.key,
     required this.title,
     required this.text,
+    this.notes = const [],
     required this.isBookmarked,
     required this.onClose,
     required this.onBookmark,
@@ -404,6 +459,7 @@ class _VerseActionPanel extends StatelessWidget {
                   ),
                 ],
               ),
+              if (notes.isNotEmpty) _VerseNotes(notes: notes),
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -484,8 +540,9 @@ class _VerseActionButton extends StatelessWidget {
 
 class _DownloadedChapterView extends StatefulWidget {
   final ChapterTextRow row;
+  final List<ChapterNote> notes;
 
-  const _DownloadedChapterView({required this.row});
+  const _DownloadedChapterView({required this.row, this.notes = const []});
 
   @override
   State<_DownloadedChapterView> createState() => _DownloadedChapterViewState();
@@ -522,9 +579,16 @@ class _DownloadedChapterViewState extends State<_DownloadedChapterView> {
             controller: _scrollController,
             key: const Key('reader-scroll'),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            child: AppCard(
-              padding: const EdgeInsets.all(20),
-              child: _ChapterHtml(htmlContent: widget.row.htmlContent),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppCard(
+                  padding: const EdgeInsets.all(20),
+                  child: _ChapterHtml(htmlContent: widget.row.htmlContent),
+                ),
+                if (widget.notes.isNotEmpty)
+                  _ChapterNotesList(notes: widget.notes),
+              ],
             ),
           ),
         ),
@@ -709,6 +773,166 @@ class _ChapterHtml extends StatelessWidget {
 
   String _normalizeText(String text) {
     return text.replaceAll(RegExp(r'[ \t\r\n]+'), ' ');
+  }
+}
+
+String _noteLabel(AppLocalizations l10n, ChapterNote note) => note.isRange
+    ? l10n.verseNoteRange(note.verse, note.verseEnd)
+    : l10n.verseNote;
+
+/// SSV footnotes in the verse panel: grey block, three lines until "Čítať
+/// celú" opens the whole text (scrollable when long).
+class _VerseNotes extends StatefulWidget {
+  final List<ChapterNote> notes;
+
+  const _VerseNotes({required this.notes});
+
+  @override
+  State<_VerseNotes> createState() => _VerseNotesState();
+}
+
+class _VerseNotesState extends State<_VerseNotes> {
+  static const _shortLength = 160;
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final notes = widget.notes;
+    final long = notes.length > 1 || notes.first.text.length > _shortLength;
+    final shown = _expanded ? notes : notes.take(1);
+
+    Widget content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final note in shown) ...[
+          if (note != notes.first) const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.more_vert, size: 16, color: AppColors.goldDark),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  _noteLabel(l10n, note).toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: AppColors.goldDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            note.text,
+            key: Key('verse-note-text-${note.verse}'),
+            maxLines: _expanded || !long ? null : 3,
+            overflow: _expanded || !long ? null : TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'serif',
+              fontSize: 14.5,
+              height: 1.55,
+              color: AppColors.text,
+            ),
+          ),
+        ],
+      ],
+    );
+    if (_expanded) {
+      content = ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+        ),
+        child: SingleChildScrollView(child: content),
+      );
+    }
+
+    return Container(
+      key: const Key('verse-notes'),
+      margin: const EdgeInsets.only(top: 12, right: 8),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          content,
+          if (long)
+            TextButton(
+              key: const Key('verse-note-more'),
+              onPressed: () => setState(() => _expanded = !_expanded),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.goldDark,
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                _expanded
+                    ? '${l10n.verseNoteLess} ▴'
+                    : '${l10n.verseNoteMore} ▾',
+              ),
+            )
+          else
+            const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+/// Footnotes under the chapter in the original (HTML) view, as on SSV.
+class _ChapterNotesList extends StatelessWidget {
+  final List<ChapterNote> notes;
+
+  const _ChapterNotesList({required this.notes});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      key: const Key('chapter-notes'),
+      padding: const EdgeInsets.fromLTRB(4, 24, 4, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.chapterNotesTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          for (final note in notes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: note.isRange
+                          ? '${note.verse} – ${note.verseEnd}. '
+                          : '${note.verse}. ',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.goldDark,
+                      ),
+                    ),
+                    TextSpan(text: note.text),
+                  ],
+                ),
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.55,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 

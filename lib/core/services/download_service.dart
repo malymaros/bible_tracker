@@ -45,8 +45,28 @@ class DownloadService {
     }
   }
 
+  /// Fetches one chapter again and replaces the cached row, e.g. a chapter
+  /// cached by an older parser (no footnotes). One request, no retries: the
+  /// reader calls it quietly and keeps the old text when it fails.
+  Future<void> refreshChapter(BibleBook book, int chapter) async {
+    final text = await _scraper.fetchChapter(book, chapter);
+    await _store(ChapterRef(book.id, chapter), text);
+  }
+
+  Future<void> _store(ChapterRef ref, ChapterText text) {
+    return _dao.upsertChapterText(
+      ref: ref,
+      htmlContent: text.htmlContent,
+      plainText: text.plainText,
+      notesHtml: text.notesHtml,
+      sourceUrl: text.sourceUrl,
+      parserVersion: text.parserVersion,
+      cachedAt: DateTime.now(),
+    );
+  }
+
   /// Downloads all chapters of [book] sequentially, skipping chapters that are
-  /// already cached in the database.
+  /// already cached by the current parser (older rows are fetched again).
   ///
   /// Emits one [BookDownloadProgress] event at startup (0/total), after each
   /// chapter (whether skipped or freshly downloaded), and a final event with
@@ -69,7 +89,8 @@ class DownloadService {
       final ref = ChapterRef(book.id, chapter);
 
       final existing = await _dao.getChapterText(ref);
-      if (existing != null) {
+      if (existing != null &&
+          existing.parserVersion >= SsvConstants.parserVersion) {
         downloaded++;
         yield BookDownloadProgress(
           bookId: book.id,
@@ -87,14 +108,7 @@ class DownloadService {
 
       try {
         final text = await _fetchWithRetry(book, chapter);
-        await _dao.upsertChapterText(
-          ref: ref,
-          htmlContent: text.htmlContent,
-          plainText: text.plainText,
-          sourceUrl: text.sourceUrl,
-          parserVersion: text.parserVersion,
-          cachedAt: DateTime.now(),
-        );
+        await _store(ref, text);
         downloaded++;
         yield BookDownloadProgress(
           bookId: book.id,

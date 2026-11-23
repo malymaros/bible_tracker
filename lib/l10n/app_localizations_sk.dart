@@ -96,6 +96,23 @@ class AppLocalizationsSk extends AppLocalizations {
   String get verseActionShare => 'Zdieľať';
 
   @override
+  String get verseNote => 'Poznámka';
+
+  @override
+  String verseNoteRange(int from, int to) {
+    return 'Poznámka k veršom $from – $to';
+  }
+
+  @override
+  String get verseNoteMore => 'Čítať celú';
+
+  @override
+  String get verseNoteLess => 'Zbaliť';
+
+  @override
+  String get chapterNotesTitle => 'Poznámky';
+
+  @override
   String get verseCopied => 'Skopírované';
 
   @override

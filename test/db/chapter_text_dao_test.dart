@@ -236,4 +236,33 @@ void main() {
 
     expect(await futureEmission, isEmpty);
   });
+
+  test('upgrade from schema 3 adds notes and keeps cached chapters', () async {
+    final db = AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) {
+          raw.execute(
+            'CREATE TABLE chapter_texts (book_id TEXT NOT NULL, '
+            'chapter_number INTEGER NOT NULL, html_content TEXT NOT NULL, '
+            'plain_text TEXT NULL, source_url TEXT NOT NULL, '
+            'parser_version INTEGER NOT NULL, cached_at INTEGER NOT NULL, '
+            'PRIMARY KEY (book_id, chapter_number))',
+          );
+          raw.execute(
+            "INSERT INTO chapter_texts VALUES ('gen', 1, '<p>Na počiatku</p>', "
+            "NULL, 'https://example.test', 1, 1700000000000)",
+          );
+          raw.execute('PRAGMA user_version = 3');
+        },
+      ),
+    );
+    addTearDown(db.close);
+
+    final row = await db.chapterTextDao.getChapterText(
+      const ChapterRef('gen', 1),
+    );
+    expect(row!.htmlContent, '<p>Na počiatku</p>');
+    expect(row.notesHtml, isNull);
+    expect(row.parserVersion, 1);
+  });
 }

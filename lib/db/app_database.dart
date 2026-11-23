@@ -28,7 +28,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -47,6 +47,11 @@ class AppDatabase extends _$AppDatabase {
           );
           await customStatement('DROP TABLE IF EXISTS bookmarked_chapters');
         }
+      }
+      if (from < 4) {
+        // Footnotes. Older rows keep parserVersion 1 and are fetched again
+        // when the reader opens them.
+        await m.addColumn(chapterTexts, chapterTexts.notesHtml);
       }
     },
   );

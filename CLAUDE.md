@@ -89,11 +89,11 @@ The reader widget (`ReaderScreen`) is shared between both reader routes; `Reader
 
 ### Persistence
 
-Drift (SQLite), schema version 3. Six tables:
+Drift (SQLite), schema version 4. Six tables:
 
 | Table | Purpose |
 |---|---|
-| `chapter_texts` | Downloaded chapter HTML/text from SSV |
+| `chapter_texts` | Downloaded chapter HTML/text from SSV, plus its footnotes (`notes_html`, schema 4) |
 | `read_chapters` | Global read progress (bookId + chapterNumber + readAt) |
 | `reading_plans` | Active reading plan metadata |
 | `plan_days` | Per-day chapter assignments for the active plan |
@@ -105,6 +105,7 @@ Drift (SQLite), schema version 3. Six tables:
 - **Bible browser** — browse all 73 books grouped by testament; shows download status and bookmarked chapters per book.
 - **Offline reader** — downloads chapter HTML from biblia.ssv.sk; reads offline afterward; FAB toggles read/unread state.
 - **Verse view** — `VerseParser` splits the stored SSV HTML into verses; the reader draws them with its own layout (default). A neutral app-bar toggle switches every reader to the original HTML view (one app-wide setting). Chapters whose verse numbers do not only go up fall back to the original view.
+- **Footnotes** — the scraper also stores SSV `div.faqs` (`parserVersion` 2); `NoteParser` turns it into `ChapterNote`s (single verse or range "20 – 24"). In the verse view a verse with a note ends with a gold ⋮; the verse panel shows the note (3 lines, "Čítať celú"), range notes show for every verse in the range. The original view lists notes under the text. Chapters cached by parser 1 are fetched again quietly when opened (and by "Stiahnuť knihu").
 - **Bookmarks** — tap a verse for bookmark / copy / share. List via the bookmark icon in the Bible tab app bar, always grouped by book in Bible order; opens the reader at the verse.
 - **Verse counts** — `verse_counts.dart` is generated from the SSV text (`tool/verse_counts_from_ssv.dart`); shown in the chapter grid and plan rows.
 - **Rosary** — `features/rosary/`, reached only from the rosary button in the top-right corner of the plan's today's reading card: list of the 4 rosaries (today preselected), detail with mysteries and prayer order, step-by-step guide. Content in `core/constants/rosary.dart`.

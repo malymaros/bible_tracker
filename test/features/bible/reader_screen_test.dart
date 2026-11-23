@@ -1,13 +1,18 @@
 import 'dart:async';
 
+import 'package:bible_tracker/core/constants/ssv_constants.dart';
+import 'package:bible_tracker/core/models/bible_book.dart';
+import 'package:bible_tracker/core/models/book_download_progress.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
 import 'package:bible_tracker/core/models/reader_context.dart';
 import 'package:bible_tracker/core/models/verse_ref.dart';
+import 'package:bible_tracker/core/services/download_service.dart';
 import 'package:bible_tracker/db/app_database.dart';
 import 'package:bible_tracker/features/bible/screens/reader_screen.dart';
 import 'package:bible_tracker/features/bible/widgets/verse_chapter_view.dart';
 import 'package:bible_tracker/l10n/app_localizations.dart';
 import 'package:bible_tracker/shared/providers/database_provider.dart';
+import 'package:bible_tracker/shared/providers/download_providers.dart';
 import 'package:bible_tracker/shared/providers/plan_providers.dart';
 import 'package:bible_tracker/shared/providers/reader_providers.dart';
 import 'package:drift/native.dart';
@@ -29,6 +34,7 @@ Widget _testReader(
   Stream<List<VerseBookmark>>? verseBookmarksStream,
   ReaderTextView textView = ReaderTextView.verses,
   int? initialVerse,
+  _FakeDownloadService? downloads,
 }) {
   // Drift streams left open at the end of a widget test leave a pending
   // timer, so the stream providers the reader watches are faked here and
@@ -36,6 +42,9 @@ Widget _testReader(
   return ProviderScope(
     overrides: [
       appDatabaseProvider.overrideWith((_) => db),
+      downloadServiceProvider.overrideWithValue(
+        downloads ?? _FakeDownloadService(),
+      ),
       verseBookmarksProvider.overrideWith(
         (_) => verseBookmarksStream ?? Stream.value(const []),
       ),
@@ -67,6 +76,20 @@ Future<void> _insertChapter(AppDatabase db, ChapterRef ref, String text) {
     parserVersion: 1,
     cachedAt: DateTime(2026, 1, 1),
   );
+}
+
+/// Records the chapters the reader fetches again; no network in tests.
+class _FakeDownloadService implements DownloadService {
+  final refreshed = <ChapterRef>[];
+
+  @override
+  Stream<BookDownloadProgress> downloadBook(BibleBook book) =>
+      const Stream.empty();
+
+  @override
+  Future<void> refreshChapter(BibleBook book, int chapter) async {
+    refreshed.add(ChapterRef(book.id, chapter));
+  }
 }
 
 Finder _richText(String text) => find.text(text, findRichText: true);
@@ -362,6 +385,159 @@ void main() {
       expect(view.selectedVerse, 2);
       expect(view.scrollToVerse, 2);
       expect(find.byKey(const Key('verse-action-panel')), findsNothing);
+    });
+  });
+
+  group('footnotes', () {
+    const gen1 = ChapterRef('gen', 1);
+    const verses =
+        '<p>1 <sup>1</sup> Prvý verš textu. <a href="#v2"><sup>2</sup></a> '
+        'Druhý verš textu. <sup>3</sup> Tretí verš textu.</p>';
+
+    Future<void> insert(
+      AppDatabase db, {
+      String? notesHtml,
+      int parserVersion = SsvConstants.parserVersion,
+    }) {
+      return db.chapterTextDao.upsertChapterText(
+        ref: gen1,
+        htmlContent: verses,
+        notesHtml: notesHtml,
+        sourceUrl: 'https://example.test/gen/1',
+        parserVersion: parserVersion,
+        cachedAt: DateTime(2026, 1, 1),
+      );
+    }
+
+    testWidgets('a verse with a note ends with ⋮ that opens the note', (
+      tester,
+    ) async {
+      final db = _openTestDb();
+      await insert(
+        db,
+        notesHtml:
+            '<div id="v2"><div class="faq">2. Krátka poznámka.</div></div>',
+      );
+
+      await tester.pumpWidget(_testReader(db, gen1));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('verse-note-mark-2')), findsOneWidget);
+      expect(find.byKey(const Key('verse-note-mark-1')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('verse-note-mark-2')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Genezis 1,2'), findsOneWidget);
+      expect(find.text('POZNÁMKA'), findsOneWidget);
+      expect(find.text('Krátka poznámka.'), findsOneWidget);
+      // A short note is shown whole, without "Čítať celú".
+      expect(find.byKey(const Key('verse-note-more')), findsNothing);
+    });
+
+    testWidgets('a verse without a note has no note block', (tester) async {
+      final db = _openTestDb();
+      await insert(
+        db,
+        notesHtml:
+            '<div id="v2"><div class="faq">2. Krátka poznámka.</div></div>',
+      );
+
+      await tester.pumpWidget(_testReader(db, gen1));
+      await tester.pumpAndSettle();
+      await tester.tapOnText(find.textRange.ofSubstring('Tretí verš'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('verse-action-panel')), findsOneWidget);
+      expect(find.byKey(const Key('verse-notes')), findsNothing);
+    });
+
+    testWidgets('a range note shows for every verse in the range', (
+      tester,
+    ) async {
+      final db = _openTestDb();
+      await insert(
+        db,
+        notesHtml:
+            '<div id="v2"><div class="faq">2 – 3. Rozsahová poznámka.</div>'
+            '</div>',
+      );
+
+      await tester.pumpWidget(_testReader(db, gen1));
+      await tester.pumpAndSettle();
+      await tester.tapOnText(find.textRange.ofSubstring('Tretí verš'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('POZNÁMKA K VERŠOM 2 – 3'), findsOneWidget);
+      expect(find.text('Rozsahová poznámka.'), findsOneWidget);
+    });
+
+    testWidgets('a long note opens with "Čítať celú"', (tester) async {
+      final db = _openTestDb();
+      final long = List.filled(30, 'Dlhé vysvetlenie verša.').join(' ');
+      await insert(
+        db,
+        notesHtml: '<div id="v2"><div class="faq">2. $long</div></div>',
+      );
+
+      await tester.pumpWidget(_testReader(db, gen1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('verse-note-mark-2')));
+      await tester.pumpAndSettle();
+
+      Text noteText() =>
+          tester.widget<Text>(find.byKey(const Key('verse-note-text-2')));
+      expect(noteText().maxLines, 3);
+      expect(find.text('Čítať celú ▾'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('verse-note-more')));
+      await tester.pumpAndSettle();
+
+      expect(noteText().maxLines, isNull);
+      expect(find.text('Zbaliť ▴'), findsOneWidget);
+    });
+
+    testWidgets('the original view lists the notes under the text', (
+      tester,
+    ) async {
+      final db = _openTestDb();
+      await insert(
+        db,
+        notesHtml:
+            '<div id="v2"><div class="faq">2. Krátka poznámka.</div></div>',
+      );
+
+      await tester.pumpWidget(
+        _testReader(db, gen1, textView: ReaderTextView.original),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('chapter-notes')), findsOneWidget);
+      expect(_richText('2. Krátka poznámka.'), findsOneWidget);
+    });
+
+    testWidgets('a chapter cached without notes is fetched again once', (
+      tester,
+    ) async {
+      final db = _openTestDb();
+      await insert(db, parserVersion: 1);
+      final downloads = _FakeDownloadService();
+
+      await tester.pumpWidget(_testReader(db, gen1, downloads: downloads));
+      await tester.pumpAndSettle();
+
+      expect(downloads.refreshed, [gen1]);
+    });
+
+    testWidgets('a current chapter is not fetched again', (tester) async {
+      final db = _openTestDb();
+      await insert(db);
+      final downloads = _FakeDownloadService();
+
+      await tester.pumpWidget(_testReader(db, gen1, downloads: downloads));
+      await tester.pumpAndSettle();
+
+      expect(downloads.refreshed, isEmpty);
     });
   });
 }

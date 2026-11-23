@@ -268,6 +268,36 @@ abstract class AppLocalizations {
   /// **'Zdieľať'**
   String get verseActionShare;
 
+  /// No description provided for @verseNote.
+  ///
+  /// In sk, this message translates to:
+  /// **'Poznámka'**
+  String get verseNote;
+
+  /// Label of an SSV footnote that covers several verses
+  ///
+  /// In sk, this message translates to:
+  /// **'Poznámka k veršom {from} – {to}'**
+  String verseNoteRange(int from, int to);
+
+  /// No description provided for @verseNoteMore.
+  ///
+  /// In sk, this message translates to:
+  /// **'Čítať celú'**
+  String get verseNoteMore;
+
+  /// No description provided for @verseNoteLess.
+  ///
+  /// In sk, this message translates to:
+  /// **'Zbaliť'**
+  String get verseNoteLess;
+
+  /// No description provided for @chapterNotesTitle.
+  ///
+  /// In sk, this message translates to:
+  /// **'Poznámky'**
+  String get chapterNotesTitle;
+
   /// No description provided for @verseCopied.
   ///
   /// In sk, this message translates to:

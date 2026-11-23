@@ -1,3 +1,4 @@
+import 'package:bible_tracker/core/models/chapter_note.dart';
 import 'package:bible_tracker/core/models/parsed_chapter.dart';
 import 'package:bible_tracker/shared/widgets/app_ui.dart';
 import 'package:flutter/gestures.dart';
@@ -6,10 +7,12 @@ import 'package:flutter/material.dart';
 /// Draws a chapter split into verses ("Nové zobrazenie"): section headings,
 /// paragraph headings, indented poetry, verse numbers. Each verse can be
 /// tapped; [selectedVerse] is highlighted and [bookmarkedVerses] carry a
-/// bookmark mark. When [scrollToVerse] is set the view scrolls to it once.
+/// bookmark mark. A verse that opens an SSV footnote ([notes]) ends with a
+/// "⋮" mark. When [scrollToVerse] is set the view scrolls to it once.
 class VerseChapterView extends StatefulWidget {
   final ParsedChapter chapter;
   final Set<int> bookmarkedVerses;
+  final List<ChapterNote> notes;
   final int? selectedVerse;
   final int? scrollToVerse;
   final ValueChanged<int> onVerseTap;
@@ -22,6 +25,7 @@ class VerseChapterView extends StatefulWidget {
     required this.chapter,
     required this.bookmarkedVerses,
     required this.onVerseTap,
+    this.notes = const [],
     this.selectedVerse,
     this.scrollToVerse,
     this.bottomPadding = 120,
@@ -86,10 +90,50 @@ class _VerseChapterViewState extends State<VerseChapterView> {
     });
   }
 
+  /// For each note, the last segment of the verse it starts at: the "⋮" goes
+  /// after that segment's text. Keyed by (block index, segment index); the
+  /// value is the verse the mark opens.
+  Map<(int, int), int> _noteMarks() {
+    final marks = <(int, int), int>{};
+    final blocks = widget.chapter.blocks;
+    for (final note in widget.notes) {
+      (int, int)? last;
+      for (var b = 0; b < blocks.length; b++) {
+        final block = blocks[b];
+        if (block is! VerseParagraph) continue;
+        for (var s = 0; s < block.segments.length; s++) {
+          final seg = block.segments[s];
+          final v = seg.verse;
+          if (v != null && note.verse >= v && note.verse <= seg.verseEnd) {
+            last = (b, s);
+          }
+        }
+      }
+      if (last == null) continue;
+      final block = blocks[last.$1] as VerseParagraph;
+      marks[last] = block.segments[last.$2].verse!;
+    }
+    return marks;
+  }
+
+  /// Verses of a multi-verse note that covers the selected verse: tinted so
+  /// the reader sees what the note talks about.
+  Set<int> _noteRange() {
+    final selected = widget.selectedVerse;
+    if (selected == null) return const {};
+    return {
+      for (final n in widget.notes)
+        if (n.isRange && n.covers(selected))
+          for (var v = n.verse; v <= n.verseEnd; v++) v,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     _scheduleScroll();
     final blocks = widget.chapter.blocks;
+    final marks = _noteMarks();
+    final range = _noteRange();
     return SafeArea(
       top: false,
       child: Scrollbar(
@@ -104,7 +148,7 @@ class _VerseChapterViewState extends State<VerseChapterView> {
               for (var i = 0; i < blocks.length; i++)
                 KeyedSubtree(
                   key: _blockKeys.putIfAbsent(i, GlobalKey.new),
-                  child: _block(context, blocks[i], i),
+                  child: _block(blocks[i], i, marks, range),
                 ),
             ],
           ),
@@ -113,7 +157,12 @@ class _VerseChapterViewState extends State<VerseChapterView> {
     );
   }
 
-  Widget _block(BuildContext context, ChapterBlock block, int index) {
+  Widget _block(
+    ChapterBlock block,
+    int index,
+    Map<(int, int), int> marks,
+    Set<int> range,
+  ) {
     return switch (block) {
       SectionHeading(:final text) => Padding(
         padding: EdgeInsets.only(top: index == 0 ? 4 : 18, bottom: 10),
@@ -128,11 +177,16 @@ class _VerseChapterViewState extends State<VerseChapterView> {
           ),
         ),
       ),
-      VerseParagraph() => _paragraph(block),
+      VerseParagraph() => _paragraph(block, index, marks, range),
     };
   }
 
-  Widget _paragraph(VerseParagraph p) {
+  Widget _paragraph(
+    VerseParagraph p,
+    int blockIndex,
+    Map<(int, int), int> marks,
+    Set<int> range,
+  ) {
     const body = TextStyle(
       fontFamily: _serif,
       fontSize: 19,
@@ -140,12 +194,16 @@ class _VerseChapterViewState extends State<VerseChapterView> {
       color: AppColors.text,
     );
     final spans = <InlineSpan>[];
-    for (final s in p.segments) {
+    for (var si = 0; si < p.segments.length; si++) {
+      final s = p.segments[si];
       final verse = s.verse;
       final selected = verse != null && verse == widget.selectedVerse;
+      final inRange = verse != null && !selected && range.contains(verse);
       final marked = verse != null && widget.bookmarkedVerses.contains(verse);
       final background = selected
           ? AppColors.goldSoft
+          : inRange
+          ? AppColors.gold.withValues(alpha: 0.12)
           : marked
           ? AppColors.error.withValues(alpha: 0.07)
           : null;
@@ -164,7 +222,7 @@ class _VerseChapterViewState extends State<VerseChapterView> {
         final number = s.verseEnd != verse ? '$verse–${s.verseEnd}' : '$verse';
         spans.add(
           TextSpan(
-            text: verse == 1 ? '$number ' : '$number ',
+            text: '$number ',
             recognizer: _recognizerFor(verse!),
             style: verse == 1
                 ? const TextStyle(
@@ -182,15 +240,28 @@ class _VerseChapterViewState extends State<VerseChapterView> {
           ),
         );
       }
+      final noteVerse = marks[(blockIndex, si)];
       spans.add(
         TextSpan(
-          text: '${s.text.trim()} ',
+          text: noteVerse == null ? '${s.text.trim()} ' : s.text.trim(),
           recognizer: verse == null ? null : _recognizerFor(verse),
           style: background == null
               ? null
               : TextStyle(backgroundColor: background),
         ),
       );
+      if (noteVerse != null) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: _NoteMark(
+              key: Key('verse-note-mark-$noteVerse'),
+              onTap: () => widget.onVerseTap(noteVerse),
+            ),
+          ),
+        );
+        spans.add(const TextSpan(text: ' '));
+      }
     }
 
     return Padding(
@@ -216,6 +287,25 @@ class _VerseChapterViewState extends State<VerseChapterView> {
             ),
           Text.rich(TextSpan(style: body, children: spans)),
         ],
+      ),
+    );
+  }
+}
+
+/// The "⋮" after a verse that has an SSV footnote; tapping it opens the verse.
+class _NoteMark extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _NoteMark({super.key, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 1),
+        child: Icon(Icons.more_vert, size: 18, color: AppColors.goldDark),
       ),
     );
   }

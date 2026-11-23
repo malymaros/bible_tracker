@@ -94,8 +94,8 @@ void main() {
       expect(result.plainText, contains('Na počiatku'));
     });
 
-    test('parserVersion is 1', () {
-      expect(result.parserVersion, 1);
+    test('parserVersion is 2 (footnotes stored)', () {
+      expect(result.parserVersion, 2);
     });
 
     test('sourceUrl ends with kapitola/1.xhtml', () {
@@ -106,6 +106,11 @@ void main() {
       // Footnotes section starts a separate sibling div; innerHtml of div.inbox
       // must not bleed into footnote text.
       expect(result.htmlContent, isNot(contains('class="faq"')));
+    });
+
+    test('notesHtml holds the footnotes (div.faqs)', () {
+      expect(result.notesHtml, contains('id="v26"'));
+      expect(result.notesHtml, contains('Pri stvorení predchádzajúcich'));
     });
 
     test('Windows-1250 Slovak characters are decoded correctly', () {

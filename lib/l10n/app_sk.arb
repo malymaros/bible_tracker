@@ -118,6 +118,18 @@
   "verseActionRemoveBookmark": "Odstrániť",
   "verseActionCopy": "Kopírovať",
   "verseActionShare": "Zdieľať",
+  "verseNote": "Poznámka",
+  "verseNoteRange": "Poznámka k veršom {from} – {to}",
+  "@verseNoteRange": {
+    "description": "Label of an SSV footnote that covers several verses",
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+  "verseNoteMore": "Čítať celú",
+  "verseNoteLess": "Zbaliť",
+  "chapterNotesTitle": "Poznámky",
   "verseCopied": "Skopírované",
   "verseBookmarkAdded": "Záložka pridaná",
   "verseBookmarkRemoved": "Záložka odstránená",

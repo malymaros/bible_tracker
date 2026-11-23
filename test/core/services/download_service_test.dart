@@ -1,3 +1,4 @@
+import 'package:bible_tracker/core/constants/ssv_constants.dart';
 import 'package:bible_tracker/core/models/bible_book.dart';
 import 'package:bible_tracker/core/models/book_download_progress.dart';
 import 'package:bible_tracker/core/models/chapter_ref.dart';
@@ -23,13 +24,17 @@ const _testBook = BibleBook(
 
 AppDatabase _openTestDb() => AppDatabase(NativeDatabase.memory());
 
-Future<void> _insertCachedChapter(AppDatabase db, int chapter) {
+Future<void> _insertCachedChapter(
+  AppDatabase db,
+  int chapter, {
+  int parserVersion = SsvConstants.parserVersion,
+}) {
   return db.chapterTextDao.upsertChapterText(
     ref: ChapterRef(_testBook.id, chapter),
     htmlContent: '<p>Cached $chapter</p>',
     plainText: 'Cached $chapter',
     sourceUrl: 'https://example.test/cached/$chapter',
-    parserVersion: 1,
+    parserVersion: parserVersion,
     cachedAt: DateTime(2026, 1, chapter),
   );
 }
@@ -38,7 +43,10 @@ String _chapterHtml(int chapter) {
   return '<html><body>'
       '<div class="ssv-bb-module"><div class="wrapper">'
       '<div class="inbox"><p>Downloaded chapter $chapter.</p></div>'
-      '</div></div>'
+      '</div>'
+      '<div class="faqs"><div id="v1"><div class="faq">1. Note $chapter.'
+      '</div></div></div>'
+      '</div>'
       '</body></html>';
 }
 
@@ -249,5 +257,51 @@ void main() {
 
       expect(requests, 1);
     });
+  });
+
+  test('chapters cached by an older parser are fetched again', () async {
+    final db = _openTestDb();
+    addTearDown(db.close);
+    await _insertCachedChapter(db, 1);
+    await _insertCachedChapter(db, 2, parserVersion: 1);
+    await _insertCachedChapter(db, 3);
+
+    final requestedPaths = <String>[];
+    final service = _serviceWithClient(
+      db,
+      MockClient((request) async {
+        requestedPaths.add(request.url.path);
+        return http.Response(_chapterHtml(2), 200);
+      }),
+    );
+
+    await service.downloadBook(_testBook).drain<void>();
+
+    expect(requestedPaths, ['/biblia/kniha/test-book/kapitola/2.xhtml']);
+    final row = await db.chapterTextDao.getChapterText(
+      ChapterRef(_testBook.id, 2),
+    );
+    expect(row!.parserVersion, SsvConstants.parserVersion);
+    expect(row.notesHtml, contains('Note 2.'));
+  });
+
+  test('refreshChapter replaces the cached row with notes', () async {
+    final db = _openTestDb();
+    addTearDown(db.close);
+    await _insertCachedChapter(db, 3, parserVersion: 1);
+
+    final service = _serviceWithClient(
+      db,
+      MockClient((_) async => http.Response(_chapterHtml(3), 200)),
+    );
+
+    await service.refreshChapter(_testBook, 3);
+
+    final row = await db.chapterTextDao.getChapterText(
+      ChapterRef(_testBook.id, 3),
+    );
+    expect(row!.htmlContent, contains('Downloaded chapter 3.'));
+    expect(row.notesHtml, contains('Note 3.'));
+    expect(row.parserVersion, SsvConstants.parserVersion);
   });
 }
