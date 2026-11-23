@@ -77,7 +77,8 @@ class _RosaryBeadsPainter extends CustomPainter {
       oldDelegate.color != color;
 }
 
-/// App-bar action that opens the rosary list.
+/// Opens the rosary list; overlays the title of the plan's today's
+/// reading card. Compact (36 px) to fit beside the title.
 class RosaryNavButton extends StatelessWidget {
   const RosaryNavButton({super.key});
 
@@ -87,7 +88,11 @@ class RosaryNavButton extends StatelessWidget {
     return IconButton(
       key: const Key('plan-rosary-nav-button'),
       tooltip: l10n.rosaryTitle,
-      style: IconButton.styleFrom(backgroundColor: AppColors.goldSoft),
+      padding: const EdgeInsets.all(6),
+      constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
       onPressed: () => Navigator.of(
         context,
       ).push(MaterialPageRoute<void>(builder: (_) => const RosaryListScreen())),
@@ -226,6 +231,57 @@ class RosaryAppBarTitle extends StatelessWidget {
           subtitle,
           style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
         ),
+      ],
+    );
+  }
+}
+
+/// One mystery as the detail list shows it: number, name, the "…insert"
+/// added to each Hail Mary, and the tappable scripture reference. The guide
+/// shows the same row so the mystery stays in view while praying.
+class RosaryMysteryRow extends StatelessWidget {
+  final RosaryMystery mystery;
+  final Color badgeBackground;
+
+  const RosaryMysteryRow({
+    super.key,
+    required this.mystery,
+    this.badgeBackground = AppColors.goldSoft,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        RosaryNumberBadge(number: mystery.number, background: badgeBackground),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  mystery.name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '…${mystery.insert}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        ScriptureRefLink(scriptureRef: mystery.ref),
       ],
     );
   }

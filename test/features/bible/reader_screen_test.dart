@@ -98,7 +98,7 @@ void main() {
     expect(find.text('Otvoriť na webe SSV'), findsOneWidget);
   });
 
-  testWidgets('books reader shows bookmark icon in AppBar', (tester) async {
+  testWidgets('books reader has no chapter bookmark button', (tester) async {
     final db = _openTestDb();
     const ref = ChapterRef('gen', 1);
     await _insertChapter(db, ref, 'Free reading chapter');
@@ -106,7 +106,7 @@ void main() {
     await tester.pumpWidget(_testReader(db, ref));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('reader-bookmark-button')), findsOneWidget);
+    expect(find.byKey(const Key('reader-bookmark-button')), findsNothing);
     expect(find.byKey(const Key('reader-mark-read-fab')), findsNothing);
   });
 
@@ -122,28 +122,6 @@ void main() {
     expect(find.text('Označiť ako prečítané'), findsNothing);
     expect(find.text('Označiť ako neprečítané'), findsNothing);
     expect(find.byKey(const Key('reader-mark-read-fab')), findsNothing);
-  });
-
-  testWidgets('books reader can toggle bookmark', (tester) async {
-    final db = _openTestDb();
-    const ref = ChapterRef('gen', 1);
-    await _insertChapter(db, ref, 'Bookmarkable chapter');
-
-    await tester.pumpWidget(_testReader(db, ref));
-    await tester.pumpAndSettle();
-
-    expect(
-      await db.bookmarkDao.isBookmarked(VerseRef.inChapter(ref, 1)),
-      isFalse,
-    );
-
-    await tester.tap(find.byKey(const Key('reader-bookmark-button')));
-    await tester.pumpAndSettle();
-
-    expect(
-      await db.bookmarkDao.isBookmarked(VerseRef.inChapter(ref, 1)),
-      isTrue,
-    );
   });
 
   testWidgets('plan reader does not show bookmark icon', (tester) async {
@@ -224,7 +202,9 @@ void main() {
     expect(find.text('Označiť ako neprečítané'), findsOneWidget);
   });
 
-  testWidgets('swipe boundary Genesis 50 navigates to Exodus 1', (tester) async {
+  testWidgets('swipe boundary Genesis 50 navigates to Exodus 1', (
+    tester,
+  ) async {
     final db = _openTestDb();
     await _insertChapter(db, const ChapterRef('gen', 50), 'Genesis fifty');
     await _insertChapter(db, const ChapterRef('exod', 1), 'Exodus one');
@@ -242,7 +222,9 @@ void main() {
     expect(_richText('Exodus one'), findsOneWidget);
   });
 
-  testWidgets('swipe right at first chapter stays on Genesis 1', (tester) async {
+  testWidgets('swipe right at first chapter stays on Genesis 1', (
+    tester,
+  ) async {
     final db = _openTestDb();
     await _insertChapter(db, const ChapterRef('gen', 1), 'Genesis one');
 
@@ -312,9 +294,7 @@ void main() {
       expect(find.text('Stvorenie sveta'), findsOneWidget);
     });
 
-    testWidgets('the original view setting shows the raw HTML', (
-      tester,
-    ) async {
+    testWidgets('the original view setting shows the raw HTML', (tester) async {
       final db = _openTestDb();
       await insertVerses(db);
 

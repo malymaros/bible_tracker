@@ -244,12 +244,6 @@ abstract class AppLocalizations {
   /// **'Pôvodné zobrazenie'**
   String get readerTextViewOriginal;
 
-  /// No description provided for @readerBookmarkChapter.
-  ///
-  /// In sk, this message translates to:
-  /// **'Záložka na kapitolu'**
-  String get readerBookmarkChapter;
-
   /// No description provided for @verseActionBookmark.
   ///
   /// In sk, this message translates to:
@@ -303,18 +297,6 @@ abstract class AppLocalizations {
   /// In sk, this message translates to:
   /// **'Žiadne záložky'**
   String get bookmarksEmpty;
-
-  /// No description provided for @bookmarksSortCanonical.
-  ///
-  /// In sk, this message translates to:
-  /// **'Podľa Biblie'**
-  String get bookmarksSortCanonical;
-
-  /// No description provided for @bookmarksSortRecent.
-  ///
-  /// In sk, this message translates to:
-  /// **'Najnovšie'**
-  String get bookmarksSortRecent;
 
   /// No description provided for @planCreateTitle.
   ///
@@ -664,7 +646,7 @@ abstract class AppLocalizations {
   /// **'Dnešné čítanie v pláne'**
   String get statsTodaySummary;
 
-  /// Rosary list screen title and tooltip of the rosary button in the plan app bar
+  /// Rosary list screen title and tooltip of the rosary button in the today's reading card
   ///
   /// In sk, this message translates to:
   /// **'Ruženec'**
@@ -682,23 +664,17 @@ abstract class AppLocalizations {
   /// **'Tajomstvá'**
   String get rosaryMysteriesSection;
 
-  /// No description provided for @rosaryPrayerOrderSection.
+  /// Heading of the prayer order on the rosary detail; kind is the RosaryKind name
   ///
   /// In sk, this message translates to:
-  /// **'Postup modlitby · ťukni pre znenie'**
-  String get rosaryPrayerOrderSection;
+  /// **'Modlitba {kind, select, joyful{radostného ruženca} luminous{ruženca svetla} sorrowful{bolestného ruženca} other{slávnostného ruženca}}'**
+  String rosaryPrayerOrderSection(String kind);
 
   /// No description provided for @rosaryGuideButton.
   ///
   /// In sk, this message translates to:
   /// **'Sprievodca modlitbou'**
   String get rosaryGuideButton;
-
-  /// No description provided for @rosaryGuideCaption.
-  ///
-  /// In sk, this message translates to:
-  /// **'Krok za krokom s celým znením každej modlitby'**
-  String get rosaryGuideCaption;
 
   /// No description provided for @rosaryGuideNext.
   ///

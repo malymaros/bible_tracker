@@ -84,9 +84,6 @@ class AppLocalizationsSk extends AppLocalizations {
   String get readerTextViewOriginal => 'Pôvodné zobrazenie';
 
   @override
-  String get readerBookmarkChapter => 'Záložka na kapitolu';
-
-  @override
   String get verseActionBookmark => 'Záložka';
 
   @override
@@ -112,12 +109,6 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get bookmarksEmpty => 'Žiadne záložky';
-
-  @override
-  String get bookmarksSortCanonical => 'Podľa Biblie';
-
-  @override
-  String get bookmarksSortRecent => 'Najnovšie';
 
   @override
   String get planCreateTitle => 'Vytvoriť plán čítania';
@@ -306,14 +297,18 @@ class AppLocalizationsSk extends AppLocalizations {
   String get rosaryMysteriesSection => 'Tajomstvá';
 
   @override
-  String get rosaryPrayerOrderSection => 'Postup modlitby · ťukni pre znenie';
+  String rosaryPrayerOrderSection(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'joyful': 'radostného ruženca',
+      'luminous': 'ruženca svetla',
+      'sorrowful': 'bolestného ruženca',
+      'other': 'slávnostného ruženca',
+    });
+    return 'Modlitba $_temp0';
+  }
 
   @override
   String get rosaryGuideButton => 'Sprievodca modlitbou';
-
-  @override
-  String get rosaryGuideCaption =>
-      'Krok za krokom s celým znením každej modlitby';
 
   @override
   String get rosaryGuideNext => 'Ďalej';

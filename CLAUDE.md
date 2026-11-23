@@ -53,7 +53,7 @@ core/
 db/           # Drift database, tables, DAOs
 features/
   bible/      # Book browser + download management + chapter reader (tab 1)
-  rosary/     # Rosary list, detail and guide (from the plan app bar)
+  rosary/     # Rosary list, detail and guide (from the today's reading card)
   plan/       # Reading plan creation and tracking (tab 2)
   statistics/ # Global reading statistics (tab 3)
 shared/       # Cross-feature providers and widgets
@@ -105,9 +105,9 @@ Drift (SQLite), schema version 3. Six tables:
 - **Bible browser** — browse all 73 books grouped by testament; shows download status and bookmarked chapters per book.
 - **Offline reader** — downloads chapter HTML from biblia.ssv.sk; reads offline afterward; FAB toggles read/unread state.
 - **Verse view** — `VerseParser` splits the stored SSV HTML into verses; the reader draws them with its own layout (default). A neutral app-bar toggle switches every reader to the original HTML view (one app-wide setting). Chapters whose verse numbers do not only go up fall back to the original view.
-- **Bookmarks** — tap a verse for bookmark / copy / share; the app-bar bookmark marks verse 1. List via the bookmark icon in the Bible tab app bar; opens the reader at the verse.
+- **Bookmarks** — tap a verse for bookmark / copy / share. List via the bookmark icon in the Bible tab app bar, always grouped by book in Bible order; opens the reader at the verse.
 - **Verse counts** — `verse_counts.dart` is generated from the SSV text (`tool/verse_counts_from_ssv.dart`); shown in the chapter grid and plan rows.
-- **Rosary** — `features/rosary/`, reached only from the plan app bar: list of the 4 rosaries (today preselected), detail with mysteries and prayer order, step-by-step guide. Content in `core/constants/rosary.dart`.
+- **Rosary** — `features/rosary/`, reached only from the rosary button in the top-right corner of the plan's today's reading card: list of the 4 rosaries (today preselected), detail with mysteries and prayer order, step-by-step guide. Content in `core/constants/rosary.dart`.
 - **Reading plan** — create a plan by selecting books and a day count; immutable schedule after creation; tracks daily progress with ahead/behind status.
 - **Statistics** — global chapter counts by testament, plan progress metrics.
 - **Light + dark theme** — follows system theme (`ThemeMode.system`).

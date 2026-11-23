@@ -92,6 +92,13 @@ class _RosaryGuideScreenState extends State<RosaryGuideScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.zero,
                         backgroundColor: AppColors.surface,
+                        // Clearly drawn even when disabled on the first step,
+                        // so the user sees there is a way back.
+                        side: const BorderSide(
+                          color: AppColors.gold,
+                          width: 1.5,
+                        ),
+                        disabledForegroundColor: AppColors.textMuted,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -145,32 +152,16 @@ class _MysteryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
+      key: const Key('rosary-guide-mystery'),
+      padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
       decoration: BoxDecoration(
         color: RosaryColors.highlight,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: RosaryColors.highlightBorder),
       ),
-      child: Row(
-        children: [
-          RosaryNumberBadge(
-            number: mystery.number,
-            size: 30,
-            background: AppColors.surface,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              mystery.name,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.text,
-              ),
-            ),
-          ),
-          ScriptureRefLink(scriptureRef: mystery.ref),
-        ],
+      child: RosaryMysteryRow(
+        mystery: mystery,
+        badgeBackground: AppColors.surface,
       ),
     );
   }

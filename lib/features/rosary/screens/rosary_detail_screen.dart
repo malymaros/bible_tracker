@@ -55,7 +55,7 @@ class _RosaryDetailScreenState extends State<RosaryDetailScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          _SectionLabel(l10n.rosaryPrayerOrderSection),
+          _SectionLabel(l10n.rosaryPrayerOrderSection(rosary.kind.name)),
           const SizedBox(height: 10),
           AppCard(
             padding: const EdgeInsets.only(bottom: 10),
@@ -91,43 +91,30 @@ class _RosaryDetailScreenState extends State<RosaryDetailScreen> {
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  height: 56,
-                  child: FilledButton.icon(
-                    key: const Key('rosary-guide-button'),
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => RosaryGuideScreen(rosary: rosary),
-                      ),
-                    ),
-                    icon: const Icon(Icons.play_arrow),
-                    label: Text(l10n.rosaryGuideButton),
+            // Full width but low, so the list above keeps most of the screen.
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            child: SizedBox(
+              height: 48,
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('rosary-guide-button'),
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.rosaryGuideCaption,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textMuted,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => RosaryGuideScreen(rosary: rosary),
                   ),
                 ),
-              ],
+                icon: const Icon(Icons.play_arrow),
+                label: Text(l10n.rosaryGuideButton),
+              ),
             ),
           ),
         ),
@@ -173,39 +160,7 @@ class _MysteryRow extends StatelessWidget {
               border: Border(top: BorderSide(color: AppColors.surfaceMuted)),
             )
           : null,
-      child: Row(
-        children: [
-          RosaryNumberBadge(number: mystery.number),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    mystery.name,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.text,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '…${mystery.insert}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          ScriptureRefLink(scriptureRef: mystery.ref),
-        ],
-      ),
+      child: RosaryMysteryRow(mystery: mystery),
     );
   }
 }

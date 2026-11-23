@@ -232,21 +232,12 @@ final _verseSnippetProvider = FutureProvider.autoDispose
       return VerseParser.parse(row.htmlContent).verseText(verse.verseNumber);
     });
 
-enum _BookmarkSort { canonical, recent }
-
-class _BookmarksListScreen extends ConsumerStatefulWidget {
+/// Bookmarks grouped by book, in Bible order.
+class _BookmarksListScreen extends ConsumerWidget {
   const _BookmarksListScreen();
 
   @override
-  ConsumerState<_BookmarksListScreen> createState() =>
-      _BookmarksListScreenState();
-}
-
-class _BookmarksListScreenState extends ConsumerState<_BookmarksListScreen> {
-  _BookmarkSort _sort = _BookmarkSort.canonical;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final bookmarks =
         ref.watch(verseBookmarksProvider).value ?? const <VerseBookmark>[];
@@ -254,9 +245,6 @@ class _BookmarksListScreenState extends ConsumerState<_BookmarksListScreen> {
 
     final sorted = bookmarks.toList()
       ..sort((a, b) {
-        if (_sort == _BookmarkSort.recent) {
-          return b.bookmarkedAt.compareTo(a.bookmarkedAt);
-        }
         final va = a.verse, vb = b.verse;
         final byBook = order[va.bookId]!.compareTo(order[vb.bookId]!);
         if (byBook != 0) return byBook;
@@ -269,7 +257,7 @@ class _BookmarksListScreenState extends ConsumerState<_BookmarksListScreen> {
     String? lastBook;
     for (final b in sorted) {
       final book = kBibleBooks.firstWhere((x) => x.id == b.verse.bookId);
-      if (_sort == _BookmarkSort.canonical && book.id != lastBook) {
+      if (book.id != lastBook) {
         children.add(
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 10, 4, 6),
@@ -292,46 +280,20 @@ class _BookmarksListScreenState extends ConsumerState<_BookmarksListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(l10n.bookmarksTitle)),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            child: SegmentedButton<_BookmarkSort>(
-              key: const Key('bookmarks-sort'),
-              showSelectedIcon: false,
-              segments: [
-                ButtonSegment(
-                  value: _BookmarkSort.canonical,
-                  label: Text(l10n.bookmarksSortCanonical),
+      body: sorted.isEmpty
+          ? Center(
+              child: Text(
+                l10n.bookmarksEmpty,
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 16,
                 ),
-                ButtonSegment(
-                  value: _BookmarkSort.recent,
-                  label: Text(l10n.bookmarksSortRecent),
-                ),
-              ],
-              selected: {_sort},
-              onSelectionChanged: (s) => setState(() => _sort = s.single),
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              children: children,
             ),
-          ),
-          Expanded(
-            child: sorted.isEmpty
-                ? Center(
-                    child: Text(
-                      l10n.bookmarksEmpty,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 16,
-                      ),
-                    ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                    children: children,
-                  ),
-          ),
-        ],
-      ),
     );
   }
 }

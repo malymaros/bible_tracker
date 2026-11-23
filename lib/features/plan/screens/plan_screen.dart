@@ -37,7 +37,6 @@ class PlanScreen extends ConsumerWidget {
           centerTitle: true,
           backgroundColor: _PlanColors.background,
           surfaceTintColor: _PlanColors.background,
-          actions: const [RosaryNavButton()],
         ),
         backgroundColor: _PlanColors.background,
         body: const Center(child: CircularProgressIndicator()),
@@ -50,7 +49,6 @@ class PlanScreen extends ConsumerWidget {
           centerTitle: true,
           backgroundColor: _PlanColors.background,
           surfaceTintColor: _PlanColors.background,
-          actions: const [RosaryNavButton()],
         ),
         backgroundColor: _PlanColors.background,
         body: Center(child: Text(error.toString())),
@@ -132,7 +130,6 @@ class _CreatePlanScreenState extends ConsumerState<CreatePlanScreen> {
         centerTitle: true,
         backgroundColor: _PlanColors.background,
         surfaceTintColor: _PlanColors.background,
-        actions: const [RosaryNavButton()],
       ),
       backgroundColor: _PlanColors.background,
       body: SafeArea(
@@ -413,7 +410,6 @@ class _ExistingPlanScreenState extends ConsumerState<_ExistingPlanScreen> {
         backgroundColor: _PlanColors.background,
         surfaceTintColor: _PlanColors.background,
         actions: [
-          const RosaryNavButton(),
           IconButton(
             tooltip: l10n.planDeleteAction,
             onPressed: () => _confirmDelete(context, ref, days),
@@ -890,12 +886,32 @@ class _DailyReadingsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            l10n.planTodayReading,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: _PlanColors.text,
-              fontWeight: FontWeight.w800,
-            ),
+          // The rosary button overlays the title's right end, so the card
+          // keeps the height it had without it.
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 44),
+                child: Text(
+                  l10n.planTodayReading,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _PlanColors.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const Positioned.fill(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: OverflowBox(
+                    maxHeight: 36,
+                    alignment: Alignment.centerRight,
+                    child: RosaryNavButton(),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           for (final group in grouped) ...[

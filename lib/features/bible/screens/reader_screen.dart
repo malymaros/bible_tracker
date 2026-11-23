@@ -74,7 +74,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   BibleBook get _book => _bookById(_chapterRef.bookId);
 
-  bool get _isBooks => widget.readerContext == ReaderContext.books;
   bool get _isPlan => widget.readerContext == ReaderContext.plan;
 
   ParsedChapter _parse(String html) {
@@ -112,7 +111,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     };
 
     final isCurrentChapterRead = allRead.contains(_chapterRef);
-    final isChapterBookmarked = bookmarkedVerses.contains(1);
 
     final row = chapter.value;
     final parsed = row == null ? null : _parse(row.htmlContent);
@@ -136,20 +134,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             icon: const Icon(Icons.text_fields, color: AppColors.textMuted),
             onPressed: () => _toggleTextView(textView),
           ),
-          if (_isBooks)
-            IconButton(
-              key: const Key('reader-bookmark-button'),
-              tooltip: l10n.readerBookmarkChapter,
-              icon: Icon(
-                isChapterBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                color: isChapterBookmarked
-                    ? AppColors.error
-                    : AppColors.textMuted,
-              ),
-              onPressed: () => ref
-                  .read(bookmarkDaoProvider)
-                  .toggle(VerseRef.inChapter(_chapterRef, 1)),
-            ),
         ],
       ),
       floatingActionButton: _isPlan && selected == null

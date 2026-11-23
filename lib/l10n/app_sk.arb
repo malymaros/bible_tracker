@@ -114,7 +114,6 @@
   "readerTextViewToggle": "Prepnúť zobrazenie textu",
   "readerTextViewVerses": "Nové zobrazenie",
   "readerTextViewOriginal": "Pôvodné zobrazenie",
-  "readerBookmarkChapter": "Záložka na kapitolu",
   "verseActionBookmark": "Záložka",
   "verseActionRemoveBookmark": "Odstrániť",
   "verseActionCopy": "Kopírovať",
@@ -124,8 +123,6 @@
   "verseBookmarkRemoved": "Záložka odstránená",
   "bookmarksTitle": "Záložky",
   "bookmarksEmpty": "Žiadne záložky",
-  "bookmarksSortCanonical": "Podľa Biblie",
-  "bookmarksSortRecent": "Najnovšie",
 
   "planCreateTitle": "Vytvoriť plán čítania",
   "planStartDate": "Začiatok",
@@ -188,13 +185,18 @@
 
   "rosaryTitle": "Ruženec",
   "@rosaryTitle": {
-    "description": "Rosary list screen title and tooltip of the rosary button in the plan app bar"
+    "description": "Rosary list screen title and tooltip of the rosary button in the today's reading card"
   },
   "rosaryTodayBadge": "DNES",
   "rosaryMysteriesSection": "Tajomstvá",
-  "rosaryPrayerOrderSection": "Postup modlitby · ťukni pre znenie",
+  "rosaryPrayerOrderSection": "Modlitba {kind, select, joyful{radostného ruženca} luminous{ruženca svetla} sorrowful{bolestného ruženca} other{slávnostného ruženca}}",
+  "@rosaryPrayerOrderSection": {
+    "description": "Heading of the prayer order on the rosary detail; kind is the RosaryKind name",
+    "placeholders": {
+      "kind": {"type": "String"}
+    }
+  },
   "rosaryGuideButton": "Sprievodca modlitbou",
-  "rosaryGuideCaption": "Krok za krokom s celým znením každej modlitby",
   "rosaryGuideNext": "Ďalej",
   "rosaryGuideRestart": "Začať odznova",
   "rosaryGuideBack": "Späť"

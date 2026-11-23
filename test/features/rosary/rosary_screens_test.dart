@@ -77,6 +77,23 @@ void main() {
     expect(find.text('Krvavý pot v Getsemanskej záhrade'), findsOneWidget);
   });
 
+  testWidgets('detail names the rosary in the prayer heading', (tester) async {
+    const headings = {
+      RosaryKind.joyful: 'MODLITBA RADOSTNÉHO RUŽENCA',
+      RosaryKind.luminous: 'MODLITBA RUŽENCA SVETLA',
+      RosaryKind.sorrowful: 'MODLITBA BOLESTNÉHO RUŽENCA',
+      RosaryKind.glorious: 'MODLITBA SLÁVNOSTNÉHO RUŽENCA',
+    };
+    for (final MapEntry(key: kind, value: heading) in headings.entries) {
+      await tester.pumpWidget(
+        _testWidget(
+          RosaryDetailScreen(key: ValueKey(kind), rosary: _rosary(kind)),
+        ),
+      );
+      expect(find.text(heading), findsOneWidget);
+    }
+  });
+
   testWidgets('tapping a prayer in detail expands its text', (tester) async {
     await tester.pumpWidget(
       _testWidget(RosaryDetailScreen(rosary: _rosary(RosaryKind.joyful))),
@@ -122,6 +139,15 @@ void main() {
     expect(find.text('Desiatok 1 z 5'), findsOneWidget);
     expect(find.text('Zmŕtvychvstanie'), findsOneWidget);
     expect(find.text('Mt 28,1-10'), findsOneWidget);
+    // Same mystery row as the detail: the Hail Mary insert stays in view.
+    final insert = _rosary(RosaryKind.glorious).mysteries.first.insert;
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('rosary-guide-mystery')),
+        matching: find.text('…$insert'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('rosary-guide-back')));
     await tester.pump();
