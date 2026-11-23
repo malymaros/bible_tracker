@@ -32,6 +32,12 @@ String verseAbbreviation(VerseRef verse) {
   return '${book.shortName} ${verse.chapterNumber},${verse.verseNumber}';
 }
 
+/// Full reference of a verse: "Žalmy 46,2".
+String verseFullName(VerseRef verse) {
+  final book = kBibleBooks.firstWhere((b) => b.id == verse.bookId);
+  return '${book.name} ${verse.chapterNumber},${verse.verseNumber}';
+}
+
 /// A bookmark ribbon, optionally with a white tick on it.
 class BookmarkGlyph extends StatelessWidget {
   final Color color;

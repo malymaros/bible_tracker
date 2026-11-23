@@ -351,48 +351,66 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     VerseRef to,
   ) async {
     final l10n = AppLocalizations.of(context)!;
-    const refStyle = TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.w700,
-      color: AppColors.text,
-    );
     final ok = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        key: const Key('bookmark-move-dialog'),
-        title: Text(l10n.bookmarkMoveTitle, textAlign: TextAlign.center),
-        content: Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 10,
-          runSpacing: 6,
-          children: [
-            Text(
-              verseAbbreviation(from),
-              style: refStyle.copyWith(
-                color: AppColors.textMuted,
-                decoration: TextDecoration.lineThrough,
+      builder: (dialogContext) {
+        // Theme colours, so the references stay readable in dark mode too.
+        final scheme = Theme.of(dialogContext).colorScheme;
+        final refStyle = TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: scheme.onSurface,
+        );
+        return AlertDialog(
+          key: const Key('bookmark-move-dialog'),
+          title: Text(l10n.bookmarkMoveTitle, textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                verseFullName(from),
+                textAlign: TextAlign.center,
+                style: refStyle.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BookmarkGlyph(color: bookmarkColorOf(color), size: 34),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_downward,
+                    color: scheme.onSurfaceVariant,
+                    size: 26,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                verseFullName(to),
+                textAlign: TextAlign.center,
+                style: refStyle,
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.spaceEvenly,
+          actions: [
+            TextButton(
+              key: const Key('bookmark-move-cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.bookmarkMoveCancel),
             ),
-            BookmarkGlyph(color: bookmarkColorOf(color), size: 30),
-            const Icon(Icons.arrow_forward, color: AppColors.textMuted),
-            Text(verseAbbreviation(to), style: refStyle),
+            FilledButton(
+              key: const Key('bookmark-move-confirm'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.bookmarkMoveConfirm),
+            ),
           ],
-        ),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actions: [
-          TextButton(
-            key: const Key('bookmark-move-cancel'),
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.bookmarkMoveCancel),
-          ),
-          FilledButton(
-            key: const Key('bookmark-move-confirm'),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.bookmarkMoveConfirm),
-          ),
-        ],
-      ),
+        );
+      },
     );
     return ok ?? false;
   }
@@ -498,7 +516,14 @@ class _VerseActionPanel extends StatelessWidget {
       color: AppColors.surface,
       elevation: 12,
       shadowColor: Colors.black26,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      // A fine gold edge sets the panel apart from the text behind it.
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        side: BorderSide(
+          color: AppColors.gold.withValues(alpha: 0.55),
+          width: 1.5,
+        ),
+      ),
       child: SafeArea(
         top: false,
         // Scrolls on short screens, where a verse with a note and both

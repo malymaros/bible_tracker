@@ -457,7 +457,8 @@ void main() {
       await tester.tap(find.byKey(const Key('verse-action-color-red')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('bookmark-move-dialog')), findsOneWidget);
-      expect(find.text('Ž 46,2'), findsWidgets);
+      expect(find.text('Žalmy 46,2'), findsOneWidget);
+      expect(find.text('Genezis 1,2'), findsWidgets);
       await tester.tap(find.byKey(const Key('bookmark-move-cancel')));
       await tester.pumpAndSettle();
       expect(await colorRows(db), {'red': elsewhere});
