@@ -29,11 +29,11 @@ void main(List<String> args) {
       total++;
       final parsed = VerseParser.parse(file.readAsStringSync());
       final expected = verseCountForChapter(book.id, ch);
-      if (!parsed.isComplete) {
+      if (!parsed.isUsable) {
         incomplete++;
         final nums = parsed.verseNumbers;
         stdout.writeln(
-          'GAPS  ${book.id} $ch: ${nums.length} marks, '
+          'BAD   ${book.id} $ch: ${nums.length} marks, '
           'first ${nums.take(5).toList()} … ${_firstProblem(nums)}',
         );
       }

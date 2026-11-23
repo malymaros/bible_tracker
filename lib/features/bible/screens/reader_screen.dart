@@ -114,7 +114,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final row = chapter.value;
     final parsed = row == null ? null : _parse(row.htmlContent);
     final showVerses =
-        textView == ReaderTextView.verses && parsed != null && parsed.isComplete;
+        textView == ReaderTextView.verses && parsed != null && parsed.isUsable;
     final selected = showVerses ? _selectedVerse : null;
 
     return Scaffold(

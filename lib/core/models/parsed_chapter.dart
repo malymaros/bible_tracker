@@ -20,8 +20,20 @@ class ParsedChapter {
   int get lastVerse =>
       verseStarts.fold(0, (m, s) => s.verseEnd > m ? s.verseEnd : m);
 
-  /// True when the verses run 1, 2, 3 … without gaps or repeats. Only such
-  /// chapters are shown in the new view; others fall back to the raw HTML.
+  /// True when verse numbers only go up. Gaps are allowed: SSV leaves out
+  /// verses that modern translations omit (Mt 17,21; Sk 8,37 …) and some
+  /// chapters begin after verse 1. Only such chapters are shown in the verse
+  /// view; others (numbers as plain text, typos) fall back to the raw HTML.
+  bool get isUsable {
+    var last = 0;
+    for (final s in verseStarts) {
+      if (s.verse! <= last) return false;
+      last = s.verseEnd;
+    }
+    return last > 0;
+  }
+
+  /// True when the verses run 1, 2, 3 … without gaps or repeats.
   bool get isComplete {
     var expected = 1;
     for (final s in verseStarts) {

@@ -19,7 +19,10 @@ abstract final class VerseParser {
   // Optional stray punctuation that SSV sometimes puts inside the <sup>
   // (`<sup>. 18</sup>`), then the number or a "2-3" range.
   static final _verseMark = RegExp(
-    r'^([.,;:!?“”"„)]*)\s*(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?$',
+    // A trailing "(2)" is the alternative (Vulgate) number SSV prints in
+    // some books, e.g. Wisdom 6 "1(2)"; the first number is the verse.
+    r'^([.,;:!?“”"„)]*)\s*(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?'
+    r'(?:\s*\(\d{1,3}\))?$',
   );
   static final _leadingChapterNumber = RegExp(r'^\d{1,3}\s+');
   static final _headingDash = RegExp(r'\s*[–—-]\s*$');
@@ -83,8 +86,27 @@ abstract final class VerseParser {
         final m = _verseMark.firstMatch(text);
         if (m != null) {
           if (m.group(1)!.isNotEmpty) out.add(_Token.text(m.group(1)!));
-          final start = int.parse(m.group(2)!);
+          var start = int.parse(m.group(2)!);
           final end = m.group(3) == null ? start : int.parse(m.group(3)!);
+          // SSV sometimes splits a number into two sups ("<sup>1</sup>
+          // <sup>0</sup>" for 10): join digits that follow a single-number
+          // mark with nothing but spaces in between.
+          var back = out.length - 1;
+          while (back >= 0 &&
+              !out[back].isMark &&
+              out[back].text!.trim().isEmpty) {
+            back--;
+          }
+          if (m.group(1)!.isEmpty &&
+              m.group(3) == null &&
+              back >= 0 &&
+              out[back].isMark &&
+              out[back].verse == out[back].verseEnd) {
+            start = int.parse('${out[back].verse}$start');
+            out.removeRange(back, out.length);
+            out.add(_Token.mark(start, start));
+            return;
+          }
           out.add(_Token.mark(start, end < start ? start : end));
           return;
         }

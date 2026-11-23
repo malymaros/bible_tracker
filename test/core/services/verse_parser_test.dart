@@ -116,6 +116,7 @@ void main() {
     test('a gap in the numbering is not complete', () {
       final c = VerseParser.parse('<p><sup>1</sup> A <sup>3</sup> B</p>');
       expect(c.isComplete, isFalse);
+      expect(c.isUsable, isTrue, reason: 'omitted verses are allowed');
     });
 
     test('text outside any paragraph is still read', () {
@@ -125,6 +126,28 @@ void main() {
       expect(c.verseNumbers, [1, 2]);
       expect(c.verseText(1), 'A B pokračuje.');
       expect(c.verseText(2), 'C');
+    });
+
+    test('a number split into two sups is joined (Prísl 1,10)', () {
+      final c = VerseParser.parse(
+        '<p><sup>9 </sup>A</p><p><sup>1</sup><sup>0 </sup>B</p>',
+      );
+      expect(c.verseNumbers, [9, 10]);
+      expect(c.verseText(10), 'B');
+    });
+
+    test('the alternative number in brackets is ignored (Múd 6)', () {
+      final c = VerseParser.parse(
+        '<p><sup><a href="#v1">1</a>(2) </sup>A <sup>2(3) </sup>B</p>',
+      );
+      expect(c.verseNumbers, [1, 2]);
+    });
+
+    test('a number going back is not usable', () {
+      final c = VerseParser.parse(
+        '<p><sup>1</sup> A <sup>2</sup> B <sup>1</sup> C</p>',
+      );
+      expect(c.isUsable, isFalse);
     });
   });
 }
