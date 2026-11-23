@@ -209,7 +209,7 @@ const List<Rosary> kRosaries = [
         number: 3,
         name: 'Ohlasovanie Božieho kráľovstva',
         shortName: 'Ohlasovanie kráľovstva',
-        insert: 'ktorý ohlasoval Božie kráľovstvo a vyzýval na pokánie',
+        insert: 'ktorý ohlasoval Božie kráľovstvo a vyzýval ľud na pokánie',
         ref: ScriptureRef(
           bookId: 'mark',
           chapter: 1,
